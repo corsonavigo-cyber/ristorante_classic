@@ -1,0 +1,97 @@
+*{
+    align-items:center ;
+    text-align: center;
+    font-family: Arial, Helvetica, sans-serif;
+    
+    box-sizing: content-box;
+}
+title{
+    font-size:2rem;
+    font-weight:bold;
+    margin:15px;
+}
+
+footer{
+    background: #333;
+    color:white;
+    padding: 10px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+nav{
+    background: #333;
+    color:white;
+    padding: 10px;
+}
+
+nav a{
+    color: white;
+    text-decoration: none;
+    margin-right:15px;
+    font-weight: bold;
+    font-size: 18px;
+}
+nav a:hover{
+    color: rgb(79, 45, 226);
+    
+}
+nav ul li{
+    display: inline-block;
+    list-style-type: none;
+}
+table{
+    background:white;
+    width:80%;
+    margin:2px auto;
+    border-collapse: collapse;
+}
+td,th{
+    border: 1px solid #ccc;
+    padding:8px;
+    
+}
+.qta{
+    padding: 5px 10px;
+    border-radius: 6px;
+    color:white;
+    font-weight: bold;
+    font-size:14px;
+
+}
+.esaurito{
+    background-color: red;
+}
+.scarso{
+    background-color: orange;
+}
+.buono{
+     background-color: green;   
+}
+.stats{
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    justify-content: center;
+    margin:30px;
+}
+.card{background-color: white;
+padding:20px;
+border-radius: 10px;
+width: 220px;
+text-align:center;
+box-shadow: 0 0 5px rgba(0, 0, 75, 0.8);
+}
+.alert{
+    display: flex;
+    flex-wrap:wrap;
+    width:80%;
+    margin: 20px auto;
+    background-color: white;
+    padding:20px;
+    border-radius: 10px;
+    text-align:center;
+    color: red;
+    font-weight: bold;
+    box-shadow: 0 0 5px rgba(0, 0, 75, 0.8);
+}

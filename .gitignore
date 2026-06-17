@@ -15,6 +15,7 @@ config/
 /cache/
 /tmp/
 *.log
+!/logs/.gitkeep  # tranne .gitkeep
 
 # IDE
 .vscode/
@@ -28,3 +29,6 @@ uploads/
 # OS
 .DS_Store
 Thumbs.db
+
+#utility
+hash.php
