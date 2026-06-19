@@ -9,8 +9,18 @@ class LoggerService
 
     public function __construct()
     {
-        $this->logFile = __DIR__ . '/../../storage/logs/app.log';
+        $this->logFile = __DIR__ . '/storage/logs/app.log';
     }
+
+   /* 
+    soluzione alternativa per creare un file di log giornaliero
+    public function __construct()
+    {
+      $this->logFile = dirname(__DIR__, 2)
+        . '/storage/logs/'
+        . date('Y-m-d')
+        . '.log';
+    } */
 
     public function info(string $message): void
     {

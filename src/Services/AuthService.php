@@ -31,7 +31,16 @@ class AuthService {
             'ruolo' => $user['ruolo']
         ];
 
-        $this->logger->info("Login riuscito: '{$username}'");
+        if($user['ruolo'] === 'admin'){
+            $this->logger->info("Login riuscito: '{$username}' (ruolo: admin)");
+            header("Location:/dashboard.php");
+            exit;
+        } else {
+            $this->logger->info("Login riuscito: '{$username}' (ruolo: {$user['ruolo']})");
+            header("Location:/index.php");
+            exit;
+        }
+             
         return true;
     }
 
@@ -100,6 +109,11 @@ class AuthService {
             return false; #l'utente esiste già
         }
 
+        if (!preg_match('/^[a-zA-Z0-9_]{3,15}$/', $username)) {
+        $this->logger->warning("Registrazione fallita: username '{$username}' non valido");
+        return false;
+       }
+
         if (!filter_var( $email,FILTER_VALIDATE_EMAIL)) {
             return false;
         }
@@ -113,6 +127,45 @@ class AuthService {
         $this->userRepo->inserisciUTente($username, $email, $passwordhash, $ruolo, $attivo);
         $this->logger->info("Nuovo utente registrato: '{$username}' (ruolo: {$ruolo})");
         return true;
+    }
+    
+    public function updateEmail(int $id_utente, string $newEmail):bool{
+
+        $user = $this->userRepo->getById($id_utente);
+        if(!$user){
+            $this->logger->warning("Aggiornamento email fallito:Utente ID{$id_utente} non trovato");
+            return false;
+        }
+        
+        if (!filter_var($newEmail,FILTER_VALIDATE_EMAIL)) {
+            $this->logger->warning("Aggiornamento email fallito: email '{$newEmail}'non valida''");
+            return false;
+        }
+
+        $this->userRepo->aggiornaEmailUtente($id_utente, $newEmail);
+        $this->logger->info("Utente {$id_utente}: email aggiornato a '{$newEmail}' (ruolo: {$user['ruolo']})");
+        return true;
+        
+    }
+
+
+    public function updateUsername(int $id_utente, string $newUsername):bool{
+
+        $user = $this->userRepo->getById($id_utente);
+        if(!$user){
+            $this->logger->warning("Aggiornamento username fallito:Utente ID{$id_utente} non trovato");
+            return false;
+        }
+        
+        if (!preg_match('/^[a-zA-Z0-9_]{3,15}$/', $newUsername)) {
+          $this->logger->warning("Aggiornamento fallito: username '{$newUsername}' non valido");
+          return false;
+        }
+
+        $this->userRepo->aggiornaNomeUtente($id_utente, $newUsername);
+        $this->logger->info("Utente {$id_utente}: username aggiornato a '{$newUsername}' (ruolo: {$user['ruolo']})");
+        return true;
+        
     }
 
     public function changePassword(int $userId,string $currentPassword,string $newPassword): bool {

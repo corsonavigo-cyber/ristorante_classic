@@ -5,10 +5,11 @@
     
     box-sizing: content-box;
 }
-title{
+.title{
     font-size:2rem;
     font-weight:bold;
     margin:15px;
+    color:#333;
 }
 
 footer{
@@ -81,6 +82,7 @@ border-radius: 10px;
 width: 220px;
 text-align:center;
 box-shadow: 0 0 5px rgba(0, 0, 75, 0.8);
+color:#333;
 }
 .alert{
     display: flex;
@@ -94,4 +96,17 @@ box-shadow: 0 0 5px rgba(0, 0, 75, 0.8);
     color: red;
     font-weight: bold;
     box-shadow: 0 0 5px rgba(0, 0, 75, 0.8);
+}
+.btn{
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #333;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    margin-top: 20px;
+}
+.btn:hover{
+    background-color: rgb(79, 45, 226);
 }

@@ -16,20 +16,16 @@ class UserRepositories {
 
      }
 
-     public function getById(int $id):?array
+     public function getById(int $id_utente):?array
      {
-        $stmt =$this->pdo->prepare('
-         SELECT * FROM utente WHERE id =:id LIMIT 1');
-         $stmt->execute(['id' => $id]);
+        $stmt =$this->pdo->prepare('SELECT * FROM utente WHERE id_utente =:id_utente LIMIT 1');
+         $stmt->execute(['id_utente' => $id_utente]);
          return $stmt->fetch() ?:null;
      }
 
      public function inserisciUTente(string $username, string $email, string $passwordhash, string $ruolo, int $attivo):int{
 
-        $stmt = $this->pdo->prepare('
-            INSERT INTO utente (username,email,password,ruolo,attivo) VALUES
-            (:username,:email,:password,:ruolo, :attivo)
-        ');
+        $stmt = $this->pdo->prepare('INSERT INTO utente (username,email,password,ruolo,attivo) VALUES (:username,:email,:password,:ruolo, :attivo)');
         $stmt->execute([
             'username'=>$username,
             'email'=>$email,
@@ -39,39 +35,39 @@ class UserRepositories {
         ]);
         return $this->pdo->lastInsertId();
      }
-
-     public function aggiornaUtente(int $id, string $username, string $email, string $passwordhash, string $ruolo, int $attivo): bool
+     public function aggiornaEmailUtente(int $id_utente, string $email): bool
      {
-        $stmt = $this->pdo->prepare('
-            UPDATE utente SET username = :username, email = :email, password = :password, ruolo = :ruolo, attivo = :attivo WHERE id = :id
-        ');
+        $stmt = $this->pdo->prepare('UPDATE utente SET email = :email WHERE id_utente = :id_utente');
         $stmt->execute([
-            'id' => $id,
-            'username' => $username,
-            'email' => $email,
-            'password' => $passwordhash,
-            'ruolo' => $ruolo,
-            'attivo' => $attivo
+            'id_utente' => $id_utente,
+            'email' => $email
         ]);
         return $stmt->rowCount()>0; #restituisce true se almeno una riga è stata aggiornata, altrimenti false
      }
-     public function cambiaStatoAttivo(int $id, int $attivo):bool
+
+     public function aggiornaNomeUtente(int $id_utente, string $username): bool
      {
-        $stmt = $this->pdo->prepare('
-            UPDATE utente SET attivo = :attivo WHERE id = :id
-        ');
+        $stmt = $this->pdo->prepare('UPDATE utente SET username = :username WHERE id_utente = :id_utente');
         $stmt->execute([
-            'id' => $id,
+            'id_utente' => $id_utente,
+            'username' => $username
+        ]);
+        return $stmt->rowCount()>0; #restituisce true se almeno una riga è stata aggiornata, altrimenti false
+     }
+     public function cambiaStatoAttivo(int $id_utente, int $attivo):bool
+     {
+        $stmt = $this->pdo->prepare('UPDATE utente SET attivo = :attivo WHERE id_utente = :id_utente');
+        $stmt->execute([
+            'id_utente' => $id_utente,
             'attivo' => $attivo
         ]);
         return $stmt->rowCount()>0;
      }
-     public function aggiornaPassword(int $id, string $passwordhash):bool
+     public function aggiornaPassword(int $id_utente, string $passwordhash):bool
      {
-        $stmt = $this->pdo->prepare('
-           UPDATE utente SET PASSWORD = :password WHERE id = :id');
+        $stmt = $this->pdo->prepare('UPDATE utente SET password = :password WHERE id_utente = :id_utente');
            $stmt->execute([
-            'id'=>$id,
+            'id_utente'=>$id_utente,
             'password'=>$passwordhash
            ]);
           return $stmt->rowCount()>0; 
