@@ -34,6 +34,7 @@ function risposta(mixed $data,int $status=200):void {
     echo json_encode(['success'=>$status<400, 'data'=>$data]);
     exit;
 }
+
 //utilizza un try catch per le operazioni CORS
 try{
    switch($method){
@@ -51,9 +52,10 @@ try{
         risposta('JSON non valido', 400);
         }
         //validazione 
-        if(empty($body['nome'])){
-            risposta('campo nome obbligatorio', 422);
+        if (empty($body['numero_tavolo']) || empty($body['posti_max']) || empty($body['posti_min'])) {
+            risposta('Tutti i campi sono obbligatori', 422);
         }
+
         //creazione
         $newId= $tavoloService->crea($body);
         risposta(['id_tavolo'=>$newId],201);
@@ -73,10 +75,11 @@ try{
         if (!$id) {
            risposta('id obbligatorio', 400);
         }
+        /*  Questa Parte di codice bloccava il delete
         $body= json_decode(file_get_contents('php://input'),true);
         if (!$body) {
           risposta('JSON non valido', 400);
-        }
+        }*/
         $ok= $tavoloService->eliminaTavolo($id);
         risposta($ok ? 'Eliminato' : 'Non eliminato');
         break;

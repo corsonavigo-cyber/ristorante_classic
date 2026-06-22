@@ -12,21 +12,26 @@ require_once __DIR__ . '/../bootstrap.php';
 ?>
 
 
-<body>
+<main>
+    <div class="supporto-titolo">
+        <h2><?= $title ?></h2>
+    </div>
 
-    <h2>Tavoli</h2>
     
+    <a class="btn" link="inserisciTavolo.php">+ Nuovo Tavolo</a>
+   
     <div class="tavoli" id="lavagna_tavoli">
        
     </div>
-    <a link="inserisciTavolo.php">Inserisci un Tavolo</a>
-
+    
 <script>
     const API = '/ristorante_classic/api/tavoli.php';
 </script>
-<script src="/ristorante_classic/public/assets/js/tavoli.js"></script>    
+<script src="/ristorante_classic/public/assets/js/tavoli.js" defer></script>    
 
+</main>
 
 <?php 
 require_once __DIR__ . '/../footer.php';
  ?>
+

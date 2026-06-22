@@ -4,6 +4,15 @@
     font-family: Arial, Helvetica, sans-serif;
     box-sizing: content-box;
 }
+body{
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    align-content: center; 
+}
+main {
+    margin-bottom: 70px;
+}
 .title{
     font-size:2rem;
     font-weight:bold;
@@ -14,7 +23,6 @@
 footer{
     background: #333;
     color:white;
-    padding: 10px;
     position: fixed;
     bottom: 0;
     width: 100%;
@@ -76,13 +84,13 @@ td,th{
     margin:30px;
 }
 .card{
-background-color: white;
-padding:20px;
-border-radius: 10px;
-width: 220px;
-text-align:center;
-box-shadow: 0 0 5px rgba(0, 0, 75, 0.8);
-color:#333;
+    background-color: white;
+    padding:20px;
+    border-radius: 10px;
+    width: 220px;
+    text-align:center;
+    box-shadow: 0 0 5px rgba(0, 0, 75, 0.8);
+    color:#333;
 }
 .alert{
     display: flex;
@@ -105,15 +113,32 @@ color:#333;
     text-decoration: none;
     border-radius: 5px;
     font-weight: bold;
-    margin-top: 20px;
+    margin-bottom: 25px;
 }
 .btn:hover{
     background-color: rgb(79, 45, 226);
 }
+  /*riferito alla cartella --tavoli*/
 .tavoli{
-    background-color: white;
     display: flex;
+    align-items: center;
+    align-content: center;
+    text-align: center;
+    justify-content: center;
+    background-color: white;
     flex-wrap: wrap;
+    border-radius: 10px;
+    width: 100%;
+    text-align:center;
+    box-shadow: 0 0 5px rgba(0, 0, 75, 0.8);
+    color:#333;
+}
+.tavolo{
+    background-color: white;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    align-content: center; 
     padding:20px;
     border-radius: 10px;
     width: 80%;
@@ -121,18 +146,18 @@ color:#333;
     box-shadow: 0 0 5px rgba(0, 0, 75, 0.8);
     color:#333;
 }
-.tavolo{
+.supporto-titolo{
     background-color: white;
-    display: flex;
-    padding:20px;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    align-content: center; 
+    margin: 25px 0 25px 0 ;
     border-radius: 10px;
-    width: 70px;
-    max-height: 70px;
+    width: 100%;
     text-align:center;
     box-shadow: 0 0 5px rgba(0, 0, 75, 0.8);
     color:#333;
-}
-.comment{
-    display: inline;
-    max-width: 50px;
+    font-weight: bold;
+    font-size: 25px;
 }
