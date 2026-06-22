@@ -1,6 +1,11 @@
 <?php
-
 declare(strict_types=1);
+//per il debug
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+
 require_once __DIR__.'/../public/bootstrap.php';
 
 //devo sempre esserci per far funzionare la rest api.
@@ -18,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 //Configurazione connessioni tramite Bootstrap,
 //per le REST API, ma alcune sono già nel file bootstrap
 
-$method= $_SERVER['REQUEST_METOD'];
+$method= $_SERVER['REQUEST_METHOD'];
 
 //se possibile recupera l'id
 $id = isset($_GET['id']) ? (int)$_GET['id'] :null;
@@ -34,10 +39,10 @@ try{
    switch($method){
       case 'GET':
         if($id){
-            $tavolo = $service->getById($id);
-            $tavolo ? risposta($tavolo) : risposta('Tavolo non trovato, 404');
+            $tavolo = $tavoloService->getById($id);
+            $tavolo ? risposta($tavolo) : risposta('Tavolo non trovato', 404);
         }else{
-            risposta($service->visualizzaTavoli());
+            risposta($tavoloService->visualizzaTavoli());
         }
         break;
       case 'POST':
@@ -50,7 +55,7 @@ try{
             risposta('campo nome obbligatorio', 422);
         }
         //creazione
-        $newId= $service->crea($body);
+        $newId= $tavoloService->crea($body);
         risposta(['id_tavolo'=>$newId],201);
         break;
       case 'PUT':
@@ -61,7 +66,7 @@ try{
         if (!$body) {
           risposta('JSON non valido', 400);
         }
-        $ok= $service->modificaTavolo($id,$body['numero'],$body['posti_max'],$body['posti_min']);
+        $ok= $tavoloService->modificaTavolo($id,$body['numero'],$body['posti_max'],$body['posti_min']);
         risposta($ok ? 'Aggiornato' : 'Nessuna Modifica');
         break;
       case 'DELETE':
@@ -72,10 +77,10 @@ try{
         if (!$body) {
           risposta('JSON non valido', 400);
         }
-        $ok= $service->eliminaTavolo($id);
+        $ok= $tavoloService->eliminaTavolo($id);
         risposta($ok ? 'Eliminato' : 'Non eliminato');
         break;
-      case 'DEFAULT':
+      default:
             risposta('Metodo non supportato', 405);
    }
 }catch (\InvalidArgumentException $e){

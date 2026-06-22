@@ -6,17 +6,23 @@ use App\Repositories\TavoloRepositories;
 class TavoloService {
     public function __construct(private TavoloRepositories $tavoloRepo, private LoggerService $logger){} #inietta il repository dei tavoli
 
-    public function visualizzaTavoli(): array
-    {
-        return $this->tavoloRepo->visualizzaTavoli() ?? [];
+    public function visualizzaTavoli(): array {
+        try {
+            return $this->tavoloRepo->visualizzaTavoli() ?? [];
+        } catch (\Throwable $e) {
+            $this->logger->error("Errore recupero tavoli: {$e->getMessage()}");
+            return []; 
+        }
     }
  
     public function getById(int $id): ?array {
-        return $this->tavoloRepo->getById($id);
+        try {
+            return $this->tavoloRepo->getById($id);
+        } catch (\Throwable $e) {
+            $this->logger->error("Errore recupero tavolo ID {$id}: {$e->getMessage()}");
+            return null;
+        }
     }
-
-    
-    
 
 
     public function inserisciTavolo(int $numero, int $posti_max,int $posti_min):bool{

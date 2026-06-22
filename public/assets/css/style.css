@@ -1,8 +1,7 @@
 *{
-    align-items:center ;
-    text-align: center;
-    font-family: Arial, Helvetica, sans-serif;
     
+   
+    font-family: Arial, Helvetica, sans-serif;
     box-sizing: content-box;
 }
 .title{
@@ -76,7 +75,8 @@ td,th{
     justify-content: center;
     margin:30px;
 }
-.card{background-color: white;
+.card{
+background-color: white;
 padding:20px;
 border-radius: 10px;
 width: 220px;
@@ -109,4 +109,30 @@ color:#333;
 }
 .btn:hover{
     background-color: rgb(79, 45, 226);
+}
+.tavoli{
+    background-color: white;
+    display: flex;
+    flex-wrap: wrap;
+    padding:20px;
+    border-radius: 10px;
+    width: 80%;
+    text-align:center;
+    box-shadow: 0 0 5px rgba(0, 0, 75, 0.8);
+    color:#333;
+}
+.tavolo{
+    background-color: white;
+    display: flex;
+    padding:20px;
+    border-radius: 10px;
+    width: 70px;
+    max-height: 70px;
+    text-align:center;
+    box-shadow: 0 0 5px rgba(0, 0, 75, 0.8);
+    color:#333;
+}
+.comment{
+    display: inline;
+    max-width: 50px;
 }
