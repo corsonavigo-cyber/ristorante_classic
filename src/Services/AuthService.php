@@ -32,10 +32,10 @@ class AuthService {
         ];
 
         if($user['ruolo'] === 'admin'){
-            $this->logger->info("Login riuscito: '{$username}' (ruolo: admin)");
+            $this->logger->info("Login riuscito come admin: '{$username}' (ruolo: admin)");
             header("Location:../public/dashboard.php");
             exit;
-        } else {
+        } else if($user['ruolo']!=='admin'){
             $this->logger->info("Login riuscito: '{$username}' (ruolo: {$user['ruolo']})");
             header("Location:../public/tavoli/gestionetavoli.php");
             exit;
@@ -77,13 +77,13 @@ class AuthService {
         return isset($_SESSION['user']);
     }
 
-    function requireAuth():void{
+    function requireAuth():bool{
 
         if (!$this->isAuth()){
             $this->logger->warning("Accesso non autorizzato");
-            header("Location:../public/login.php");
-            exit;
+            return false;
         }
+        return true;
     }
 
     function requireRole(string $role):void{

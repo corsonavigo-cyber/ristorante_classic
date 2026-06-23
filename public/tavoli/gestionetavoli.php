@@ -13,10 +13,11 @@ require_once __DIR__ . '/../bootstrap.php';
 
 
 <main>
+    <!--il bottone elimina viene gestito direttamente nel js per le prossime tabelle lo predisporro per sottrazione come avviene realente nei magazzini-->
     <div class="supporto-titolo">
         <h2><?= $title ?></h2>
     </div>
-
+    
     
     <a class="btn" href="inseriscitavolo.php">+ Nuovo Tavolo</a>
    
