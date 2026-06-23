@@ -33,11 +33,11 @@ class AuthService {
 
         if($user['ruolo'] === 'admin'){
             $this->logger->info("Login riuscito: '{$username}' (ruolo: admin)");
-            header("Location:/dashboard.php");
+            header("Location:../public/dashboard.php");
             exit;
         } else {
             $this->logger->info("Login riuscito: '{$username}' (ruolo: {$user['ruolo']})");
-            header("Location:/index.php");
+            header("Location:../public/tavoli/gestionetavoli.php");
             exit;
         }
              
@@ -69,6 +69,8 @@ class AuthService {
         session_destroy();
 
         $this->logger->info("Logout: '{$username}'");
+        header("Location:../public/login.php");
+        exit;
     }
 
     function isAuth():bool{
@@ -79,7 +81,7 @@ class AuthService {
 
         if (!$this->isAuth()){
             $this->logger->warning("Accesso non autorizzato");
-            header("Location:/../login.php");
+            header("Location:../public/login.php");
             exit;
         }
     }

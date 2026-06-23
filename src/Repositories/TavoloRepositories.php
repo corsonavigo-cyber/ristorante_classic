@@ -9,7 +9,7 @@ class TavoloRepositories {
 
      public function visualizzaTavoli():?array
      {
-        $stmt =$this->pdo->prepare('SELECT * FROM tavolo');
+        $stmt =$this->pdo->prepare('SELECT * FROM tavolo ORDER BY numero_tavolo');
          $stmt->execute();
          return $stmt->fetchAll() ?:null;
      }

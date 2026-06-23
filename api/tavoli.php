@@ -70,7 +70,7 @@ try{
         if (!$body) {
           risposta('JSON non valido', 400);
         }
-        $ok= $tavoloService->modificaTavolo($id,$body['numero'],$body['posti_max'],$body['posti_min']);
+        $ok= $tavoloService->modificaTavolo($id,$body['numero_tavolo'],$body['posti_max'],$body['posti_min']);
         risposta($ok ? 'Aggiornato' : 'Nessuna Modifica');
         break;
       case 'DELETE':

@@ -9,7 +9,11 @@ class LoggerService
 
     public function __construct()
     {
-        $this->logFile = __DIR__ . '/storage/logs/app.log';
+        // 1. Imposta la timezone per i log
+        date_default_timezone_set('Europe/Rome');
+        //configurare il percorso per la cartella lo
+        $logDir = dirname(__DIR__, 2) . '/storage/logs';
+        $this->logFile = $logDir . '/app.log';
     }
 
    /* 

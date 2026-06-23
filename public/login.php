@@ -4,9 +4,9 @@ require_once __DIR__.'/bootstrap.php';
 require_once __DIR__.'/head.php';
 
 
-
-
 $errore=null;
+
+
 if($_SERVER['REQUEST_METHOD']==='POST'){
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
@@ -14,7 +14,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     if($username === '' || $password ===''){
         $errore = "Username e password sono obbligatori";
     }else if($authService->login($username,$password)){
-        header('Location:/dashboard.php');
+        header('Location:dashboard.php');
         exit;
     }else{
         $errore = "Credenziali non valide";

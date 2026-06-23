@@ -17,17 +17,17 @@ require_once __DIR__ . '/../bootstrap.php';
      <p>compila i campi richiesti per modificare il tavolo</p>
    </div>
    <div class="tavolo">
-     <form action="" method="POST">
-        <label for="numero-tavolo">Numero del Tavolo : </label>
+      <form action="" id="form_modifica" method="POST">
+        <label for="numero-tavolo" >Numero del Tavolo : </label>
         <input type="number" step="1" id="numero-tavolo" name="numero-tavolo">
-
+        <div class="controllopositivo" id="controllo"><p id="avviso"></p> </div>
         <label for="posti-max-tavolo">Posti Massimi del Tavolo : </label>
-        <input type="number" step="1" id="numero-tavolo" name="numero-tavolo">
+        <input type="number" step="1" id="posti-max-tavolo" name="posti-max-tavolo">
 
         <label for="posti-min-tavolo">Posti Minimi del Tavolo : </label>
-        <input type="number" step="1" id="numero-tavolo" name="numero-tavolo">
+        <input type="number" step="1" id="posti-min-tavolo" name="posti-min-tavolo">
 
-        <button type="submit" class="btn-modifica" data-id="<?= $id ?>">Modifica</button>
+        <button type="button" class="btn-modifica" data-id="<?= $id ?>">Modifica</button>
      </form>
    </div>
   </div>

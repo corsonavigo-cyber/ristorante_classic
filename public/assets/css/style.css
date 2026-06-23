@@ -161,3 +161,13 @@ td,th{
     font-weight: bold;
     font-size: 25px;
 }
+.warning{
+    width: 100%;
+    text-align:center;
+    box-shadow: 0 0 5px rgba(0, 0, 75, 0.8);
+    color:#963131;
+    font-weight: bold;
+}
+.controllopositivo{
+    display:none;
+}

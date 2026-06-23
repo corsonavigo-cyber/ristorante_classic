@@ -17,9 +17,9 @@ require_once __DIR__ . '/../bootstrap.php';
    </div>
    <div class="tavolo">
      <form action="" id="form_inserisci" method="POST">
-        <label for="numero-tavolo">Numero del Tavolo : </label>
+        <label for="numero-tavolo" >Numero del Tavolo : </label>
         <input type="number" step="1" id="numero-tavolo" name="numero-tavolo">
-
+        <div class="controllopositivo" id="controllo"><p id="avviso"></p> </div>
         <label for="posti-max-tavolo">Posti Massimi del Tavolo : </label>
         <input type="number" step="1" id="posti-max-tavolo" name="posti-max-tavolo">
 
@@ -34,7 +34,10 @@ require_once __DIR__ . '/../bootstrap.php';
     const API = '/ristorante_classic/api/tavoli.php';
 </script>
 <script src="/ristorante_classic/public/assets/js/tavoli.js" defer></script>    
+<script>
 
+
+</script>
 </main>
 
 </main>
