@@ -5,7 +5,6 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-
 require_once __DIR__.'/../public/bootstrap.php';
 
 //devo sempre esserci per far funzionare la rest api.
@@ -46,8 +45,10 @@ try{
             risposta($tavoloService->visualizzaTavoli());
         }
         break;
+        
       case 'POST':
         $body= json_decode(file_get_contents('php://input'),true);
+        file_put_contents(__DIR__.'/debug.txt', print_r($body, true)."\n", FILE_APPEND);
         if (!$body) {
         risposta('JSON non valido', 400);
         }
@@ -56,10 +57,11 @@ try{
             risposta('Tutti i campi sono obbligatori', 422);
         }
 
-        //creazione
-        $newId= $tavoloService->crea($body);
+        //creazione  DA VERIFICARE CREA PROBABIOLMENTE QUA IL PR0BLEMA
+        $newId= $tavoloService->inserisciTavolo($body['numero_tavolo'], $body['posti_max'], $body['posti_min']);
         risposta(['id_tavolo'=>$newId],201);
         break;
+
       case 'PUT':
         if (!$id) {
            risposta('id obbligatorio', 400);
@@ -75,11 +77,7 @@ try{
         if (!$id) {
            risposta('id obbligatorio', 400);
         }
-        /*  Questa Parte di codice bloccava il delete
-        $body= json_decode(file_get_contents('php://input'),true);
-        if (!$body) {
-          risposta('JSON non valido', 400);
-        }*/
+        
         $ok= $tavoloService->eliminaTavolo($id);
         risposta($ok ? 'Eliminato' : 'Non eliminato');
         break;

@@ -18,7 +18,7 @@ require_once __DIR__ . '/../bootstrap.php';
     </div>
 
     
-    <a class="btn" link="inserisciTavolo.php">+ Nuovo Tavolo</a>
+    <a class="btn" href="inseriscitavolo.php">+ Nuovo Tavolo</a>
    
     <div class="tavoli" id="lavagna_tavoli">
        

@@ -17,8 +17,8 @@ class TavoloRepositories {
      public function getByNumero(int $numero): ?array 
      {
         #preparo la connessione
-        $stmt = $this->pdo->prepare('SELECT * FROM tavolo WHERE numero = :numero LIMIT 1'); #prepara una query SQL con un parametro
-        $stmt->execute(['numero' => $numero]); #esegue la query sostituendo il parametro con il valore passato
+        $stmt = $this->pdo->prepare('SELECT * FROM tavolo WHERE numero_tavolo = :numero_tavolo LIMIT 1'); #prepara una query SQL con un parametro
+        $stmt->execute(['numero_tavolo' => $numero]); #esegue la query sostituendo il parametro con il valore passato
         return $stmt->fetch() ?: null; #restituisce il risultato come array associativo o null se non trovato
 
      }
@@ -32,21 +32,21 @@ class TavoloRepositories {
 
      public function inserisciTavolo(int $numero, int $posti_max, int $posti_min):int{
 
-        $stmt = $this->pdo->prepare('INSERT INTO tavolo (numero,posti_max,posti_min) VALUES (:numero,:posti_max,:posti_min)');
+        $stmt = $this->pdo->prepare('INSERT INTO tavolo (numero_tavolo,posti_max,posti_min) VALUES (:numero_tavolo,:posti_max,:posti_min)');
         $stmt->execute([
-            'numero'=>$numero,
+            'numero_tavolo'=>$numero,
             'posti_max'=>$posti_max,
             'posti_min'=>$posti_min
         ]);
-        return $this->pdo->lastInsertId();
+        return (int)$this->pdo->lastInsertId();
      }
 
      public function aggiornaTavolo(int $id_tavolo, int $numero, int $posti_max, int $posti_min): bool
      {
-        $stmt = $this->pdo->prepare('UPDATE tavolo SET numero = :numero, posti_max = :posti_max, posti_min = :posti_min WHERE id_tavolo = :id_tavolo');
+        $stmt = $this->pdo->prepare('UPDATE tavolo SET numero_tavolo = :numero_tavolo, posti_max = :posti_max, posti_min = :posti_min WHERE id_tavolo = :id_tavolo');
         $stmt->execute([
             'id_tavolo' => $id_tavolo,
-            'numero' => $numero,
+            'numero_tavolo' => $numero,
             'posti_max' => $posti_max,
             'posti_min' => $posti_min
         ]);

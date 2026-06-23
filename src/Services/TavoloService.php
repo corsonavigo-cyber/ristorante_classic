@@ -25,7 +25,7 @@ class TavoloService {
     }
 
 
-    public function inserisciTavolo(int $numero, int $posti_max,int $posti_min):bool{
+    public function inserisciTavolo(int $numero, int $posti_max,int $posti_min):int{
 
         #salto l'autorizzazione in base al ruolo
        try {
@@ -33,10 +33,11 @@ class TavoloService {
              
         }catch (\Throwable $e) {
              $this->logger->error("Tavolo {$numero} non inserito: {$e->getMessage()}");
+             throw new \RuntimeException("Errore inserimento tavolo: {$e->getMessage()}");
              return false;
         }
         $this->logger->info("Tavolo {$numero}: inserito con successo");
-        return true;
+        return $newId;
         
         
     }
