@@ -11,10 +11,12 @@ use Config\Database;
 
 use App\Repositories\TavoloRepositories;
 use App\Repositories\UserRepositories;
+use App\Repositories\MenuRepositories;
 
 use App\Services\AuthService;
 use App\Services\LoggerService;  
 use App\Services\TavoloService;
+use App\Services\MenuService;
 
 
 $dotenv =Dotenv::createImmutable(__DIR__.'/../');
@@ -29,11 +31,12 @@ $pdo = Database::getInstance();
 //chiamo le repositories
 $userRepository = new UserRepositories($pdo);
 $tavoloRepository= new TavoloRepositories($pdo);
+$menuRepository= new MenuRepositories($pdo);
 
 //chiamo i service
 $authService = new AuthService($userRepository, $logger);
 $tavoloService= new TavoloService($tavoloRepository, $logger);
-
+$menuService= new MenuService($tavoloRepository, $logger);
 /*inserisco l'aurorizzazione nelle pagine
 
 $paginePubbliche = ['/login.php'];

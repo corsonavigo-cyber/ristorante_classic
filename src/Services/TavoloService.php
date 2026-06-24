@@ -29,12 +29,11 @@ class TavoloService {
 
         #salto l'autorizzazione in base al ruolo
        try {
-             $this->tavoloRepo->inserisciTavolo($numero, $posti_max, $posti_min);
+             $newId = $this->tavoloRepo->inserisciTavolo($numero, $posti_max, $posti_min);
              
         }catch (\Throwable $e) {
              $this->logger->error("Tavolo {$numero} non inserito: {$e->getMessage()}");
              throw new \RuntimeException("Errore inserimento tavolo: {$e->getMessage()}");
-             return false;
         }
         $this->logger->info("Tavolo {$numero}: inserito con successo");
         return $newId;

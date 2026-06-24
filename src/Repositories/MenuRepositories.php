@@ -55,6 +55,13 @@ class MenuRepositories {
          $stmt->execute(['id_bevanda' => $id_bevanda]);
          return $stmt->fetch() ?:null;
      }
+
+     public function selezionaAllergeneId(int $id_allergene):?array
+     {
+        $stmt =$this->pdo->prepare('SELECT * FROM allergeni WHERE id_allergene =:id_allergene LIMIT 1');
+        $stmt->execute(['id_allergene' => $id_allergene]);
+        return $stmt->fetch() ?:null;
+     }
                   
                 //INSERIMENTI
 
