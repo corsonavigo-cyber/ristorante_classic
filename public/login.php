@@ -1,6 +1,6 @@
 <?php 
 require_once __DIR__.'/bootstrap.php';
-
+require_once __DIR__.'/head.php';
 
 
 $errore=null;
@@ -23,9 +23,11 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 
 
 ?>
-<body>
-    <div class="card">
+
+<body class="bodylogin">
+    <div class="cards">
         <h2 class="title">Login</h2>
+        <br>
         <?php if($errore): ?>
             <div class="alert">
                 <!-- importante per l'accessibilità, usare htmlspecialchars per evitare XSS -->
@@ -36,7 +38,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
             <div class="card">
                 <label for="username">Username:</label>
                 <input type="text" id="username" name="username" required>
-
+                <br>
                 <label for="password">Password:</label>
                 <input type="password" id="password" name="password" required>
 

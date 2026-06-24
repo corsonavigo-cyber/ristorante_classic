@@ -34,7 +34,7 @@ $tavoloRepository= new TavoloRepositories($pdo);
 $authService = new AuthService($userRepository, $logger);
 $tavoloService= new TavoloService($tavoloRepository, $logger);
 
-//inserisco l'aurorizzazione nelle pagine
+/*inserisco l'aurorizzazione nelle pagine
 
 $paginePubbliche = ['/login.php'];
 //serve a non includere login.php nelle pagine da autorizzare ed ad evitare il loop
@@ -43,4 +43,4 @@ if (!in_array(basename($_SERVER['PHP_SELF']), array_map('basename', $paginePubbl
         header("Location: /login.php");
         exit;
     }
-}
+}*/
