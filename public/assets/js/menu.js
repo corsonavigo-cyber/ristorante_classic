@@ -5,7 +5,7 @@
   
   //per caricare e selezionare dove avverà l'insert dei menu
   const lavagna_menu_attivo = document.getElementById('lavagna_menu_attivo');
-  const lavagna_piatti_nonattivo = document.getElementById('lavagna_piatti_nonattivo');
+  const lavagna_piatti_nonattivi = document.getElementById('lavagna_piatti_nonattivi');
   const lavagna_bevande_nonattive = document.getElementById('lavagna_bevande_nonattive');
   const form_inserisci= document.getElementById('form_inserisci');
   const form_modifica= document.getElementById('form_modifica');
@@ -29,17 +29,17 @@
       document.addEventListener('click', modificaBevandaClick);
       document.addEventListener('input', controllaPiattoesistente);
       
-  }else if(lavagna_menu_nonattivo){
+  }else if(lavagna_piatti_nonattivi){
       //aggiungo il lissener al caricamento se siamo nell'ambiente giusto
-      document.addEventListener('DOMContentLoaded', caricaMenuNonAttivo);
+      document.addEventListener('DOMContentLoaded', caricaPiattiNonAttivi);
       //il bottone elimina lo attivo solo se seno nell'elenco menu non attivo
-      document.addEventListener('click', eliminaPiattoClick);
-      document.addEventListener('click', eliminaBevandaClick);
+      /*document.addEventListener('click', eliminaPiattoClick);*/
       document.addEventListener('click', aggiungiPiattoClick);
+     
+  }else if(lavagna_bevande_nonattive){
+      document.addEventListener('click', eliminaBevandaClick);
       document.addEventListener('click', aggiungiBevandaClick);
   }
-  
-  
   
  //Caricare reiderizza tutti i tavoli attivi, funzione
 
@@ -195,7 +195,97 @@
     
   }
 
-  //------------------DELETE-------------------------------------
+  //-----------------CARICA MENU PIATTI NON ATTIVI------------------------------------
+
+async function caricaPiattiNonAttivi(){
+    //carico i piatti
+    const rispostapiatti = await fetch(`${API}?type=piatti`);
+    const jsonpiatti = await rispostapiatti.json();
+    
+    //carico le bevande per mettere &in_menu='no' va strutturato nell'api menu.php e nel service.php
+    const nonAttivi = jsonpiatti.data.filter(piatto => piatto.in_menu === 'no');
+    /*
+    const lavagna = document.getElementById('lavagna_piatti_nonattivi');
+    */
+    //da sviluppare successivamente il pulsante che collega il piatto al tavolo   
+    if (!nonAttivi.length) {
+      lavagna_piatti_nonattivi.innerHTML = `<p>Non ci sono piatti non attivi</p>`;
+      return;
+    }
+    lavagna_piatti_nonattivi.innerHTML = nonAttivi.map(piatto=>`
+        <!--elementi piatti-->
+    <div class="piatto" id="${piatto.id_piatto}">
+       
+       <h3 class="comment"><b>${piatto.nome_piatto}</b></h3>
+
+       <p class="comment">${piatto.descrizione}</p>
+       <p class="comment">Prezzo: ${piatto.prezzo} € </p> 
+       <!--va fatto così perché dentro un litteral il foreach non funziona per il problema dell'hosting, risulta undefine-->
+       <ul id="elenco_allergeni" class="elenco_allergeni">
+          ${piatto.allergeni ? piatto.allergeni.split(', ').map(a => `<li class="comment">${a}</li>`).join(''):'<li>Nessun allergene</li>'}
+       </ul>
+       <p class="comment">${piatto.categoria.toUpperCase()}</p> 
+
+       <button class="btn-attiva-piatto" data-id="${piatto.id_piatto}">Mostra Piatto 👁️</button>
+
+       <!--link AJAX per inviare la modifica piatto-->
+       <a class="btn" href="modificapiatto.php?id=${piatto.id_piatto}">Modifica ✏️</a>
+       
+       <!--button AJAX per richiedere la disattivazione dal menu del tavolo-->
+
+       <button class="btn-elimina-piatto" data-id="${piatto.id_piatto}">Elimina 🗑️</button>
+    </div>`).join('');
+      
+
+  }
+
+  
+  async function aggiungiPiattoClick(e){
+    
+    //come utilizzare fetch(URL,METHOD)
+    try{
+
+        //seleziono l'elemento bottone per il disattiva
+        const btn = e.target.closest('.btn-attiva-piatto');
+        //escludo click per errore
+        if(!btn) return;
+        //questa funzione di js genera un alet bool
+        if(!confirm('mostrare ai clienti questo piatto?')){
+          return;
+        }
+        //recupero il data set da data-id
+        const id_attiva = btn.dataset.id;
+        //blocco l'esecuzione se non arriva l'id
+        if(!id_attiva){
+          throw new Error('Piatto non mostrato, manca ID!');
+        }
+
+    
+        //salvo il response dentro risposta, chiamo la fetch su un id specifico e scelgo il metodo delete definito 
+        const risposta = await fetch(`/ristorante_classic/api/menu.php?type=piatti&id=${id_attiva}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              id_piatto: parseInt(id_attiva), 
+              in_menu : 'si' 
+            })
+        });
+        //se la risposta non è ok dat che il 400 e il 500 non interrompono il codice, lo interrompo con l'if e trow new error
+        if (!risposta.ok) {
+          //prendo la risposta json 
+          const json = await risposta.json().catch(()=>null);
+          throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+        //se il flusso del programma non viene interrotto ricarico i piatti
+        await caricaPiattiNonAttivi();
+    }catch (errore){
+        console.error(errore);
+        //mostro la risposta json
+        alert(errore.message);
+    }
+    
+  }
+
 
  /* async function eliminaTavoloClick(e){
     

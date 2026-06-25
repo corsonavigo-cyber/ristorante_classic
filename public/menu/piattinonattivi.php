@@ -10,7 +10,7 @@ require_once __DIR__ . '/../navbar.php';
 require_once __DIR__ . '/../bootstrap.php';
 //pagina di esempio AJAX fetch API
 ?>
- //gestione dei piatti non attivi
+ <!--gestione dei piatti non attivi-->
 
 <main>
     <!--il bottone elimina viene gestito direttamente nel js per le prossime tabelle lo predisporro per sottrazione come avviene realente nei magazzini-->
@@ -18,10 +18,10 @@ require_once __DIR__ . '/../bootstrap.php';
         <h2><?= $title ?></h2>
     </div>
     
-    
-    <a class="btn" href="inseriscipiatto.php">+ Nuovo Piatto/a>
+    <a class="btn" href="gestionemenuchevedonoiclienti.php">Torna Ai Piatti Visualizzabili Dai Clienti</a>
+    <a class="btn" href="inseriscipiatto.php">+ Inserisci Nuovo Piatto</a>
    
-    <div class="menu" id="lavagna_menu_nonattivo">
+    <div class="menu" id="lavagna_piatti_nonattivi">
        
     </div>
     
