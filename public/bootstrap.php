@@ -19,6 +19,7 @@ use App\Services\TavoloService;
 use App\Services\MenuService;
 
 
+
 $dotenv =Dotenv::createImmutable(__DIR__.'/../');
 $dotenv->load();
 
@@ -36,7 +37,7 @@ $menuRepository= new MenuRepositories($pdo);
 //chiamo i service
 $authService = new AuthService($userRepository, $logger);
 $tavoloService= new TavoloService($tavoloRepository, $logger);
-$menuService= new MenuService($tavoloRepository, $logger);
+$menuService= new MenuService($menuRepository, $logger);
 /*inserisco l'aurorizzazione nelle pagine
 
 $paginePubbliche = ['/login.php'];

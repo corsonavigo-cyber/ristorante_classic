@@ -1,17 +1,25 @@
 <?php
 declare(strict_types=1);
+
+
+
+
 //per il debug
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 require_once __DIR__.'/../public/bootstrap.php';
+use App\Enums\Categoria;
+use App\Enums\InMenu;
+use App\Enums\Alcol;
 
 //devo sempre esserci per far funzionare la rest api.
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: '. $_ENV['APP_CORS_ORIGIN']); // in produzione sarà concesso solo altuo dominio
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
+
 
 // Preflight CORS deve essere sempre presente
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -92,11 +100,30 @@ try{
             
             'bevande'   => risposta($menuService->modificaBevanda($id,$body['nome_bevanda'],(float)$body['prezzo'],$body['descrizione'],Alcol::from($body['alcol']),InMenu::from($body['in_menu']),$body['allergeni'] ?? [])),
 
-            'piatti_menu'  => risposta($menuService->togliPiattoMenu($id, InMenu::from($body['in_menu']))),
-            'bevande_menu' => risposta($menuService->togliBevandaMenu($id, InMenu::from($body['in_menu']))),
+            
            
              default     => throw new \InvalidArgumentException('Tipo non valido')
         };
+        break;
+
+      case 'PATCH':
+        $body= json_decode(file_get_contents('php://input'),true);
+        if (!$type) {
+                    throw new \InvalidArgumentException('Parametro type mancante');
+                }
+
+        if (!$body || $body === []) {
+                    risposta('JSON non valido', 400);
+                    break;
+                }
+        match($type) {
+
+            'piatti'  => risposta($menuService->togliPiattoMenu($id, InMenu::from($body['in_menu']))),
+            'bevande' => risposta($menuService->togliBevandaMenu($id, InMenu::from($body['in_menu']))),
+           
+             default     => throw new \InvalidArgumentException('Tipo non valido')
+        };
+
         break;
 
       case 'DELETE':
@@ -119,7 +146,7 @@ try{
        
         break;
 
-    default:
+      default:
         risposta('Metodo non supportato', 405);
 }
 

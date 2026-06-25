@@ -2,9 +2,9 @@
 declare(strict_types=1);
 namespace App\Services;
 use App\Repositories\MenuRepositories;
-/*use App\Enums\Categoria;
+use App\Enums\Categoria;
 use App\Enums\InMenu;
-use App\Enums\Alcol;*/
+use App\Enums\Alcol;
 
 class MenuService {
     public function __construct(private MenuRepositories $menuRepo, private LoggerService $logger){} #inietta il repository dei tavoli

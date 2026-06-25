@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Enum;
+namespace App\Enums;
 
-enum Alcol: string {
+enum InMenu: string {
     case Si = 'si';
     case No = 'no';
 }
+
 ?>

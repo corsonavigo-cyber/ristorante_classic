@@ -1,5 +1,5 @@
 <?php
-namespace App\Enum;
+namespace App\Enums;
 
 enum Categoria: string {
     case Antipasto = 'antipasto';

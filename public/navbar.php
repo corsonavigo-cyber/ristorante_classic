@@ -1,3 +1,4 @@
+<body>
 <header>
     <nav>
     <ul>
@@ -8,5 +9,5 @@
         <li><a href="/pages/utenti/">Utenti</a></li>
         <li><a href="../../api/logout.php">Esci </button> </li>
     </ul>
-</nav>
+  </nav>
 </header>

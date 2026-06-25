@@ -2,9 +2,9 @@
 declare(strict_types=1); #serve a attivare il controllo dei tipi
 namespace App\Repositories; #namespace è come un "cartella virtuale" per organizzare il codice e evitare conflitti di nomi
 use PDO; #importa la classe PDO per lavorare con il database
-use App\Enum\Categoria;
-use App\Enum\InMenu;
-use App\Enum\Alcol;
+use App\Enums\Categoria;
+use App\Enums\InMenu;
+use App\Enums\Alcol;
 #creo una nuova classe UserRepositories che rappresenta un repository per gestire gli utenti nel database
 class MenuRepositories {
 

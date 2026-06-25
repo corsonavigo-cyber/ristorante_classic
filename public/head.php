@@ -8,4 +8,4 @@
         <link rel="icon" type="image/png" href="/ristorante_classic/public/assets/img/favicon.png">
         <link rel="stylesheet" href="/ristorante_classic/public/assets/css/style.css">
     </head>
-    <body>
+  
