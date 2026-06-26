@@ -1,8 +1,7 @@
 <?php
 ini_set('display_errors', '1');
 error_reporting(E_ALL);
-$title = 'Modifica Piatto';
-$id=$_GET['id'];
+$title = 'Inserisci Piuatto';
 ?>
 <?php 
 require_once __DIR__ . '/../bootstrap.php'; // prima le dipendenze
@@ -14,10 +13,10 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
   <div class="piatti">
    <div class="supporto-titolo">
      <h2><?= $title ?></h2>
-     <p>compila i campi richiesti per modificare il Piatto</p>
+     <p>compila i campi richiesti per inserire il Piatto</p>
    </div>
    <div class="piatto">
-     <form action="" id="form_modifica" method="POST">
+     <form action="" id="form_inserisci" method="POST">
         <label for="nome-piatto" >Nome del Piatto : </label>
         <input type="text"  id="nome-piatto" name="nome-piatto" required>
 
@@ -65,7 +64,7 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
             <label><input type="radio" id="altro" name="categoria" value="altro">altro</label>
         </fieldset>
 
-        <button type="button" class="btn-modifica" data-id="<?= $id ?>">Salva Modifiche</button>
+        <button type="button" class="btn-inserisci" >Inserisci</button>
      </form>
    </div>
   </div>
@@ -73,11 +72,7 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
     const API = '/ristorante_classic/api/menu.php';
 </script>
 <script src="/ristorante_classic/public/assets/js/menu.js" defer></script>    
-<script>
 
-
-</script>
-</main>
 
 </main>
 <?php 

@@ -50,8 +50,8 @@ try{
                     throw new \InvalidArgumentException('Parametro type mancante');
                 }
         match($type) {
-            'piatti'=> $id ? risposta($menuService->selezionaPiatto($id)) : risposta($menuService->visualizzaPiatti()),
-            'bevande'=> $id ? risposta($menuService->selezionaBevanda($id)): risposta($menuService->visualizzaBevande()),
+            'piatti'=> $id ? risposta($menuService->visualizzaPiattoConRelazioni($id)) : risposta($menuService->visualizzaPiatti()),
+            'bevande'=> $id ? risposta($menuService->visualizzaBevandaConRelazioni($id)): risposta($menuService->visualizzaBevande()),
             'allergeni'=> $id ? risposta($menuService->selezionaAllergene($id)):risposta($menuService->visualizzaListaAllergeni()),
             'categoria' => risposta($menuService->piattiPerCategoria(Categoria::from($_GET['categoria'] ?? ''))),
             default=> throw new \InvalidArgumentException('Tipo non valido')

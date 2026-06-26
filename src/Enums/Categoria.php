@@ -2,10 +2,11 @@
 namespace App\Enums;
 
 enum Categoria: string {
-    case Antipasto = 'antipasto';
-    case Primo     = 'primo';
-    case Secondo   = 'secondo';
-    case Dessert   = 'dessert';
+    case antipasto = 'antipasto';
+    case primo     = 'primo';
+    case secondo   = 'secondo';
+    case dolce   = 'dolce';
+    case altro   = 'altro';
 }
 ?>
 

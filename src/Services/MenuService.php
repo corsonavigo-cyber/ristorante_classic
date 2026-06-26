@@ -17,6 +17,26 @@ class MenuService {
             return []; 
         }
     }
+    //visualizzaPiattoConRelazioni
+    public function visualizzaPiattoConRelazioni(int $id_piatto): array {
+        try {
+            return $this->menuRepo->visualizzaPiattoConRelazioni($id_piatto) ?? [];
+        } catch (\Throwable $e) {
+            $this->logger->error("Errore recupero piatto: {$e->getMessage()}");
+            return []; 
+        }
+    }
+
+     //visualizzaBevandaConRelazioni
+    public function visualizzaBevandaConRelazioni(int $id_bevanda): array {
+        try {
+            return $this->menuRepo->visualizzaBevandaConRelazioni($id_bevanda) ?? [];
+        } catch (\Throwable $e) {
+            $this->logger->error("Errore recupero bevanda: {$e->getMessage()}");
+            return []; 
+        }
+    }
+
 
     public function visualizzaBevande(): array {
         try {

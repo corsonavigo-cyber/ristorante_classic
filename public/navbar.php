@@ -7,7 +7,7 @@
         <li><a href="/pages/prenotazioni/">Prenotazioni</a></li>
         <li><a href="/pages/conti/">Conti</a></li>
         <li><a href="/pages/utenti/">Utenti</a></li>
-        <li><a href="../../api/logout.php">Esci </button> </li>
+        <li><a href="../../api/logout.php">Esci </a> </li>
     </ul>
   </nav>
 </header>

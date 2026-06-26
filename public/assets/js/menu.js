@@ -8,6 +8,7 @@
   const lavagna_piatti_nonattivi = document.getElementById('lavagna_piatti_nonattivi');
   const lavagna_bevande_nonattive = document.getElementById('lavagna_bevande_nonattive');
   const form_inserisci= document.getElementById('form_inserisci');
+  const form_inserisci_bevanda= document.getElementById('form_inserisci_bevanda');
   const form_modifica= document.getElementById('form_modifica');
   const da_inserire = document.getElementById("nome_piatto");
 
@@ -21,19 +22,25 @@
   }else if(form_inserisci){
       //attiva il bottone inserisci
       document.addEventListener('click', inserisciPiattoClick);
+     
+      /*document.addEventListener('click', inserisciAllergeneClick);*/
+  }else if(form_inserisci_bevanda){
+      //attiva il bottone inserisci
+      
       document.addEventListener('click', inserisciBevandaClick);
-      document.addEventListener('click', inserisciAllergeneClick);
+      /*document.addEventListener('click', inserisciAllergeneClick);*/
   }else if(form_modifica){
       //attiva il bottone inserisci
       document.addEventListener('click', modificaPiattoClick);
-      document.addEventListener('click', modificaBevandaClick);
-      document.addEventListener('input', controllaPiattoesistente);
+      document.addEventListener('DOMContentLoaded', precaricaFormModifica);
+      /*document.addEventListener('click', modificaBevandaClick);*/
+      document.addEventListener('input', controllaNomeDisponibile);
       
   }else if(lavagna_piatti_nonattivi){
       //aggiungo il lissener al caricamento se siamo nell'ambiente giusto
       document.addEventListener('DOMContentLoaded', caricaPiattiNonAttivi);
       //il bottone elimina lo attivo solo se seno nell'elenco menu non attivo
-      /*document.addEventListener('click', eliminaPiattoClick);*/
+      document.addEventListener('click', eliminaPiattoClick);
       document.addEventListener('click', aggiungiPiattoClick);
      
   }else if(lavagna_bevande_nonattive){
@@ -93,8 +100,8 @@
          ${bevanda.allergeni ? bevanda.allergeni.split(', ').map(a => `<li class="comment">${a}</li>`).join(''):'<li>Nessun allergene</li>'}
        </ul>
        <p class="comment">Contiene Alcol: ${bevanda.alcol} </p> 
-       <!--link AJAX per inviare la modifica piatto-->
-       <a class="btn" href="modificapiatto.php?id=${bevanda.id_bevanda}">Modifica ✏️</a>
+       <!--link AJAX per inviare la modifica bevanda-->
+       <a class="btn" href="modificabevanda.php?id=${bevanda.id_bevanda}">Modifica ✏️</a>
 
        <!--button AJAX per richiedere la disattivazione dal menu del tavolo-->
 
@@ -286,18 +293,222 @@ async function caricaPiattiNonAttivi(){
     
   }
 
+  async function aggiungiBevandaClick(e){
+    try{
+        const btn = e.target.closest('.btn-attiva-bevanda');
+        if(!btn) return;
 
- /* async function eliminaTavoloClick(e){
+        if(!confirm('mostrare ai clienti questa bevanda?')){
+          return;
+        }
+
+        const id_attiva = btn.dataset.id;
+        if(!id_attiva){
+          throw new Error('Bevanda non mostrata, manca ID!');
+        }
+
+        const risposta = await fetch(`/ristorante_classic/api/menu.php?type=bevande&id=${id_attiva}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              in_menu: 'si' 
+            })
+        });
+
+        if (!risposta.ok) {
+          const json = await risposta.json().catch(()=>null);
+          throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+
+        await caricaBevandaNonAttive();
+
+    }catch (errore){
+        console.error(errore);
+        alert(errore.message);
+    }
+}
+   //------------------POST INSERT-------------------------------------
+
+async function inserisciPiattoClick(e){
+    
+    //come utilizzare fetch(URL,METHOD)
+    try{
+
+        //seleziono l'elemento bottone per l'inserisci
+        const btn = e.target.closest('.btn-inserisci');
+        
+        //escludo click per errore
+        if(!btn) return;
+
+        //recupero il nome del piatto dal form INPUT
+        const nome_piatto = document.getElementById('nome-piatto').value.trim();
+        
+
+        //questa funzione di js genera un alet bool
+        if(!confirm(`vuoi inserire ${nome_piatto}?`)){
+          return;
+        }
+        //recupero gli altri dati dal form INPUT
+        const descrizione = document.getElementById('descrizione').value;
+        const prezzo = parseFloat(document.getElementById('prezzo').value);
+        //metodo per selezionare i checked della checkbox dal form in js [... converte la node list in un array accessibile importante
+        const allergeniSelezionati = [...document.querySelectorAll('input[name="allergeniSelezionati[]"]:checked')].map(el =>  parseInt(el.value));        
+        const in_menu = document.querySelector('input[name="in_menu"]:checked').value;
+        const categoria = document.querySelector('input[name="categoria"]:checked').value;
+
+
+      //validazione dati
+      // Nome piatto
+        if (typeof nome_piatto !== "string" || nome_piatto === "") {
+            throw new Error("Il nome del piatto è obbligatorio");
+        }
+
+        // Descrizione
+        if (typeof descrizione !== "string" || descrizione.trim() === "") {
+            throw new Error("La descrizione è obbligatoria");
+        }
+
+        // Prezzo
+        if (typeof prezzo !== "number" || Number.isNaN(prezzo) || prezzo <= 1) {
+            throw new Error("Inserisci un prezzo valido");
+        }
+
+
+        //salvo il response dentro risposta, chiamo la fetch su un id specifico 
+        const risposta = await fetch(`${API}?type=piatti`, {
+            method: 'POST',
+            headers:{
+              'Content-Type': 'application/json'
+                },
+            body: JSON.stringify({
+                    nome_piatto: String(nome_piatto),
+                    descrizione: String(descrizione),
+                    prezzo: prezzo,
+                    allergeni: allergeniSelezionati,
+                    in_menu: in_menu,
+                    categoria: categoria
+            })
+        });
+        //se la risposta non è ok dat che il 400 e il 500 non interrompono il codice, lo interrompo con l'if e trow new error
+        if (!risposta.ok) {
+          //prendo la risposta json 
+          const json = await risposta.json().catch(()=>null);
+          throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+        //se il flusso del programma non viene interrotto ritorno alla pagina gestione piatti non attivi
+        alert('piatto inserito con successo!');
+        //reindirizzo il cliente
+        window.location.href = "piattinonattivi.php";
+       
+    }catch (errore){
+        console.error(errore);
+        //mostro la risposta json
+        alert(errore.message);
+    }
+    
+  }
+
+
+  async function inserisciBevandaClick(e){
+    try{
+        const btn = e.target.closest('.btn-inserisci-bevanda');
+        if(!btn) return;
+
+        const nome_bevanda = document.getElementById('nome-bevanda').value.trim();
+
+        if(!confirm(`vuoi inserire ${nome_bevanda}?`)){
+          return;
+        }
+
+        const descrizione = document.getElementById('descrizione').value;
+        const prezzo = parseFloat(document.getElementById('prezzo').value);
+        const allergeniSelezionati = [...document.querySelectorAll('input[name="allergeniSelezionati[]"]:checked')].map(el => parseInt(el.value));        
+        const in_menu = document.querySelector('input[name="in_menu"]:checked').value;
+        const alcol = document.querySelector('input[name="alcol"]:checked').value;
+
+        // validazione
+        if (typeof nome_bevanda !== "string" || nome_bevanda === "") {
+            throw new Error("Il nome della bevanda è obbligatorio");
+        }
+        if (typeof descrizione !== "string" || descrizione.trim() === "") {
+            throw new Error("La descrizione è obbligatoria");
+        }
+        if (typeof prezzo !== "number" || Number.isNaN(prezzo) || prezzo <= 0) {
+            throw new Error("Inserisci un prezzo valido");
+        }
+
+        const risposta = await fetch(`${API}?type=bevande`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                nome_bevanda: String(nome_bevanda),
+                descrizione: String(descrizione),
+                prezzo: prezzo,
+                allergeni: allergeniSelezionati,
+                in_menu: in_menu,
+                alcol: alcol
+            })
+        });
+
+        if (!risposta.ok) {
+          const json = await risposta.json().catch(()=>null);
+          throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+
+        alert('bevanda inserita con successo!');
+        window.location.href = "bevandenonattive.php";
+       
+    }catch (errore){
+        console.error(errore);
+        alert(errore.message);
+    }
+}
+
+
+
+  //-----------------FUNZIONE DI SUPPORTO INSERISCI/MODIFICA------------------
+
+ async function controllaNomeDisponibile(){
+    const risposta = await fetch(`${API}?type=piatti`);
+    const json = await risposta.json();
+    const nomi_piatti = json.data.map(piatto => piatto.nome_piatto);
+    const avviso = document.getElementById("avviso");
+    //selettore di classe con il puinto
+    const sezione = document.querySelector('#controllo');
+    
+    
+    if(!da_inserire.value.trim()){
+       sezione.classList.add('warning');
+       avviso.innerHTML=`il piatto deve avere un nome!`;
+       return;
+    }
+    if(nomi_piatti.includes(da_inserire.value.trim())){
+       sezione.classList.remove('controllopositivo');
+       sezione.classList.add('warning');
+       avviso.innerHTML=`il piatto ${da_inserire.value.trim()} è già esistente!`;
+      
+    }else{
+       sezione.classList.remove('warning');
+       avviso.innerHTML="";
+       sezione.classList.add('controllopositivo');
+       
+    }
+
+ }
+ 
+ //s------------------------------elimina
+
+  async function eliminaPiattoClick(e){
     
     //come utilizzare fetch(URL,METHOD)
     try{
 
         //seleziono l'elemento bottone per l'elimina
-        const btn = e.target.closest('.btn-elimina');
+        const btn = e.target.closest('.btn-elimina-piatto');
         //escludo click per errore
         if(!btn) return;
         //questa funzione di js genera un alet bool
-        if(!confirm('vuoi eliminare quest tavolo?')){
+        if(!confirm('vuoi eliminare questo piatto?')){
           return;
         }
         //recupero il data set da data-id
@@ -309,7 +520,7 @@ async function caricaPiattiNonAttivi(){
 
     
         //salvo il response dentro risposta, chiamo la fetch su un id specifico e scelgo il metodo delete definito in tavoli.php
-        const risposta = await fetch(`/ristorante_classic/api/tavoli.php?id=${id_elimina}`, {
+        const risposta = await fetch(`/ristorante_classic/api/menu.php?type=piatti&id=${id_elimina}`, {
             method: 'DELETE'
         });
         //se la risposta non è ok dat che il 400 e il 500 non interrompono il codice, lo interrompo con l'if e trow new error
@@ -318,8 +529,8 @@ async function caricaPiattiNonAttivi(){
           const json = await risposta.json().catch(()=>null);
           throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
         }
-        //se il flusso del programma non viene interrotto ricarico i tavoli
-        await caricaTavoli();
+        //se il flusso del programma non viene interrotto ricarico i piatti
+        await caricaPiattiNonAttivi();
     }catch (errore){
         console.error(errore);
         //mostro la risposta json
@@ -328,95 +539,72 @@ async function caricaPiattiNonAttivi(){
     
   }
  
-
-  //------------------POST INSERT-------------------------------------
-
-async function inserisciTavoloClick(e){
-    
-    //come utilizzare fetch(URL,METHOD)
+async function eliminaBevandaClick(e){
     try{
-
-        //seleziono l'elemento bottone per l'inserisci
-        const btn = e.target.closest('.btn-inserisci');
-        
-        //escludo click per errore
+        const btn = e.target.closest('.btn-elimina-bevanda');
         if(!btn) return;
-        //questa funzione di js genera un alet bool
-        if(!confirm('vuoi inserire questo tavolo?')){
+
+        if(!confirm('vuoi eliminare questa bevanda?')){
           return;
         }
-        //recupero i dati dal form INPUT
-        const numero_tavolo = document.getElementById('numero-tavolo').value;
-        const posti_max_tavolo = document.getElementById('posti-max-tavolo').value;
-        const posti_min_tavolo = document.getElementById('posti-min-tavolo').value;
-         
-        //validazione dati
-        if (!numero_tavolo || !posti_max_tavolo || !posti_min_tavolo || numero_tavolo<0 || numero_tavolo>200 || posti_max_tavolo < 0|| posti_max_tavolo>30 ||posti_min_tavolo < 0|| posti_min_tavolo>30 ) {
-            throw new Error('Tutti i campi sono obbligatori, inserisci dei valori congrui');
+
+        const id_elimina = btn.dataset.id;
+        if(!id_elimina){
+          throw new Error('Id Mancante nel bottone!');
         }
 
-
-        //salvo il response dentro risposta, chiamo la fetch su un id specifico e scelgo il metodo delete definito in tavoli.php
-        const risposta = await await fetch(API, {
-            method: 'POST',
-            headers:{
-              'Content-Type': 'application/json'
-                },
-            body: JSON.stringify({
-                    numero_tavolo: parseInt(numero_tavolo),
-                    posti_max: parseInt(posti_max_tavolo),
-                    posti_min: parseInt(posti_min_tavolo)
-            })
+        const risposta = await fetch(`/ristorante_classic/api/menu.php?type=bevande&id=${id_elimina}`, {
+            method: 'DELETE'
         });
-        //se la risposta non è ok dat che il 400 e il 500 non interrompono il codice, lo interrompo con l'if e trow new error
+
         if (!risposta.ok) {
-          //prendo la risposta json 
           const json = await risposta.json().catch(()=>null);
           throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
         }
-        //se il flusso del programma non viene interrotto ricarico i tavoli
-        alert('tavolo inserito con successo!');
-       
+
+        await caricaBevandaNonAttive();
+
     }catch (errore){
         console.error(errore);
-        //mostro la risposta json
         alert(errore.message);
     }
-    
-  }
- //-----------------FUNZIONE DI SUPPORTO INSERISCI/MODIFICA------------------
-
- async function controllaNumeroDisponibile(){
-    const risposta = await fetch(API);
-    const json = await risposta.json();
-    const numeri = json.data.map(item => item.numero_tavolo);
-    const avviso = document.getElementById("avviso");
-    //selettore di classe con il puinto
-    const sezione = document.querySelector('#controllo');
-    
-    
-    if(!da_inserire.value){
-       sezione.classList.add('warning');
-       avviso.innerHTML=`il tavolo deve avere un numero!`;
-       return;
-    }
-    if(numeri.includes(parseInt(da_inserire.value))){
-       sezione.classList.remove('controllopositivo');
-       sezione.classList.add('warning');
-       avviso.innerHTML=`il tavolo ${da_inserire.value} è già esistente!`;
-      
-    }else{
-       sezione.classList.remove('warning');
-       avviso.innerHTML="";
-       sezione.classList.add('controllopositivo');
-       
-    }
-
- }
-
+}
+ 
+ 
  //------------------UPDATE------------------------------------------------------
 
- async function modificaTavoloClick(e){
+async function precaricaFormModifica() {
+    // legge l'id dall'URL: modificapiatto.php?id=5
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (!id) return;
+
+    const risposta = await fetch(`${API}?type=piatti&id=${id}`);
+    
+    const json = await risposta.json();
+    const data = json.data; // ← prendi il primo elemento
+    console.log('JSON completo:', JSON.stringify(json));
+    document.getElementById('nome-piatto').value = data.nome_piatto;
+    document.getElementById('descrizione').value  = data.descrizione;
+    document.getElementById('prezzo').value = parseFloat(data.prezzo);
+    //da correggere
+    console.log(data.id_allergeni);
+    console.log('JSON completo:', JSON.stringify(json));
+    const allergeniEsistenti = data.id_allergeni ? data.id_allergeni.split(',').map(a => parseInt(a.trim())) : [];
+    console.log(allergeniEsistenti)
+    console.log('tipo:', typeof data.id_allergeni);
+    console.log('valore:', data.id_allergeni);
+    document.querySelectorAll('input[name="allergeniSelezionati[]"]').forEach(checkbox => {
+    checkbox.checked = allergeniEsistenti.includes(parseInt(checkbox.value));
+    });
+
+    const inMenuInput = document.querySelector(`input[name="in_menu"][value="${data.in_menu}"]`);
+    if (inMenuInput) inMenuInput.checked = true;
+
+    const categoriaInput = document.querySelector(`input[name="categoria"][value="${data.categoria}"]`);
+    if (categoriaInput) categoriaInput.checked = true;
+}
+
+ async function modificaPiattoClick(e){
     
     //come utilizzare fetch(URL,METHOD)
     try{
@@ -427,44 +615,50 @@ async function inserisciTavoloClick(e){
         //escludo click per errore
         if(!btn) return;
         //questa funzione di js genera un alet bool
-        if(!confirm('vuoi modificare questo tavolo?')){
+        if(!confirm('vuoi modificare questo piatto?')){
           return;
         }
-        //recupero i dati dal form INPUT
-        const numero_tavolo = document.getElementById('numero-tavolo');
-        const posti_max_tavolo = document.getElementById('posti-max-tavolo');
-        const posti_min_tavolo = document.getElementById('posti-min-tavolo');     
-       
-        
-        //dati precaricati
-        const id= btn.dataset.id;
-        if(!id){
+         //dati precaricati
+        const id_modifica= btn.dataset.id;
+        if(!id_modifica){
           throw new Error('ID tavolo mancante');
            }
-        const API_ID=`${API}?id=${id}`;
-        const precaricato = await fetch(API_ID);
-        const json = await precaricato.json();
-        console.log(json)
-        //problema, non visualizza il valore nel campo input
-        numero_tavolo.value = json.data.numero_tavolo;
-        posti_max_tavolo.value = json.data.posti_max;
-        posti_min_tavolo.value = json.data.posti_min;
+        
+       
+        
+        //recupero i dati dal form INPUT
 
-        //validavi gli elementi DOM, non i valori — serve .value
-        if (!numero_tavolo.value || !posti_max_tavolo.value || !posti_min_tavolo.value || numero_tavolo.value<0 || numero_tavolo.value>200 || posti_max_tavolo.value < 0|| posti_max_tavolo.value>30 ||posti_min_tavolo.value < 0|| posti_min_tavolo.value>30 ) {
-            throw new Error('Tutti i campi sono obbligatori, inserisci dei valori congrui');
-        }
+        const nome_piatto = document.getElementById('nome-piatto').value.trim();
+        const descrizione = document.getElementById('descrizione').value;
+        const prezzo = parseFloat(document.getElementById('prezzo').value);
+        //metodo per selezionare i checked della checkbox dal form in js [... converte la node list in un array accessibile importante
+        const allergeniSelezionati = [...document.querySelectorAll('input[name="allergeniSelezionati[]"]:checked')].map(el => parseInt(el.value));        
+        const in_menu = document.querySelector('input[name="in_menu"]:checked').value;
+        const categoria = document.querySelector('input[name="categoria"]:checked').value;
+
+    
+       
+      
+       // 5. validazione
+        if (!nome_piatto) throw new Error('Il nome del piatto è obbligatorio');
+        if (isNaN(prezzo) || prezzo <= 0) throw new Error('Inserisci un prezzo valido');
+        if (!in_menu)   throw new Error('Seleziona se il piatto è in menu');
+        if (!categoria) throw new Error('Seleziona una categoria');
     
         //salvo il response dentro risposta, chiamo la fetch su un id specifico e scelgo il metodo delete definito in tavoli.php
-        const risposta =  await fetch(API_ID, {
+        const risposta =  await fetch(`${API}?type=piatti&id=${id_modifica}`, {
             method: 'PUT',
             headers:{
               'Content-Type': 'application/json'
                 },
             body: JSON.stringify({
-                    numero_tavolo: parseInt(numero_tavolo.value),
-                    posti_max: parseInt(posti_max_tavolo.value),
-                    posti_min: parseInt(posti_min_tavolo.value)
+                    
+                    nome_piatto: String(nome_piatto),
+                    descrizione: String(descrizione),
+                    prezzo: prezzo,
+                    allergeni: allergeniSelezionati,
+                    in_menu: in_menu,
+                    categoria: categoria
             })
         });
         //se la risposta non è ok dat che il 400 e il 500 non interrompono il codice, lo interrompo con l'if e trow new error
@@ -473,13 +667,20 @@ async function inserisciTavoloClick(e){
           const errJson = await risposta.json().catch(()=>null);
           throw new Error(errJson?.data ?? `Errore HTTP ${risposta.status}`);
         }
-        //se il flusso del programma non viene interrotto ricarico i tavoli
+        //se il flusso del programma torno alla gestione tavoli non attivi
         alert('tavolo modificato con successo!');
-    
+         //reindirizzo il cliente
+         if(in_menu === "si"){
+             window.location.href = "gestionemenuchevedonoiclienti.php";
+         }else if (in_menu === "no"){
+             window.location.href = "piattinonattivi.php";
+         }else{
+            alert("non ho capito la tua richiesta");
+         }
     }catch (errore){
         console.error(errore);
         //mostro la risposta json
         alert(errore.message);
     }
     
-  }*/
+  }

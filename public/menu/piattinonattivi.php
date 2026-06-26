@@ -19,7 +19,7 @@ require_once __DIR__ . '/../bootstrap.php';
     </div>
     
     <a class="btn" href="gestionemenuchevedonoiclienti.php">Torna Ai Piatti Visualizzabili Dai Clienti</a>
-    <a class="btn" href="inseriscipiatto.php">+ Inserisci Nuovo Piatto</a>
+    <a class="btn" href="inseriscipiatto.php">+ Inserisci Un Nuovo Piatto</a>
    
     <div class="menu" id="lavagna_piatti_nonattivi">
        

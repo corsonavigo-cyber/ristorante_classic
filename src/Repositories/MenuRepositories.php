@@ -16,12 +16,25 @@ class MenuRepositories {
         $stmt->execute();
         return $stmt->fetchAll() ?:null;
      }
+
+     public function visualizzaPiattoConRelazioni(int $id_piatto):?array
+     {
+        $stmt =$this->pdo->prepare('SELECT * FROM piatti WHERE id_piatto = :id_piatto LIMIT 1');
+        $stmt->execute(['id_piatto' => $id_piatto]);
+        return $stmt->fetch() ?:null;
+     }
     //BEVANDE
     public function visualizzaMenuBevande():?array
      {
         $stmt =$this->pdo->prepare('SELECT * FROM bevande');
         $stmt->execute();
         return $stmt->fetchAll() ?:null;
+     }
+     public function visualizzaBevandaConRelazioni(int $id_bevanda):?array
+     {
+        $stmt =$this->pdo->prepare('SELECT * FROM bevande WHERE id_bevanda = :id_bevanda LIMIT 1');
+        $stmt->execute(['id_bevanda' => $id_bevanda]);
+        return $stmt->fetch() ?:null;
      }
      //ALLERGENI
      public function visualizzaAllergeni():?array
@@ -113,11 +126,11 @@ class MenuRepositories {
         foreach($allergeni_selezionati as $id_allergene) {
         $stmt2 = $this->pdo->prepare('INSERT INTO allergene_piatto (id_allergene, id_piatto) VALUES (:id_allergene, :id_piatto)');
         $stmt2->execute([
-        ':id_allergene' => $id_allergene,
+        ':id_allergene' => (int)$id_allergene,
         ':id_piatto'   => $id_piatto
         ]);
         }
-        return $id_piatto > 0;
+        return true;
      }
 
      //DELETE
@@ -194,31 +207,31 @@ class MenuRepositories {
         return $stmt->rowCount()>0; #restituisce true se almeno una riga è stata aggiornata, altrimenti false
      }
      //2.aggiorna il l'elemento del menu
-     public function aggiornaPiatto(int $id_piatto, string $nome_piatto, float $prezzo, string $descrizione, InMenu $in_menu, Categoria $categoria, array $allergeni_selezionati): bool
-     {
-        $stmt = $this->pdo->prepare('UPDATE piatto SET nome_piatto = :nome_piatto, prezzo = :prezzo, descrizione = :descrizione, in_menu = :in_menu, categoria = :categoria WHERE id_piatto = :id_piatto');
-        $stmt->execute([
-            'id_piatto' => $id_piatto,
+    public function aggiornaPiatto(int $id_piatto, string $nome_piatto, float $prezzo, string $descrizione, InMenu $in_menu, Categoria $categoria, array $allergeni_selezionati): bool
+      {
+         $stmt = $this->pdo->prepare('UPDATE piatto SET nome_piatto = :nome_piatto, prezzo = :prezzo, descrizione = :descrizione, in_menu = :in_menu, categoria = :categoria WHERE id_piatto = :id_piatto');
+         $stmt->execute([
+            'id_piatto'   => $id_piatto,
             'nome_piatto' => $nome_piatto,
-            'prezzo' => $prezzo,
+            'prezzo'      => $prezzo,
             'descrizione' => $descrizione,
-            'in_menu'=>$in_menu->value,
-            'categoria'=>$categoria->value
-        ]);
-        eliminaRelazioneAllergenePiatto($id_piatto);
-        if($stmt->rowCount()>0){
-            foreach($allergeni_selezionati as $id_allergene) {
+            'in_menu'     => $in_menu->value,
+            'categoria'   => $categoria->value
+         ]);
+
+         // elimina e reinserisci sempre, indipendentemente da rowCount
+         $this->eliminaRelazioneAllergenePiatto($id_piatto);
+
+         foreach ($allergeni_selezionati as $id_allergene) {
             $stmt2 = $this->pdo->prepare('INSERT INTO allergene_piatto (id_allergene, id_piatto) VALUES (:id_allergene, :id_piatto)');
             $stmt2->execute([
-              ':id_allergene' => $id_allergene,
-              ':id_piatto'   => $id_piatto
+                  ':id_allergene' => (int)$id_allergene,
+                  ':id_piatto'    => $id_piatto
             ]);
-            }
-        return true; 
-        }
+         }
 
-     }
-     
+         return true;
+      }
      public function aggiornaBevanda(int $id_bevanda, string $nome_bevanda, float $prezzo, string $descrizione, Alcol $alcol, InMenu $in_menu, array $allergeni_selezionati): bool
      {
         $stmt = $this->pdo->prepare('UPDATE bevanda SET nome_bevanda = :nome_bevanda, prezzo = :prezzo, descrizione = :descrizione, in_menu = :in_menu, categoria = :categoria WHERE id_bevanda = :id_bevanda');
