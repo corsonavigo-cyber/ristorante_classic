@@ -20,8 +20,10 @@
       document.addEventListener('input', controllaNumeroDisponibile);
   }else if(form_modifica){
       //attiva il bottone inserisci
+      document.addEventListener('DOMContentLoaded', precaricaTavolo);
       document.addEventListener('click', modificaTavoloClick);
-      document.addEventListener('input', controllaNumeroDisponibile);
+      document.addEventListener('input', controllaNumeroDisponibile);    
+       
   }
   
   
@@ -179,6 +181,27 @@ async function inserisciTavoloClick(e){
 
  //------------------UPDATE------------------------------------------------------
 
+async function precaricaTavolo() {
+    // legge l'id dall'URL: modificabevanda.php?id=5
+    //funzione dell'URL in js per la ricerca al suo interno
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (!id) return;
+
+    const risposta = await fetch(`${API}?id=${id}`);
+    
+    const json = await risposta.json();
+    //è un array per accedere bisogna usare [0]
+    const data = json.data; // ← prendi il primo elemento
+    console.log(data);
+    document.getElementById('numero-tavolo').value = parseInt(data.numero_tavolo);
+    document.getElementById('posti-max-tavolo').value  = parseInt(  data.posti_max);
+    document.getElementById('posti-min-tavolo').value = parseInt(data.posti_min);
+    
+}
+
+
+
+
  async function modificaTavoloClick(e){
     
     //come utilizzare fetch(URL,METHOD)
@@ -198,20 +221,12 @@ async function inserisciTavoloClick(e){
         const posti_max_tavolo = document.getElementById('posti-max-tavolo');
         const posti_min_tavolo = document.getElementById('posti-min-tavolo');     
        
-        
-        //dati precaricati
+    
         const id= btn.dataset.id;
         if(!id){
           throw new Error('ID tavolo mancante');
            }
-        const API_ID=`${API}?id=${id}`;
-        const precaricato = await fetch(API_ID);
-        const json = await precaricato.json();
-        console.log(json)
-        //problema, non visualizza il valore nel campo input
-        numero_tavolo.value = json.data.numero_tavolo;
-        posti_max_tavolo.value = json.data.posti_max;
-        posti_min_tavolo.value = json.data.posti_min;
+
 
         //validavi gli elementi DOM, non i valori — serve .value
         if (!numero_tavolo.value || !posti_max_tavolo.value || !posti_min_tavolo.value || numero_tavolo.value<0 || numero_tavolo.value>200 || posti_max_tavolo.value < 0|| posti_max_tavolo.value>30 ||posti_min_tavolo.value < 0|| posti_min_tavolo.value>30 ) {
@@ -219,7 +234,7 @@ async function inserisciTavoloClick(e){
         }
     
         //salvo il response dentro risposta, chiamo la fetch su un id specifico e scelgo il metodo delete definito in tavoli.php
-        const risposta =  await fetch(API_ID, {
+        const risposta =  await fetch(`${API}?id=${id}`, {
             method: 'PUT',
             headers:{
               'Content-Type': 'application/json'
@@ -238,6 +253,7 @@ async function inserisciTavoloClick(e){
         }
         //se il flusso del programma non viene interrotto ricarico i tavoli
         alert('tavolo modificato con successo!');
+        window.location.href = "gestionetavoli.php";
     
     }catch (errore){
         console.error(errore);
