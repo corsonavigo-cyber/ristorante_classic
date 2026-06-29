@@ -234,7 +234,7 @@ class MenuRepositories {
       }
      public function aggiornaBevanda(int $id_bevanda, string $nome_bevanda, float $prezzo, string $descrizione, Alcol $alcol, InMenu $in_menu, array $allergeni_selezionati): bool
      {
-        $stmt = $this->pdo->prepare('UPDATE bevanda SET nome_bevanda = :nome_bevanda, prezzo = :prezzo, descrizione = :descrizione, in_menu = :in_menu, categoria = :categoria WHERE id_bevanda = :id_bevanda');
+        $stmt = $this->pdo->prepare('UPDATE bevanda SET nome_bevanda = :nome_bevanda, prezzo = :prezzo, descrizione = :descrizione, in_menu = :in_menu, alcol = :alcol WHERE id_bevanda = :id_bevanda');
         $stmt->execute([
             'id_bevanda' => $id_bevanda,
             'nome_bevanda' => $nome_bevanda,
@@ -244,17 +244,17 @@ class MenuRepositories {
             'in_menu'=>$in_menu->value
             
         ]);
-        eliminaRelazioneAllergeneBevanda($id_bevanda);
-        if($stmt->rowCount()>0){
-            foreach($allergeni_selezionati as $id_allergene) {
-            $stmt2 = $this->pdo->prepare('INSERT INTO allergene_bevanda (id_allergene, id_bevanda) VALUES (:id_allergene, :id_bevanda)');
-            $stmt2->execute([
-              ':id_allergene' => $id_allergene,
-              ':id_bevanda'   => $id_bevanda
-            ]);
-            }
-        return true; 
+        $this->eliminaRelazioneAllergeneBevanda($id_bevanda);
+        
+        foreach($allergeni_selezionati as $id_allergene) {
+        $stmt2 = $this->pdo->prepare('INSERT INTO allergene_bevanda (id_allergene, id_bevanda) VALUES (:id_allergene, :id_bevanda)');
+        $stmt2->execute([
+            ':id_allergene' => $id_allergene,
+            ':id_bevanda'   => $id_bevanda
+        ]);
         }
+        return true; 
+        
 
      }
 

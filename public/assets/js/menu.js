@@ -11,7 +11,14 @@
   const form_inserisci_bevanda= document.getElementById('form_inserisci_bevanda');
   const form_modifica= document.getElementById('form_modifica');
   const da_inserire = document.getElementById("nome_piatto");
+  const form_modifica_bevanda= document.getElementById('form_modifica_bevanda');
+  let initialized = false;
 
+  function initBevande() {
+    if (initialized) return;
+    initialized = true;
+    precaricaFormModifica();
+   }
   //controllo che siamo nella pagina elenco Menu prima di avviare il riempimento
   if (lavagna_menu_attivo) {
       //aggiungo il lissener al caricamento se siamo nell'ambiente giusto
@@ -22,19 +29,27 @@
   }else if(form_inserisci){
       //attiva il bottone inserisci
       document.addEventListener('click', inserisciPiattoClick);
-     
+      document.addEventListener('input', controllaNomeDisponibile);
       /*document.addEventListener('click', inserisciAllergeneClick);*/
   }else if(form_inserisci_bevanda){
       //attiva il bottone inserisci
       
       document.addEventListener('click', inserisciBevandaClick);
+      document.addEventListener('input', controllaNomeBevandaDisponibile);
       /*document.addEventListener('click', inserisciAllergeneClick);*/
   }else if(form_modifica){
       //attiva il bottone inserisci
       document.addEventListener('click', modificaPiattoClick);
-      document.addEventListener('DOMContentLoaded', precaricaFormModifica);
+      document.addEventListener('DOMContentLoaded', initBevande);
       /*document.addEventListener('click', modificaBevandaClick);*/
       document.addEventListener('input', controllaNomeDisponibile);
+      
+  }else if(form_modifica_bevanda){
+      //attiva il bottone inserisci
+      document.addEventListener('DOMContentLoaded', precaricaFormModificaBevanda);
+      /*document.addEventListener('click', modificaBevandaClick);*/
+      document.addEventListener('input', controllaNomeBevandaDisponibile);
+      document.addEventListener('click', modificaBevandaClick);
       
   }else if(lavagna_piatti_nonattivi){
       //aggiungo il lissener al caricamento se siamo nell'ambiente giusto
@@ -44,6 +59,7 @@
       document.addEventListener('click', aggiungiPiattoClick);
      
   }else if(lavagna_bevande_nonattive){
+      document.addEventListener('DOMContentLoaded', caricaBevandeNonAttive);
       document.addEventListener('click', eliminaBevandaClick);
       document.addEventListener('click', aggiungiBevandaClick);
   }
@@ -246,6 +262,48 @@ async function caricaPiattiNonAttivi(){
 
   }
 
+
+  async function caricaBevandeNonAttive(){
+    //carico i bevande
+    const rispostabevande = await fetch(`${API}?type=bevande`);
+    const jsonbevande = await rispostabevande.json();
+    
+    //carico le bevande per mettere &in_menu='no' va strutturato nell'api menu.php e nel service.php
+    const nonAttivi = jsonbevande.data.filter(bevanda => bevanda.in_menu === 'no');
+    /*
+    const lavagna = document.getElementById('lavagna_bevande_nonattivi');
+    */
+    //da sviluppare successivamente il pulsante che collega il bevanda al tavolo   
+    if (!nonAttivi.length) {
+      lavagna_bevande_nonattive.innerHTML = `<p>Non ci sono bevande non attive</p>`;
+      return;
+    }
+    lavagna_bevande_nonattive.innerHTML = nonAttivi.map(bevanda=>`
+        <!--elementi bevande-->
+    <div class="bevanda" id="${bevanda.id_bevanda}">
+       
+       <h3 class="comment"><b>${bevanda.nome_bevanda}</b></h3>
+
+       <p class="comment">${bevanda.descrizione}</p>
+       <p class="comment">Prezzo: ${bevanda.prezzo} € </p> 
+       <!--va fatto così perché dentro un litteral il foreach non funziona per il problema dell'hosting, risulta undefine-->
+       <ul id="elenco_allergeni" class="elenco_allergeni">
+          ${bevanda.allergeni ? bevanda.allergeni.split(', ').map(a => `<li class="comment">${a}</li>`).join(''):'<li>Nessun allergene</li>'}
+       </ul> 
+
+       <button class="btn-attiva-bevanda" data-id="${bevanda.id_bevanda}">Mostra bevanda 👁️</button>
+
+       <!--link AJAX per inviare la modifica bevanda-->
+       <a class="btn" href="modificabevanda.php?id=${bevanda.id_bevanda}">Modifica ✏️</a>
+       
+       <!--button AJAX per richiedere la disattivazione dal menu del tavolo-->
+
+       <button class="btn-elimina-bevanda" data-id="${bevanda.id_bevanda}">Elimina 🗑️</button>
+    </div>`).join('');
+      
+
+  }
+
   
   async function aggiungiPiattoClick(e){
     
@@ -283,7 +341,7 @@ async function caricaPiattiNonAttivi(){
           const json = await risposta.json().catch(()=>null);
           throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
         }
-        //se il flusso del programma non viene interrotto ricarico i piatti
+        //se il flusso del programma non viene interrotto ricarico i bevande
         await caricaPiattiNonAttivi();
     }catch (errore){
         console.error(errore);
@@ -320,7 +378,7 @@ async function caricaPiattiNonAttivi(){
           throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
         }
 
-        await caricaBevandaNonAttive();
+        await caricaBevandeNonAttive();
 
     }catch (errore){
         console.error(errore);
@@ -395,10 +453,10 @@ async function inserisciPiattoClick(e){
           const json = await risposta.json().catch(()=>null);
           throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
         }
-        //se il flusso del programma non viene interrotto ritorno alla pagina gestione piatti non attivi
+        //se il flusso del programma non viene interrotto ritorno alla pagina gestione bevande non attivi
         alert('piatto inserito con successo!');
         //reindirizzo il cliente
-        window.location.href = "piattinonattivi.php";
+        window.location.href = "bevandenonattivi.php";
        
     }catch (errore){
         console.error(errore);
@@ -456,7 +514,7 @@ async function inserisciPiattoClick(e){
         }
 
         alert('bevanda inserita con successo!');
-        window.location.href = "bevandenonattive.php";
+        window.location.href = "gestionebevandenonattive.php";
        
     }catch (errore){
         console.error(errore);
@@ -482,11 +540,44 @@ async function inserisciPiattoClick(e){
        avviso.innerHTML=`il piatto deve avere un nome!`;
        return;
     }
-    if(nomi_piatti.includes(da_inserire.value.trim())){
-       sezione.classList.remove('controllopositivo');
-       sezione.classList.add('warning');
-       avviso.innerHTML=`il piatto ${da_inserire.value.trim()} è già esistente!`;
+
       
+    if(!form_modifica){
+      if(nomi_piatti.includes(da_inserire.value.trim())){
+        sezione.classList.remove('controllopositivo');
+        sezione.classList.add('warning');
+        avviso.innerHTML=`il piatto ${da_inserire.value.trim()} è già esistente!`;
+        } 
+    }else{
+       sezione.classList.remove('warning');
+       avviso.innerHTML="";
+       sezione.classList.add('controllopositivo');
+       
+    }
+
+ }
+
+ async function controllaNomeBevandaDisponibile(){
+    const risposta = await fetch(`${API}?type=bevande`);
+    const json = await risposta.json();
+    const da_inserire = document.getElementById('nome-bevanda');
+    const nomi_bevande = json.data.map(bevanda => bevanda.nome_bevanda);
+    const avviso = document.getElementById("avviso");
+    //selettore di classe con il puinto
+    const sezione = document.querySelector('#controllo');
+    
+    
+    if(!da_inserire.value.trim()){
+       sezione.classList.add('warning');
+       avviso.innerHTML=`La bevanda deve avere un nome!`;
+       return;
+    }
+    if(!form_modifica_bevanda){
+      if(nomi_piatti.includes(da_inserire.value.trim())){
+        sezione.classList.remove('controllopositivo');
+        sezione.classList.add('warning');
+        avviso.innerHTML=`La bevanda ${da_inserire.value.trim()} è già esistente!`;
+      }  
     }else{
        sezione.classList.remove('warning');
        avviso.innerHTML="";
@@ -562,7 +653,7 @@ async function eliminaBevandaClick(e){
           throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
         }
 
-        await caricaBevandaNonAttive();
+        await caricaBevandeNonAttive();
 
     }catch (errore){
         console.error(errore);
@@ -618,7 +709,7 @@ async function precaricaFormModifica() {
         if(!confirm('vuoi modificare questo piatto?')){
           return;
         }
-         //dati precaricati
+      
         const id_modifica= btn.dataset.id;
         if(!id_modifica){
           throw new Error('ID tavolo mancante');
@@ -674,8 +765,121 @@ async function precaricaFormModifica() {
              window.location.href = "gestionemenuchevedonoiclienti.php";
          }else if (in_menu === "no"){
              window.location.href = "piattinonattivi.php";
-         }else{
-            alert("non ho capito la tua richiesta");
+         }
+    }catch (errore){
+        console.error(errore);
+        //mostro la risposta json
+        alert(errore.message);
+    }
+    
+  }
+
+  async function precaricaFormModificaBevanda() {
+    // legge l'id dall'URL: modificabevanda.php?id=5
+    //funzione dell'URL in js per la ricerca al suo interno
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (!id) return;
+
+    const risposta = await fetch(`${API}?type=bevande&id=${id}`);
+    
+    const json = await risposta.json();
+    const data = json.data; // ← prendi il primo elemento
+    
+    document.getElementById('nome-bevanda').value = data.nome_bevanda;
+    document.getElementById('descrizione').value  = data.descrizione;
+    document.getElementById('prezzo').value = parseFloat(data.prezzo);
+    //da correggere
+    
+    
+    const allergeniEsistenti = data.id_allergeni ? data.id_allergeni.split(',').map(a => parseInt(a.trim())) : [];
+    console.log(allergeniEsistenti)
+    console.log('tipo:', typeof data.id_allergeni);
+    console.log('valore:', data.id_allergeni);
+    document.querySelectorAll('input[name="allergeniSelezionati[]"]').forEach(checkbox => {
+    checkbox.checked = allergeniEsistenti.includes(parseInt(checkbox.value));
+    });
+
+    const inMenuInput = document.querySelector(`input[name="in_menu"][value="${data.in_menu}"]`);
+    if (inMenuInput) inMenuInput.checked = true;
+    
+    const contieneAlcolInput = document.querySelector(`input[name="alcol"][value="${data.alcol}"]`);
+    if (contieneAlcolInput) contieneAlcolInput.checked = true;
+    
+}
+
+async function modificaBevandaClick(e){
+    
+    //come utilizzare fetch(URL,METHOD)
+    try{
+        
+        //seleziono l'elemento bottone per l'inserisci
+        const btn = e.target.closest('.btn-modifica-bevanda');
+        
+        //escludo click per errore
+        if(!btn) return;
+        //questa funzione di js genera un alet bool
+        if(!confirm('vuoi modificare questa bevanda?')){
+          return;
+        }
+      
+        const id_modifica= btn.dataset.id;
+        if(!id_modifica){
+          throw new Error('ID tavolo mancante');
+           }
+        
+       
+        
+        //recupero i dati dal form INPUT
+
+        const nome_bevanda = document.getElementById('nome-bevanda').value.trim();
+        const descrizione = document.getElementById('descrizione').value;
+        const prezzo = parseFloat(document.getElementById('prezzo').value);
+        //metodo per selezionare i checked della checkbox dal form in js [... converte la node list in un array accessibile importante
+        const allergeniSelezionati = [...document.querySelectorAll('input[name="allergeniSelezionati[]"]:checked')].map(selezionati => parseInt(selezionati.value));        
+        const in_menu = document.querySelector('input[name="in_menu"]:checked').value;
+        const alcol = document.querySelector('input[name="alcol"]:checked').value;
+
+    
+       
+      
+       // 5. validazione
+        if (!nome_bevanda) throw new Error('Il nome della bevanda è obbligatoria');
+        if (isNaN(prezzo) || prezzo <= 0) throw new Error('Inserisci un prezzo valido');
+        if (!in_menu)   throw new Error('Seleziona se la bevanda è in menu');
+        if (!alcol) throw new Error('Seleziona se la bevanda contiene alcol');
+    
+        //salvo il response dentro risposta, chiamo la fetch su un id specifico e scelgo il metodo delete definito in tavoli.php
+        const risposta =  await fetch(`${API}?type=bevande&id=${id_modifica}`, {
+            method: 'PUT',
+            headers:{
+              'Content-Type': 'application/json'
+                },
+            body: JSON.stringify({
+                    
+                    nome_bevanda: String(nome_bevanda),
+                    descrizione: String(descrizione),
+                    prezzo: prezzo,
+                    allergeni: allergeniSelezionati,
+                    in_menu: in_menu,
+                    alcol: alcol
+            })
+        });
+        //se la risposta non è ok dat che il 400 e il 500 non interrompono il codice, lo interrompo con l'if e trow new error
+        if (!risposta.ok) {
+          //prendo la risposta json 
+          const errJson = await risposta.json().catch(()=>null);
+          throw new Error(errJson?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+        if (!json.success) {
+            throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+        //se il flusso del programma torno alla gestione tavoli non attivi
+        alert('bevanda modificata con successo!');
+         //reindirizzo il cliente
+         if(in_menu === "si"){
+             window.location.href = "gestionemenuchevedonoiclienti.php";
+         }else if (in_menu === "no"){
+             window.location.href = "gestionebevandenonattive.php";
          }
     }catch (errore){
         console.error(errore);

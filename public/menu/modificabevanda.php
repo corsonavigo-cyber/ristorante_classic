@@ -14,7 +14,7 @@ require_once __DIR__ . '/../navbar.php';
      <p>compila i campi richiesti per modificare la Bevanda</p>
    </div>
    <div class="piatto">
-     <form action="" id="form_modifica" method="POST">
+     <form action="" id="form_modifica_bevanda" method="POST">
         <label for="nome-bevanda">Nome della Bevanda : </label>
         <input type="text" id="nome-bevanda" name="nome-bevanda" required>
 
