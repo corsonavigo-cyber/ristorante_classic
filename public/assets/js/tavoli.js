@@ -8,12 +8,17 @@
   const form_inserisci= document.getElementById('form_inserisci');
   const form_modifica= document.getElementById('form_modifica');
   const da_inserire = document.getElementById("numero-tavolo");
+  
+
   //controllo che siamo nella pagina elenco tavoli prima di avviare il riempimento
+
   if (lavagna) {
       //aggiungo illissener al caricamento se siamo nell'ambiente giusto
       document.addEventListener('DOMContentLoaded', caricaTavoli);
       //il bottone elimina lo attivo solo se seno nell'elenco tavoli
       document.addEventListener('click', eliminaTavoloClick);
+      document.addEventListener('click', eliminaPrenotazioneClick);
+
   }else if(form_inserisci){
       //attiva il bottone inserisci
       document.addEventListener('click', inserisciTavoloClick);
@@ -33,7 +38,7 @@
   async function caricaTavoli(){
     const risposta = await fetch(API);
     const json = await risposta.json();
-    const lavagna = document.getElementById('lavagna_tavoli')
+    const lavagna = document.getElementById('lavagna_tavoli');
     //da aggiungere la visualizzazione delle prenotazioni e dei conti e delle comande  
     lavagna.innerHTML = json.data.map(tavolo=>`
     <div class="tavolo" id="${tavolo.id_tavolo}">
@@ -42,6 +47,8 @@
 
        <p class="comment">Posti max ${tavolo.posti_max} prenotabili</p>
        <p class="comment">Posti min ${tavolo.posti_min} prenotabili</p> 
+       <!--per visualizzazione in caso di tavolo prenotato-->
+       <div class=tavolo id=prenotato data-id-tavolo="${tavolo.id_tavolo}">  </div> 
        <!--link AJAX per inviare la modifica tavolo-->
        <a class="btn" href="modificatavolo.php?id=${tavolo.id_tavolo}">Modifica ✏️</a>
 
@@ -49,8 +56,80 @@
 
        <button class="btn-elimina" data-id="${tavolo.id_tavolo}">Elimina 🗑️</button>
     </div>`).join('');
+    json.data.forEach(tavolo => caricaPrenotazioniTavolo(tavolo.id_tavolo));
   }
+
+  //carica la le prenotazioni
+  function today(){
+    const d = new Date();
+    return d.toISOString().split('T')[0]; // "2026-06-30"
+  }
+
+  async function caricaPrenotazioniTavolo(id_tavolo){
+    const risposta = await fetch(`/ristorante_classic/api/prenotazioni.php?type=tavolo&id=${id_tavolo}`);
+    const json = await risposta.json();
+
+    // seleziono il div giusto tramite il data-attribute, non un id fisso "prenotato"
+    // (un id duplicato per ogni tavolo è invalido in HTML)
+    const contenitore = document.querySelector(`#prenotato[data-id-tavolo="${id_tavolo}"]`);
+    if (!contenitore) return;
+
+    const prenotazioniOggi = json.data.filter(prenotazione=>data_in_prenotazione === today());  
+
+    if (prenotazioniOggi.length > 0){
+        contenitore.innerHTML = json.data.map(p => `
+            <h4 class="comment"><b>${p.nome_prenotazione}</b></h4>
+            <p class="comment">${p.numero_persone} persone</p>
+            <p class="comment">Ora arrivo ${p.ora_prenotazione}</p>
+            <p class="comment">${p.data_in_prenotazione}</p>
+            <a class="btn" href="modificaprenotazione.php?id=${p.id_prenotazione}">Modifica ✏️</a>
+            <button class="btn-elimina-prenotazione" data-id="${tavolo.id_tavolo}">Elimina 🗑️</button>
+        `).join('');
+    } else {
+        contenitore.innerHTML = `<h4>LIBERO</h4>`;
+    }
+}
   //------------------DELETE-------------------------------------
+
+    async function eliminaPrenotazioneClick(e){
+    
+    //come utilizzare fetch(URL,METHOD)
+    try{
+
+        //seleziono l'elemento bottone per l'elimina
+        const btn_elimina = e.target.closest('.btn-elimina-prenotazione');
+        //escludo click per errore
+        if(!btn_elimina) return;
+        //questa funzione di js genera un alet bool
+        if(!confirm('vuoi eliminare questa prenotazione?')){
+          return;
+        }
+        //recupero il data set da data-id
+        const id_elimina = btn_elimina.dataset.id;
+        //blocco l'esecuzione se non arriva l'id
+        if(!id_elimina){
+          throw new Error('Id Mancante nel bottone!');
+        }
+            
+        //salvo il response dentro risposta, chiamo la fetch su un id specifico e scelgo il metodo delete definito in tavoli.php
+        const risposta = await fetch(`/ristorante_classic/api/prenotazioni.php?type=tavolo_prenotazioni&id=${id_elimina}`, {
+            method: 'DELETE'
+        });
+        //se la risposta non è ok dat che il 400 e il 500 non interrompono il codice, lo interrompo con l'if e trow new error
+        if (!risposta.ok) {
+          //prendo la risposta json 
+          const json = await risposta.json().catch(()=>null);
+          throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+        //se il flusso del programma non viene interrotto ricarico le prenotazioni
+        await caricaPrenotazioniTavolo();
+    }catch (errore){
+        console.error(errore);
+        //mostro la risposta json
+        alert(errore.message);
+    }
+    
+  }
 
   async function eliminaTavoloClick(e){
     
@@ -71,7 +150,30 @@
         if(!id_elimina){
           throw new Error('Id Mancante nel bottone!');
         }
+         // NUOVO: controllo se il tavolo ha prenotazioni attive collegate
+        const checkRisposta = await fetch(`/ristorante_classic/api/prenotazioni.php?type=tavolo&id=${id_elimina}`);
+        const checkJson = await checkRisposta.json();
+        const prenotazioniCollegate = checkJson.data ?? [];
 
+        // se ci sono prenotazioni, avviso l'utente che verranno scollegate
+        if (prenotazioniCollegate.length > 0) {
+            if (!confirm('Questo tavolo ha prenotazioni collegate. Eliminandolo verranno rimosse anche le relazioni con le prenotazioni. Continuare?')) {
+                return;
+            }
+            // elimino prima le relazioni tavolo-prenotazione
+            const eliminaRelazione = await fetch(`/ristorante_classic/api/prenotazioni.php?type=tavolo&id=${id_elimina}`, {
+                method: 'DELETE'
+            });
+            if (!eliminaRelazione.ok) {
+                const json = await eliminaRelazione.json().catch(()=>null);
+                throw new Error(json?.data ?? `Errore HTTP ${eliminaRelazione.status}`);
+            }
+        } else {
+            // nessuna prenotazione collegata, conferma standard
+            if(!confirm('vuoi eliminare quest tavolo?')){
+              return;
+            }
+        }
     
         //salvo il response dentro risposta, chiamo la fetch su un id specifico e scelgo il metodo delete definito in tavoli.php
         const risposta = await fetch(`/ristorante_classic/api/tavoli.php?id=${id_elimina}`, {

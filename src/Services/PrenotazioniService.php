@@ -233,6 +233,40 @@ class PrenotazioniService {
         }
     }
 
+
+    //eliminazione composta: cancella le prenotazioni (+ le loro relazioni con i tavoli)
+    public function eliminaPrenotazioniERelazioneTavolo(int $id_prenotazione): bool
+    {
+        $prenotazione = $this->prenotazioniRepo->visualizzaPrenotazione($id_prenotazione);
+
+        // FIX: niente da cancellare -> non è un errore, esci silenziosamente
+        if (!$prenotazione) {
+            return true;
+        }
+
+        try {
+            $this->pdo->beginTransaction();
+
+            $this->prenotazioniRepo->eliminaRelazionePrenotazioneTavolo($id_prenotazione);
+            $this->prenotazioniRepo->eliminaPrenotazione($id_prenotazione);
+
+            // log PRIMA che il dato sparisca dal DB, altrimenti perdi il contesto
+            $this->storicoPrenotazioni->cancellata(
+                "Prenotazione id {$id_prenotazione} ({$prenotazione['nome_prenotazione']}) rimossa"
+            );
+
+            $this->pdo->commit();
+
+            $this->logger->info("Prenotazione {$id_prenotazione} rimossa con relazione tavolo");
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            $this->logger->error("Errore durante l'eliminazione prenotazione {$id_prenotazione}: {$e->getMessage()}");
+            return false;
+        }
+    }
+
    //------------------------------------------UPDATE--------------------------------------------------------------
 
     public function modificaPrenotazione(int $id_prenotazione, string $nome_prenotazione, string $ora_prenotazione, string $data_in_prenotazione, int $attiva, int $numero_persone):bool{

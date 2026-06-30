@@ -9,21 +9,21 @@ class PrenotazioniRepositories {
      //PRENOTAZIONI COLLEGATE E NON AI TAVOLI
      public function visualizzaPrenotazioni():?array
      {
-        $stmt =$this->pdo->prepare('SELECT * FROM tavoli_prenotati ORDER BY  data_in_prenotazione, ora_prenotazione ');
+        $stmt =$this->pdo->prepare('SELECT * FROM tavoli_prenotati WHERE data_in_prenotazione >= CURDATE()  DAY  ORDER BY  data_in_prenotazione, ora_prenotazione ');
         $stmt->execute();
         return $stmt->fetchAll() ?:null;
      }
 
      public function visualizzaPrenotazioniTavolo(int $id_tavolo):?array
      {
-        $stmt =$this->pdo->prepare('SELECT * FROM tavoli_prenotati WHERE id_tavolo = :id_tavolo ORDER BY  data_in_prenotazione, ora_prenotazione ');
+        $stmt =$this->pdo->prepare('SELECT * FROM tavoli_prenotati WHERE id_tavolo = :id_tavolo AND data_in_prenotazione >= CURDATE() ORDER BY  data_in_prenotazione, ora_prenotazione ');
         $stmt->execute(['id_tavolo' => $id_tavolo]);
         return $stmt->fetchAll() ?:null;
      }
 
     public function visualizzaPrenotazione(int $id_prenotazione):?array
     {
-        $stmt =$this->pdo->prepare('SELECT * FROM tavoli_prenotati WHERE id_prenotazione = :id_prenotazione LIMIT 1');
+        $stmt =$this->pdo->prepare('SELECT * FROM tavoli_prenotati WHERE id_prenotazione = :id_prenotazione AND data_in_prenotazione >= CURDATE() LIMIT 1');
         $stmt->execute(['id_prenotazione' => $id_prenotazione]);
         return $stmt->fetch() ?:null;
     }
@@ -31,7 +31,7 @@ class PrenotazioniRepositories {
     public function visualizzaPrenotazioniData(string $data_in_prenotazione):?array
     //il js dovra mostrare con con un class warning quelle che non sono state collegate a un conto entro 1 ora dall'orario di prenotazione
      {
-        $stmt =$this->pdo->prepare('SELECT * FROM tavoli_prenotati WHERE data_in_prenotazione = :data_in_prenotazione ORDER BY ora_prenotazione, numero_persone DESC ');
+        $stmt =$this->pdo->prepare('SELECT * FROM tavoli_prenotati WHERE  data_in_prenotazione >= CURDATE() AND data_in_prenotazione = :data_in_prenotazione ORDER BY ora_prenotazione, numero_persone DESC ');
         $stmt->execute(['data_in_prenotazione' => $data_in_prenotazione]);
         return $stmt->fetchAll() ?:null;
      }

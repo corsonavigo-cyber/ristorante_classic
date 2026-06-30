@@ -44,7 +44,7 @@ $storicoPrenotazioni = new StoricoPrenotazioniService();
 $authService = new AuthService($userRepository, $logger);
 $tavoloService= new TavoloService($tavoloRepository, $logger);
 $menuService= new MenuService($menuRepository, $logger);
-$prenotazioniService= new PrenotazioniService($prenotazioniRepository, $logger,$storicoPrenotazioni);
+$prenotazioniService= new PrenotazioniService($prenotazioniRepository, $logger,$storicoPrenotazioni,$pdo);
 
 
 /*inserisco l'aurorizzazione nelle pagine
