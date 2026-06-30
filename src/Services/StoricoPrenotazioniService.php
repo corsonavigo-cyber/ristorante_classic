@@ -30,6 +30,11 @@ class StoricoPrenotazioniService
         $this->write('EFFETTUATA', $message);
     }
 
+    public function inserita(string $message): void
+    {
+        $this->write('INSERITA', $message);
+    }
+
     public function spostata(string $message): void
     {
         $this->write('SPOSTATA', $message);

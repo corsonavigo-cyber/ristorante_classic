@@ -74,7 +74,7 @@ class PrenotazioniRepositories {
         return $id_prenotazione = (int)$this->pdo->lastInsertId();
      }
 
-   public function isTavoloDisponibile(int $id_tavolo, string $data_in_prenotazione, string $ora_prenotazione):bool
+   public function isTavoloDisponibile(int $id_tavolo, string $data_in_prenotazione):bool
    {
        $prenotazioni_del_tavolo = $this->visualizzaPrenotazioniTavolo($id_tavolo);
        if( $prenotazioni_del_tavolo === null) { return true; }
@@ -86,7 +86,7 @@ class PrenotazioniRepositories {
        return true;
    }
 
-   
+
      //DELETE
 
      
@@ -139,15 +139,22 @@ class PrenotazioniRepositories {
          ]);
          return $stmt->rowCount()>0;
       }
-      //3. aggiorna la relazione con il tavolo
-     public function aggiornaTavoloPrenotazione(int $id_prenotazione, array $id_tavolo): bool
-     {
-        $this->eliminaRelazionePrenotazioneTavolo($id_prenotazione);
-        $this->inserisciPrenotazioneTavolo($id_prenotazione, $id_tavolo);
-        //non sono sicura se questo va bene magari è meglio inserirlo in  un if che nel caso interrompe o farlo nel service
-        return true; 
-     }
 
-     
+   public function aggiornaTavoloPrenotazione(int $id_prenotazione, array $tavoli): bool
+   {
+      // niente beginTransaction/commit qui dentro -> la transazione
+      // viene gestita un livello più in alto, nel Service, perché lì
+      // viene chiamata insieme ad aggiornaPrenotazione() e devono essere atomiche insieme
+      $this->eliminaRelazionePrenotazioneTavolo($id_prenotazione);
+      $esito = $this->inserisciPrenotazioneTavolo($id_prenotazione, $tavoli);
+
+      if (!$esito) {
+         // lancia eccezione invece di tornare false ->
+         // così il catch nel Service intercetta e fa rollBack() su TUTTO
+         throw new \RuntimeException("Aggiornamento tavoli fallito per prenotazione {$id_prenotazione}");
+      }
+
+      return true;
+   }
      
 }
