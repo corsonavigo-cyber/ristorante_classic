@@ -14,6 +14,13 @@ class PrenotazioniRepositories {
         return $stmt->fetchAll() ?:null;
      }
 
+     public function visualizzaPrenotazioniTavolo(int $id_tavolo):?array
+     {
+        $stmt =$this->pdo->prepare('SELECT * FROM tavoli_prenotati WHERE id_tavolo = :id_tavolo ORDER BY  data_in_prenotazione, ora_prenotazione ');
+        $stmt->execute(['id_tavolo' => $id_tavolo]);
+        return $stmt->fetchAll() ?:null;
+     }
+
     public function visualizzaPrenotazione(int $id_prenotazione):?array
     {
         $stmt =$this->pdo->prepare('SELECT * FROM tavoli_prenotati WHERE id_prenotazione = :id_prenotazione LIMIT 1');
@@ -36,160 +43,109 @@ class PrenotazioniRepositories {
         
         //la js dovra controllare se in quel giorno il tavolo è disponibile per la prenotazione 
         //prevedo che i tavoli siano un array in modo che posso selezionarlo 1 o più
-        foreach($tavoli as $id_tavolo) {
         //dovrà controllare che l'ora di accesso si superiore alle prenotazioni
         //nel conto dovro solo inviare il valore da prenotazione, si/no
+          // FIX: prepare fuori dal loop (PDO permette riuso dello stesso prepared statement)
         $stmt = $this->pdo->prepare('INSERT INTO tavoli_prenotazione (id_prenotazione, id_tavolo) VALUES (:id_prenotazione, :id_tavolo)');
-        $stmt->execute([
-            'id_prenotazione'=> $id_prenotazione,
-            'id_tavolo'=>$id_tavolo
-        ]);
+ 
+        $righeInserite = 0;
+        foreach ($tavoli as $id_tavolo) {
+            $stmt->execute([
+                'id_prenotazione' => $id_prenotazione,
+                'id_tavolo' => $id_tavolo
+            ]);
+            $righeInserite += $stmt->rowCount();
         }
-        return $stmt->rowCount()>0;
-     }
+        // FIX: true solo se TUTTI i tavoli sono stati inseriti correttamente
+        return $righeInserite === count($tavoli);
+    }
 
  
-    public function inserisciPrenotazione(string $nome_prenotazione, string $ora_prenotazione, string $data_in_prenotazione, int $attiva, int $numero_persone):bool{
+    public function inserisciPrenotazione(string $nome_prenotazione, string $ora_prenotazione, string $data_in_prenotazione, int $attiva, int $numero_persone):int{
 
-        $stmt = $this->pdo->prepare('INSERT INTO tavoli_prenotazione (nome_prenotazione, ora_prenotazione, data_in_prenotazione, attiva, numero_persone) VALUES (:nome_prenotazione, :ora_prenotazione, :data_in_prenotazione, :attiva, :numero_persone)');
+        $stmt = $this->pdo->prepare('INSERT INTO prenotazione (nome_prenotazione, ora_prenotazione, data_in_prenotazione, attiva, numero_persone) VALUES (:nome_prenotazione, :ora_prenotazione, :data_in_prenotazione, :attiva, :numero_persone)');
         $stmt->execute([
             'nome_prenotazione'=>$nome_prenotazione,
             'ora_prenotazione'=>$ora_prenotazione,
             'data_in_prenotazione'=>$data_in_prenotazione,
             'attiva'=>$attiva,
-            'numero_persone'=>$numero_personeu
+            'numero_persone'=>$numero_persone
         ]);
-        $id_bevanda = (int)$this->pdo->lastInsertId();
-
-        //inserimento nella tabella delle relazioni nell' inserimento ho intezione di aggiungere una selezione multipla per ottenere un array di id allergene
-        foreach($allergeni_selezionati as $id_allergene) {
-        $stmt2 = $this->pdo->prepare('INSERT INTO allergene_bevanda (id_allergene, id_bevanda) VALUES (:id_allergene, :id_bevanda)');
-        $stmt2->execute([
-        ':id_allergene' => $id_allergene,
-        ':id_bevanda'   => $id_bevanda
-        ]);
-        }
-        return $id_bevanda > 0;
+        return $id_prenotazione = (int)$this->pdo->lastInsertId();
      }
 
+   public function isTavoloDisponibile(int $id_tavolo, string $data_in_prenotazione, string $ora_prenotazione):bool
+   {
+       $prenotazioni_del_tavolo = $this->visualizzaPrenotazioniTavolo($id_tavolo);
+       if( $prenotazioni_del_tavolo === null) { return true; }
+       foreach($prenotazioni_del_tavolo as $prenotazione) { 
+          if($prenotazione['data_prenotazione']===$data_in_prenotazione){
+          return false;
+          }
+         }
+       return true;
+   }
 
+   
      //DELETE
-//---------------------------------------arrivata qui---------------------------------------------------
+
      
 //domani prevedere elimina la relazione in base id_prenotazione e poi elimina le relazioni e le prenotazioni, inserendole in un file storico in base al giorno s eè passato
 //delete di supporto per le relazioni
      public function eliminaRelazionePrenotazioneTavolo(int $id_prenotazione):bool
      {
-        $stmt = $this->pdo->prepare('DELETE FROM allergene_piatto WHERE id_piatto = :id_piatto');
+        $stmt = $this->pdo->prepare('DELETE FROM tavoli_prenotazione WHERE id_prenotazione = :id_prenotazione');
         $stmt->execute([
-            'id_piatto' => $id_piatto
+            'id_prenotazione' => $id_prenotazione
         ]);
         return $stmt->rowCount()>0;
      }
      
 
-     public function eliminaRelazioneAllergeneBevanda(int $id_bevanda):bool
+     public function eliminaPrenotazione(int $id_prenotazione):bool
      {
-        $stmt = $this->pdo->prepare('DELETE FROM allergene_bevanda WHERE id_bevanda = :id_bevanda');
+        $stmt = $this->pdo->prepare('DELETE FROM prenotazione WHERE id_prenotazione = :id_prenotazione');
         $stmt->execute([
-            'id_bevanda' => $id_bevanda
+            'id_prenotazione' => $id_prenotazione
         ]);
         return $stmt->rowCount()>0;
      }
-
-     public function eliminaPiatto(int $id_piatto):bool
-     {
-        $this->eliminaRelazioneAllergenePiatto($id_piatto);
-        $stmt = $this->pdo->prepare('DELETE FROM piatto WHERE id_piatto = :id_piatto');
-        $stmt->execute([
-            'id_piatto' => $id_piatto
-        ]);
-        return $stmt->rowCount()>0;
-     }
-
-     public function eliminaBevanda(int $id_bevanda):bool
-     {
-        $this->eliminaRelazioneAllergeneBevanda($id_bevanda);
-        $stmt = $this->pdo->prepare('DELETE FROM bevanda WHERE id_bevanda = :id_bevanda');
-        $stmt->execute([
-            'id_bevanda' => $id_bevanda
-        ]);
-        return $stmt->rowCount()>0;
-     }
-
 
      //UPDATE
 
-     //1.cambio stato se in menu o no
-     public function aggiornaStatoBevanda(int $id_bevanda, InMenu $in_menu): bool
+     //1.cambio stato prenotazione
+     public function aggiornaStatoPrenotazione(int $id_prenotazione, int $attiva): bool
      {
-        $stmt = $this->pdo->prepare('UPDATE bevanda SET in_menu = :in_menu WHERE id_bevanda = :id_bevanda');
+        $stmt = $this->pdo->prepare('UPDATE prenotazione SET attiva = :attiva WHERE id_prenotazione = :id_prenotazione');
         $stmt->execute([
-            'id_bevanda' => $id_bevanda,
-            'in_menu' => $in_menu->value
+            'id_prenotazione' => $id_prenotazione,
+            'attiva' => $attiva
         ]);
         return $stmt->rowCount()>0; #restituisce true se almeno una riga è stata aggiornata, altrimenti false
      }
 
-     public function aggiornaStatoPiatto(int $id_piatto, InMenu $in_menu): bool
-     {
-        $stmt = $this->pdo->prepare('UPDATE piatto SET in_menu = :in_menu WHERE id_piatto = :id_piatto');
-        $stmt->execute([
-            'id_piatto' => $id_piatto,
-            'in_menu' => $in_menu->value
-        ]);
-        return $stmt->rowCount()>0; #restituisce true se almeno una riga è stata aggiornata, altrimenti false
-     }
-     //2.aggiorna il l'elemento del menu
-    public function aggiornaPiatto(int $id_piatto, string $nome_piatto, float $prezzo, string $descrizione, InMenu $in_menu, Categoria $categoria, array $allergeni_selezionati): bool
+     
+     //2.aggiorna la prenotazione
+    public function aggiornaPrenotazione(int $id_prenotazione, string $nome_prenotazione, string $ora_prenotazione, string $data_in_prenotazione, int $attiva, int $numero_persone): bool
       {
-         $stmt = $this->pdo->prepare('UPDATE piatto SET nome_piatto = :nome_piatto, prezzo = :prezzo, descrizione = :descrizione, in_menu = :in_menu, categoria = :categoria WHERE id_piatto = :id_piatto');
+         $stmt = $this->pdo->prepare('UPDATE prenotazione SET nome_prenotazione = :nome_prenotazione, ora_prenotazione = :ora_prenotazione, data_in_prenotazione = :data_in_prenotazione, attiva = :attiva , numero_persone = :numero_persone WHERE id_prenotazione = :id_prenotazione');
          $stmt->execute([
-            'id_piatto'   => $id_piatto,
-            'nome_piatto' => $nome_piatto,
-            'prezzo'      => $prezzo,
-            'descrizione' => $descrizione,
-            'in_menu'     => $in_menu->value,
-            'categoria'   => $categoria->value
+            'id_prenotazione' => $id_prenotazione,
+            'nome_prenotazione' => $nome_prenotazione,
+            'ora_prenotazione' => $ora_prenotazione,
+            'data_in_prenotazione' => $data_in_prenotazione,
+            'attiva'=> $attiva,
+            'numero_persone'=>$numero_persone
          ]);
-
-         // elimina e reinserisci sempre, indipendentemente da rowCount
-         $this->eliminaRelazioneAllergenePiatto($id_piatto);
-
-         foreach ($allergeni_selezionati as $id_allergene) {
-            $stmt2 = $this->pdo->prepare('INSERT INTO allergene_piatto (id_allergene, id_piatto) VALUES (:id_allergene, :id_piatto)');
-            $stmt2->execute([
-                  ':id_allergene' => (int)$id_allergene,
-                  ':id_piatto'    => $id_piatto
-            ]);
-         }
-
-         return true;
+         return $stmt->rowCount()>0;
       }
-     public function aggiornaBevanda(int $id_bevanda, string $nome_bevanda, float $prezzo, string $descrizione, Alcol $alcol, InMenu $in_menu, array $allergeni_selezionati): bool
+      //3. aggiorna la relazione con il tavolo
+     public function aggiornaTavoloPrenotazione(int $id_prenotazione, array $id_tavolo): bool
      {
-        $stmt = $this->pdo->prepare('UPDATE bevanda SET nome_bevanda = :nome_bevanda, prezzo = :prezzo, descrizione = :descrizione, in_menu = :in_menu, alcol = :alcol WHERE id_bevanda = :id_bevanda');
-        $stmt->execute([
-            'id_bevanda' => $id_bevanda,
-            'nome_bevanda' => $nome_bevanda,
-            'prezzo' => $prezzo,
-            'descrizione' => $descrizione,
-            'alcol'=>$alcol->value,
-            'in_menu'=>$in_menu->value
-            
-        ]);
-        $this->eliminaRelazioneAllergeneBevanda($id_bevanda);
-        
-        foreach($allergeni_selezionati as $id_allergene) {
-        $stmt2 = $this->pdo->prepare('INSERT INTO allergene_bevanda (id_allergene, id_bevanda) VALUES (:id_allergene, :id_bevanda)');
-        $stmt2->execute([
-            ':id_allergene' => $id_allergene,
-            ':id_bevanda'   => $id_bevanda
-        ]);
-        }
+        $this->eliminaRelazionePrenotazioneTavolo($id_prenotazione);
+        $this->inserisciPrenotazioneTavolo($id_prenotazione, $id_tavolo);
+        //non sono sicura se questo va bene magari è meglio inserirlo in  un if che nel caso interrompe o farlo nel service
         return true; 
-        
-
      }
 
      
