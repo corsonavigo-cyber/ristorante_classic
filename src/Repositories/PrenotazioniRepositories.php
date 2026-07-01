@@ -9,7 +9,13 @@ class PrenotazioniRepositories {
      //PRENOTAZIONI COLLEGATE E NON AI TAVOLI
      public function visualizzaPrenotazioni():?array
      {
-        $stmt =$this->pdo->prepare('SELECT * FROM tavoli_prenotati WHERE data_in_prenotazione >= CURDATE()  DAY  ORDER BY  data_in_prenotazione, ora_prenotazione ');
+        $stmt =$this->pdo->prepare(<<<'SQL'
+            SELECT id_prenotazione,nome_prenotazione, ora_prenotazione, data_in_prenotazione, attiva, numero_persone, GROUP_CONCAT(id_tavolo ORDER BY numero_tavolo) AS id_tavoli, GROUP_CONCAT(numero_tavolo ORDER BY numero_tavolo SEPARATOR ', ') AS tavoli
+            FROM tavoli_prenotati
+            WHERE data_in_prenotazione >= CURDATE()
+            GROUP BY id_prenotazione, ora_prenotazione,data_in_prenotazione, attiva, numero_persone
+            ORDER BY data_in_prenotazione, ora_prenotazione
+        SQL);
         $stmt->execute();
         return $stmt->fetchAll() ?:null;
      }

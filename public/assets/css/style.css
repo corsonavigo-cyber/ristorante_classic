@@ -166,7 +166,7 @@ td,th{
     box-shadow: 0 0 5px rgba(0, 0, 75, 0.8);
     color:#333;
 }
-.tavolo{
+.tavolo,.prenotazioni{
     background-color: white;
     align-items: center;
     text-align: center;
@@ -204,7 +204,7 @@ td,th{
 .controllopositivo{
     display:none;
 }
-.elenco_allergeni{
+.elenco_allergeni,.elenco_tavoli,.elenco_prenotazioni{
     list-style-type:none;
 
 }

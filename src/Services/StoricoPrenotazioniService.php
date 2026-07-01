@@ -9,8 +9,6 @@ class StoricoPrenotazioniService
 
     public function __construct()
     {
-        date_default_timezone_set('Europe/Rome');
-
         $cartellaLog = dirname(__DIR__, 2) . '/storage/logs';
         $this->storicoFile = $cartellaLog . '/storicoprenotazioni.txt';
     }
