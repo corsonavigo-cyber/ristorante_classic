@@ -25,18 +25,16 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
     
         <label for="data-in-prenotazione">Data Prenotazione : </label>
         <input type="date" name="data-in-prenotazione" id="data-in-prenotazione" min="<?= date('Y-m-d') ?>" max="2026-12-31" required>
-    
-        <div class="controllopositivo" id="controllo"><p id="avviso"></p> </div>
 
         <label for="numero-persone">Numero Persone : </label>
         <input type="number"  id="numero-persone" name="numero-persone" required> 
 
 
         <fieldset>
-            <legend>Vuoi assegnare subito la prenotazione a un tavolo? </legend>
+            <legend>La prenotazione è Attiva? </legend>
 
-            <label><input type="radio" id="attiva-si" name="in_menu" value=1> Sì</label>
-            <label><input type="radio" id="attiva-no" name="in_menu" value=0> No</label>
+            <label><input type="radio" id="attiva-si" name="attiva" value=1> Sì</label>
+            <label><input type="radio" id="attiva-no" name="attiva" value=0> No</label>
         </fieldset>
 
         <fieldset id="tavoli">
@@ -46,7 +44,7 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
             <label><input type="checkbox" name="tavoliSelezionati[]" value="1"></label>
             
         </fieldset> 
-
+        <div id="controllo" ><p id="avviso"></p></div>
         <button type="button" class="btn-inserisci-prenotazione" >Inserisci</button>
      </form>
    </div>

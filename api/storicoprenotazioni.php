@@ -3,20 +3,28 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../public/bootstrap.php';
 
-$file = dirname(__DIR__) . '/storage/logs/storicoprenotazioni.txt';
-
 header('Content-Type: application/json');
 
-if (!file_exists($file)) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'File non trovato'
-    ]);
-    exit;
-}
+$type = $_GET['type'] ?? null;
 
-echo json_encode([
-    'success' => true,
-    'contenuto' => file_get_contents($file)
-]);
-?>
+try {
+    match ([$_SERVER['REQUEST_METHOD'], $type]) {
+        ['GET', 'storico'] => (function () use ($leggiStoricoService) {
+            http_response_code(200);
+            echo json_encode(['data' => $leggiStoricoService->ottieniStorico()]);
+        })(),
+        default => throw new \InvalidArgumentException('Endpoint non valido'),
+    };
+} catch (\ValueError $e) {
+    http_response_code(422);
+    echo json_encode(['data' => $e->getMessage()]);
+} catch (\InvalidArgumentException $e) {
+    http_response_code(400);
+    echo json_encode(['data' => $e->getMessage()]);
+} catch (\RuntimeException $e) {
+    http_response_code(404);
+    echo json_encode(['data' => $e->getMessage()]);
+} catch (\Exception $e) {
+    http_response_code(500);
+    echo json_encode(['data' => $e->getMessage()]);
+}

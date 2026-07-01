@@ -1,0 +1,6 @@
+[2026-07-01 13:16:25] [CANCELLATA] Prenotazione 3 : eliminata con successo dal tavolo
+[2026-07-01 13:17:00] [CANCELLATA] Prenotazione 3 : eliminata con successo dal tavolo
+[2026-07-01 13:36:33] [INSERITA] Prenotazione 3 : confermata con successo 
+[2026-07-01 13:36:42] [CANCELLATA] Prenotazione 3 : eliminata con successo dal tavolo
+[2026-07-01 13:37:06] [CANCELLATA] Prenotazione 3 : eliminata con successo dal tavolo
+[2026-07-01 13:37:06] [NON PRESENTATI] Prenotazione 3 : annullata con successo 

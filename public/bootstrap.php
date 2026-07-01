@@ -13,6 +13,7 @@ use App\Repositories\TavoloRepositories;
 use App\Repositories\UserRepositories;
 use App\Repositories\MenuRepositories;
 use App\Repositories\PrenotazioniRepositories;
+use App\Repositories\LeggiStoricoRepositories;
 
 use App\Services\AuthService;
 use App\Services\LoggerService;  
@@ -20,7 +21,7 @@ use App\Services\TavoloService;
 use App\Services\MenuService;
 use App\Services\PrenotazioniService;
 use App\Services\StoricoPrenotazioniService;
-
+use App\Services\LeggiStoricoService;
 
 
 
