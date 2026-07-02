@@ -35,7 +35,13 @@ class PrenotazioniRepositories {
 
     public function visualizzaPrenotazione(int $id_prenotazione):?array
     {
-        $stmt =$this->pdo->prepare('SELECT * FROM tavoli_prenotati WHERE id_prenotazione = :id_prenotazione AND data_in_prenotazione >= CURDATE() LIMIT 1');
+        $stmt =$this->pdo->prepare(<<<'SQL'
+            SELECT id_prenotazione,nome_prenotazione, ora_prenotazione, data_in_prenotazione, attiva, numero_persone, GROUP_CONCAT(id_tavolo ORDER BY numero_tavolo) AS id_tavoli, GROUP_CONCAT(numero_tavolo ORDER BY numero_tavolo SEPARATOR ', ') AS tavoli
+            FROM tavoli_prenotati
+            WHERE data_in_prenotazione >= CURDATE() AND id_prenotazione = :id_prenotazione
+            GROUP BY id_prenotazione, ora_prenotazione,data_in_prenotazione, attiva, numero_persone
+            ORDER BY data_in_prenotazione, ora_prenotazione
+        SQL);
         $stmt->execute(['id_prenotazione' => $id_prenotazione]);
         return $stmt->fetch() ?:null;
     }

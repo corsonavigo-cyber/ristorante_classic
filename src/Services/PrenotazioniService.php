@@ -310,7 +310,7 @@ class PrenotazioniService {
 
     }
 
-    public function modificaPrenotazioneETavolo(array $tavoli,int $id_prenotazione, string $nome_prenotazione, string $ora_prenotazione, string $data_in_prenotazione, int $attiva, int $numero_persone):bool{
+    public function modificaPrenotazioneETavolo(int $id_prenotazione, string $nome_prenotazione, string $ora_prenotazione, string $data_in_prenotazione, int $attiva, int $numero_persone,array $tavoli):bool{
        
        $id_ricerca= $this->visualizzaPrenotazione($id_prenotazione);
        

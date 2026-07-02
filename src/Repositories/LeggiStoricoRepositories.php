@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
-class LeggiStoricoRepository
+class LeggiStoricoRepositories
 {
     private string $file;
 
@@ -18,8 +18,17 @@ class LeggiStoricoRepository
         if (!file_exists($this->file)) {
             throw new \RuntimeException('File storico non trovato');
         }
+        // lock in lettura: evita letture parziali se un altro processo sta scrivendo
+        $handle = fopen($this->file, 'r');
+        if ($handle === false) {
+            throw new \Exception('Impossibile aprire il file storico');
+        }
 
-        $contenuto = file_get_contents($this->file);
+        flock($handle, LOCK_SH); // lock condiviso (shared) — "sto leggendo, aspetta a scrivere"
+        $contenuto = stream_get_contents($handle);
+        flock($handle, LOCK_UN);  // rilascio il lock
+        fclose($handle);
+
 
         if ($contenuto === false) {
             throw new \Exception('Errore nella lettura del file storico');

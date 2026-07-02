@@ -14,20 +14,27 @@ $title = 'Gestione Prenotazioni';
 <main> 
     <div class="supporto-titolo">
         <h2  class="title"><?= $title ?></h2>
+    </div> 
+    <div id="oggi" class="dataeora">
+    </div>
+       
     
     <div class="schermata-divisa">
-    
     <div>
+    <button type="button"  class="btn-elimina-storico-prenotazione" >Elimina Storico</button>
     <a class="btn" href="visualizzastorico.php">Visualizza lo Storico delle Prenotazioni</a>
     <a class="btn" href="inserisciprenotazioni.php">Inserisci una Nuova Prenotazione</a>
-   
-    <div class="prenotazioni" id="lavagna_prenotazioni_tavolo">
+
+    <h3  class="title">Prenotazioni Non Associate a Un Tavolo</h3>
+    <div class="prenotazioni" id="lavagna_prenotazioni_notavolo">
        
     </div>
 
-    <div class="menubevande" id="lavagna_prenotazioni_notavolo">
+    <h3  class="title">Prenotazioni Associate a Un Tavolo</h3>
+    <div class="prenotazioni" id="lavagna_prenotazioni_tavolo">
        
     </div>
+   
     </div>
     </div>
 <script>

@@ -26,7 +26,7 @@ $title = 'Storico Prenotazioni';
    
     </div>
 <script>
-    const API = '/ristorante_classic/api/prenotazioni.php';
+    const API = '/ristorante_classic/api/storicoprenotazioni.php';
 </script>
 <script src="/ristorante_classic/public/assets/js/prenotazioni.js" defer></script>    
 

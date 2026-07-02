@@ -39,6 +39,9 @@ $userRepository = new UserRepositories($pdo);
 $tavoloRepository= new TavoloRepositories($pdo);
 $menuRepository= new MenuRepositories($pdo);
 $prenotazioniRepository= new PrenotazioniRepositories($pdo);
+$leggistoricoRepository = new LeggiStoricoRepositories(
+    dirname(__DIR__) . '/storage/logs/storicoprenotazioni.txt'
+);
 
 //chiamo i service
 $storicoPrenotazioni = new StoricoPrenotazioniService(); 
@@ -46,7 +49,7 @@ $authService = new AuthService($userRepository, $logger);
 $tavoloService= new TavoloService($tavoloRepository, $logger);
 $menuService= new MenuService($menuRepository, $logger);
 $prenotazioniService= new PrenotazioniService($prenotazioniRepository, $logger,$storicoPrenotazioni,$pdo);
-
+$leggiStoricoService = new LeggiStoricoService($leggistoricoRepository); 
 
 /*inserisco l'aurorizzazione nelle pagine
 

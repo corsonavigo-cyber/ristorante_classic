@@ -155,7 +155,9 @@ try {
     }
 } catch (\ValueError $e) {
     risposta('Valore enum non valido: ' . $e->getMessage(), 422);
-} catch (\InvalidArgumentException $e) {
+} catch (\InvalidArgumentException $e ) {
+    risposta($e->getMessage(), 400);
+} catch (\TypeError $e) {
     risposta($e->getMessage(), 400);
 } catch (\RuntimeException $e) {
     risposta($e->getMessage(), 404);

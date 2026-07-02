@@ -37,22 +37,23 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
             <label><input type="radio" id="attiva-no" name="attiva" value=0> No</label>
         </fieldset>
 
-        <fieldset id="tavoli">
+        <fieldset id="tavoli_checkbox">
             <!--fare una lista dinamica di checkbox con js per vedere i tavoli in modo dinamico. Poi mettere una funzione che controlli se il numero di persone ha bisogno di 1 o pui tavoli  -->
-            <legend>Tavoli</legend>
-            <!--tavoliSelezionati[] serve  ariempire un array di tavoli-->
-            <label><input type="checkbox" name="tavoliSelezionati[]" value="1"></label>
+            
             
         </fieldset> 
         <div id="controllo" ><p id="avviso"></p></div>
         <button type="button" class="btn-inserisci-prenotazione" >Inserisci</button>
      </form>
    </div>
+   <a class="btn" href="gestioneprenotazioni.php">Torna alla Gestione delle Prenotazioni</a>
+
   </div>
 <script>
-    const API = '/ristorante_classic/api/menu.php';
+    const API = '/ristorante_classic/api/prenotazioni.php';
+    const API_tavoli = '/ristorante_classic/api/tavoli.php';
 </script>
-<script src="/ristorante_classic/public/assets/js/menu.js" defer></script>    
+<script src="/ristorante_classic/public/assets/js/prenotazioni.js" defer></script>    
 
 
 </main>
