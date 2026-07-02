@@ -21,11 +21,12 @@ $title = 'Gestione Prenotazioni';
     
     <div class="schermata-divisa">
     <div>
-    <button type="button"  class="btn-elimina-storico-prenotazione" >Elimina Storico</button>
+    
     <a class="btn" href="visualizzastorico.php">Visualizza lo Storico delle Prenotazioni</a>
     <a class="btn" href="inserisciprenotazioni.php">Inserisci una Nuova Prenotazione</a>
 
     <h3  class="title">Prenotazioni Non Associate a Un Tavolo</h3>
+
     <div class="prenotazioni" id="lavagna_prenotazioni_notavolo">
        
     </div>

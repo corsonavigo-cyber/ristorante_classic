@@ -197,42 +197,43 @@ class PrenotazioniService {
     //eliminazione composta: cancella le prenotazioni di ieri (+ le loro relazioni con i tavoli)
     public function eliminaPrenotazioniIeri(): bool
     {
+        
         $ieri = (new \DateTime('yesterday'))->format('Y-m-d');
 
-        $prenotazioniIeri = $this->prenotazioniRepo->visualizzaPrenotazioniData($ieri);
+        $prenotazioniIeri = $this->prenotazioniRepo->visualizzaPrenotazioniPrimaDi($ieri);
 
         // FIX: niente da cancellare -> non è un errore, esci silenziosamente
         if (!$prenotazioniIeri) {
-            return true;
+            return $this->logger->info("Eliminazione Prenotazione multipla nessuna prenotazione ieri fallita: {$e->getMessage()}");
         }
 
         try {
             $this->pdo->beginTransaction();
 
-            foreach ($prenotazioniIeri as $prenotazione) {
-                $id = $prenotazione['id_prenotazione'];
+            foreach ($prenotazioniIeri as $prenotazioneieri) { // FIX: singolo foreach, niente nesting
+                $id = $prenotazioneieri['id_prenotazione'];
 
                 $this->prenotazioniRepo->eliminaRelazionePrenotazioneTavolo($id);
                 $this->prenotazioniRepo->eliminaPrenotazione($id);
 
-                // log PRIMA che il dato sparisca dal DB, altrimenti perdi il contesto
+                // log prima che il dato sparisca, altrimenti perdi il contesto
                 $this->storicoPrenotazioni->cancellata(
-                    "Prenotazione id {$id} ({$prenotazione['nome_prenotazione']}) del {$ieri} rimossa automaticamente (scaduta)"
+                    "Prenotazione id {$id} ({$prenotazioneieri['nome_prenotazione']}) del {$prenotazioneieri['data_in_prenotazione']} rimossa automaticamente (scaduta)"
                 );
             }
 
             $this->pdo->commit();
-
-            $this->logger->info("Pulizia automatica: rimosse " . count($prenotazioniIeri) . " prenotazioni del {$ieri}");
+            $this->logger->info("Pulizia automatica: rimosse " . count($prenotazioniIeri) . " prenotazioni scadute (prima del {$oggi})");
 
             return true;
         } catch (\Throwable $e) {
-            $this->pdo->rollBack();
-            $this->logger->error("Errore durante la pulizia prenotazioni di ieri: {$e->getMessage()}");
+            if ($this->pdo->inTransaction()) {
+               $this->pdo->rollBack();
+            }
+            $this->logger->error("Errore durante la pulizia prenotazioni scadute: {$e->getMessage()}");
             return false;
         }
     }
-
 
     //eliminazione composta: cancella le prenotazioni (+ le loro relazioni con i tavoli)
     public function eliminaPrenotazioniERelazioneTavolo(int $id_prenotazione): bool
@@ -329,9 +330,9 @@ class PrenotazioniService {
 
             $this->prenotazioniRepo->aggiornaPrenotazione( $id_prenotazione, $nome_prenotazione, $ora_prenotazione,$data_in_prenotazione, $attiva, $numero_persone);
             
-            $tavoliStr = implode(', ', $tavoli);
+            
             // se questa lancia RuntimeException, va dritta nel catch sotto
-            $this->prenotazioniRepo->aggiornaTavoloPrenotazione($id_prenotazione, $tavoliStr);
+            $this->prenotazioniRepo->aggiornaTavoloPrenotazione($id_prenotazione, $tavoli);
 
             $this->pdo->commit(); // entrambe le query confermate insieme
 

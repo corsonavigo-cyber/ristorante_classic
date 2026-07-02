@@ -54,6 +54,12 @@ class PrenotazioniRepositories {
         return $stmt->fetchAll() ?:null;
      }
 
+    public function visualizzaPrenotazioniPrimaDi(string $data): array {
+            $stmt = $this->pdo->prepare('SELECT * FROM prenotazione WHERE data_in_prenotazione < :data');
+            $stmt->execute(['data' => $data]);
+            return $stmt->fetchAll() ?:null;
+    }
+
 
                 //INSERIMENTI
 

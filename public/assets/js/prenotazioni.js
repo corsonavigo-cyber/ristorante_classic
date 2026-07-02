@@ -42,13 +42,13 @@
   //controllo che siamo nella pagina giusta per attivare i lissener
   if (lavagna_prenotazioni_tavolo) {
       document.addEventListener('DOMContentLoaded',mostraDataOra);
+      document.addEventListener('DOMContentLoaded', eliminaStoricoPrenotazione);
       //aggiungo il lissener al caricamento se siamo nell'ambiente giusto
       document.addEventListener('DOMContentLoaded', caricaPrenotazioniConTavolo);
       document.addEventListener('DOMContentLoaded', caricaPrenotazioniSenzaTavolo);
       //il bottone togli dal menu lo attivo solo se seno nell'elenco attivo
       document.addEventListener('click', togliPrenotazioneDalTavoloClick);
       document.addEventListener('click', eliminaPrenotazioneClick);
-      document.addEventListener('click', eliminaStoricoPrenotazioneClick);
       document.addEventListener('click', disattivaPrenotazione);
       document.addEventListener('click', attivaPrenotazione);
 
@@ -210,26 +210,18 @@
   }
 
 
-  async function eliminaStoricoPrenotazioneClick(e){
+  async function eliminaStoricoPrenotazione(e){
     
     //come utilizzare fetch(URL,METHOD)
     try{
 
-        //seleziono l'elemento bottone per l'elimina
-        const btn_elimina = e.target.closest('.btn-elimina-storico-prenotazione');
-        //escludo click per errore
-        if(!btn_elimina) return;
-        //questa funzione di js genera un alet bool
-        if(!confirm('vuoi eliminare queste prenotazioni?')){
-          return;
-        }
-        //recupero il data set da data-id
-        const id_elimina = btn_elimina.dataset.id;
-        //blocco l'esecuzione se non arriva l'id
-        if(!id_elimina){
-          throw new Error('Id Mancante nel bottone!');
-        }
-            
+        
+        const oggi = new Date().toISOString().slice(0, 10); 
+        const ultimaEsecuzione = localStorage.getItem('ultimaPuliziaPrenotazioni');
+
+        if (ultimaEsecuzione === oggi) return; // già eseguita oggi, esci
+
+          
         //salvo il response dentro risposta, chiamo la fetch su un id specifico e scelgo il metodo delete definito in tavoli.php
         const risposta = await fetch(`${API}?type=pulisci`, {
             method: 'DELETE'
@@ -240,6 +232,7 @@
           const json = await risposta.json().catch(()=>null);
           throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
         }
+        localStorage.setItem('ultimaPuliziaPrenotazioni', oggi);
         //se il flusso del programma non viene interrotto ricarico le prenotazioni
         window.location.reload();
     }catch (errore){
@@ -595,7 +588,7 @@ async function modificaPrenotazioneClick(e){
         if(!id_modifica) throw new Error('ID Prenotazione mancante');
 
         const nome_prenotazione = document.getElementById('nome-prenotazione').value.trim();
-        const ora_prenotazione = document.getElementById('ora-prenotazione').value;
+        const ora_prenotazione = document.getElementById('ora-prenotazione').value.length === 5 ? `${document.getElementById('ora-prenotazione').value}:00` : document.getElementById('ora-prenotazione').value;
         const data_in_prenotazione = document.getElementById('data-in-prenotazione').value;
         const tavoliSelezionati = Array.from(document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')).map(el => parseInt(el.value)); 
         const attivo = parseInt(document.querySelector('input[name="attiva"]:checked').value, 10); // FIX: cast a int, coerente col backend (era stringa)
@@ -606,16 +599,16 @@ async function modificaPrenotazioneClick(e){
         if (Number.isNaN(numero_persone) || numero_persone <= 0) throw new Error('Inserisci un numero di persone valido');
 
         const conTavolo = tavoliSelezionati.length >= 1;
-        const type = conTavolo ? 'prenotazioni_tavolo' : 'prenotazioni';
+        const type = 'prenotazioni_tavolo';
 
         // FIX: body unificato, elimina la duplicazione tra i due rami
         const body = {
             nome_prenotazione: String(nome_prenotazione),
-            ora_prenotazione: `${ora_prenotazione}:00`,
+            ora_prenotazione: `${ora_prenotazione}`,
             data_in_prenotazione: String(data_in_prenotazione),
             attiva: attivo, // FIX: chiave "attiva" per matchare il parametro PHP $body['attiva'], non "attivo"
             numero_persone: numero_persone,
-            ...(conTavolo && { tavoli: tavoliSelezionati })
+            tavoli: tavoliSelezionati 
         };
 
         const risposta = await fetch(`${API}?type=${type}&id=${id_modifica}`, {

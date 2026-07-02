@@ -8,3 +8,8 @@
 [2026-07-02 12:21:36] [EFFETTUATA] Prenotazione inserita correttamente id_prenotazione 6 sul tavolo 5
 [2026-07-02 12:21:48] [CANCELLATA] Prenotazione id 6 (gianni) rimossa
 [2026-07-02 12:24:50] [EFFETTUATA] Prenotazione inserita correttamente id_prenotazione 7 sul tavolo 5
+[2026-07-02 14:52:02] [SPOSTATA] Prenotazione 7: modificata con successo sia il tavolo che la prenotazione
+[2026-07-02 15:00:25] [SPOSTATA] Prenotazione 7: modificata con successo sia il tavolo che la prenotazione
+[2026-07-02 15:32:22] [CANCELLATA] Prenotazione id 3 (Luca Verdi) del 2026-07-01 rimossa automaticamente (scaduta)
+[2026-07-02 15:32:22] [CANCELLATA] Prenotazione id 3 (Luca Verdi) del 2026-07-01 rimossa automaticamente (scaduta)
+[2026-07-02 16:08:02] [CANCELLATA] Prenotazione id 7 (gianni) del 2024-07-02 rimossa automaticamente (scaduta)

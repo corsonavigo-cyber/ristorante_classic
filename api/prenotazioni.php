@@ -128,11 +128,14 @@ try {
             break;
 
         case 'DELETE':
-            if (!$id) {
-                risposta('ID mancante', 400);
-            }
+            
+        
+            
             if (!$type) {
                 throw new \InvalidArgumentException('Parametro type mancante');
+            }
+            if ($type !== 'pulisci' && !$id) {
+                risposta('ID mancante', 400);
             }
 
             $body = json_decode(file_get_contents('php://input'), true) ?? [];
