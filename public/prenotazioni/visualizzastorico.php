@@ -18,8 +18,8 @@ $title = 'Storico Prenotazioni';
     </div>
     
     <div>
-      <label for="ricerca"> Ricerca: </label>
-      <input type="text" id="ricerca_storico" nome="ricerca">
+      <label for="ricerca-storico"> Ricerca: </label>
+      <input type="text" id="ricerca-storico" nome="ricerca-storico">
     </div>
     <div class="menu" id="storico">
        

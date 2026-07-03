@@ -43,6 +43,7 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
             
         </fieldset> 
         <div id="controllo" ><p id="avviso"></p></div>
+        <div id="controllo1" ><p id="avviso1"></p></div>
         <button type="button" class="btn-inserisci-prenotazione" >Inserisci</button>
      </form>
    </div>

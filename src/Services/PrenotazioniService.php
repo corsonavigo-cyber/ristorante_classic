@@ -204,7 +204,7 @@ class PrenotazioniService {
 
         // FIX: niente da cancellare -> non è un errore, esci silenziosamente
         if (!$prenotazioniIeri) {
-            return $this->logger->info("Eliminazione Prenotazione multipla nessuna prenotazione ieri fallita: {$e->getMessage()}");
+            return $this->logger->info(" Nessuna Eliminazione Prenotazione multipla prenotazione ieri non presenti");
         }
 
         try {

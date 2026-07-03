@@ -6,7 +6,7 @@
   //per caricare e selezionare dove avverà l'insert dei menu
   const lavagna_prenotazioni_tavolo = document.getElementById('lavagna_prenotazioni_tavolo');
   const lavagna_prenotazioni_notavolo = document.getElementById('lavagna_prenotazioni_notavolo');
-
+  
   const form_inserisci_prenotazione= document.getElementById('form_inserisci_prenotazione');
   const storico = document.getElementById('storico');
   const form_modifica_prenotazione= document.getElementById('form_modifica_prenotazione');
@@ -54,45 +54,60 @@
 
   }else if(form_inserisci_prenotazione){
       //attiva il bottone inserisci
-      document.addEventListener('click', inserisciPrenotazioneClick);
-      document.addEventListener('DOMContentLoaded', () => {
-          const runCheck = () => {
-              const tavoliSelezionati = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')]
-                  .map(el => parseInt(el.value));
-              controllaTavoloDataDisponibile(tavoliSelezionati);
-          };
+     document.addEventListener('click', inserisciPrenotazioneClick);
 
-          // checkbox: input va bene, reattività immediata senza rischi
-          document.querySelectorAll('input[name="tavoliSelezionati[]"]')
-              .forEach(cb => cb.addEventListener('input', runCheck));
+    document.addEventListener('DOMContentLoaded', () => {
+        const runCheck = () => {
+            const tavoliSelezionati = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')]
+                .map(el => parseInt(el.value));
+            controllaTavoloDataDisponibile(tavoliSelezionati);
+            controllaPostiTavoloDisponibili(tavoliSelezionati);
+        };
 
-          // data/ora: change, per evitare validazioni su valori incompleti
-          document.querySelectorAll('#data-in-prenotazione, #ora-prenotazione')
-              .forEach(campo => campo.addEventListener('change', runCheck));
-      });
-      document.addEventListener('DOMContentLoaded', precaricaTavoliForm);
+        // FIX: delegation  (es. #tavoli_checkbox), funziona anche per checkbox iniettate dopo
+        document.getElementById('tavoli_checkbox').addEventListener('change', (e) => {
+            if (e.target.name === 'tavoliSelezionati[]') runCheck();
+        });
+
+        document.getElementById('numero-persone').addEventListener('input', runCheck);
+
+        document.querySelectorAll('#data-in-prenotazione, #ora-prenotazione')
+            .forEach(campo => campo.addEventListener('change', runCheck));
+    });
+
+    document.addEventListener('DOMContentLoaded', precaricaTavoliForm);
       
   }else if(form_modifica_prenotazione){
       //attiva il bottone inserisci
       document.addEventListener('click', modificaPrenotazioneClick);
       document.addEventListener('DOMContentLoaded', precaricaTavoliForm);
       document.addEventListener('DOMContentLoaded', () => {
-          const runCheck = () => {
-              const tavoliSelezionati = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')]
-                  .map(el => parseInt(el.value));
-              controllaTavoloDataDisponibile(tavoliSelezionati);
-          };
+        const runCheck = () => {
+            const tavoliSelezionati = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')]
+                .map(el => parseInt(el.value));
+            controllaTavoloDataDisponibile(tavoliSelezionati);
+            controllaPostiTavoloDisponibili(tavoliSelezionati);
+        };
 
-          // checkbox: input va bene, reattività immediata senza rischi
-          document.querySelectorAll('input[name="tavoliSelezionati[]"]')
-              .forEach(cb => cb.addEventListener('input', runCheck));
+        // FIX: funziona anche per checkbox iniettate dopo
+        document.getElementById('tavoli_checkbox').addEventListener('change', (e) => {
+            if (e.target.name === 'tavoliSelezionati[]') runCheck();
+        });
 
-          // data/ora: change, per evitare validazioni su valori incompleti
-          document.querySelectorAll('#data-in-prenotazione, #ora-prenotazione')
-              .forEach(campo => campo.addEventListener('change', runCheck));
-      });
+        
+        document.getElementById('numero-persone').addEventListener('input', runCheck);
+
+        document.querySelectorAll('#data-in-prenotazione, #ora-prenotazione')
+            .forEach(campo => campo.addEventListener('change', runCheck));
+    });
+
   }else if(storico){
-      document.addEventListener('DOMContentLoaded', caricaStorico);
+     const filtro = document.getElementById('ricerca-storico').value;
+     document.addEventListener('DOMContentLoaded', () => caricaStorico());
+     
+     document.getElementById('ricerca-storico').addEventListener('input', function() {
+    caricaStorico(this.value.trim()); // function() → this è l'input ✓
+    });
   }
 
  //Caricare reiderizza tutte le prenotazioni attivie
@@ -103,8 +118,15 @@
     const jsonprenotazioni = await rispprenotazioni.json();
     
     const prenotazioniDaOggi = jsonprenotazioni.data.filter(prenotazioneg=>prenotazioneg.data_in_prenotazione >= today());
-    
-    lavagna_prenotazioni_tavolo.innerHTML = prenotazioniDaOggi.filter(prenotazione => prenotazione.id_tavolo !== null ).map(prenotazione=>`
+    /*console.table(
+    jsonprenotazioni.data.map(p => ({
+        prenotazioni: jsonprenotazioni.data,
+        data: p.data_in_prenotazione,
+        oggi: today(),
+        confronto: p.data_in_prenotazione >= today()
+    }))
+    );*/
+    lavagna_prenotazioni_tavolo.innerHTML = prenotazioniDaOggi.filter(prenotazione => prenotazione.id_tavoli !== null ).map(prenotazione=>`
         <!--elementi prenotazioni-->
     <div class="prenotazione" id="${prenotazione.id_prenotazione}">
        
@@ -248,30 +270,34 @@
     //carico i prenotazioni
     const rispprenotazioni = await fetch(`${API}?type=prenotazioni`);
     const jsonprenotazioni = await rispprenotazioni.json();
-    
     const prenotazioniDaOggi = jsonprenotazioni.data.filter(prenotazioneg=>prenotazioneg.data_in_prenotazione >= today());
-    
-    lavagna_prenotazioni_notavolo.innerHTML = prenotazioniDaOggi.filter(prenotazione => prenotazione.id_tavoli === null ).map(prenotazione=>`
-        <!--elementi prenotazioni-->
-    <div class="prenotazione" id="${prenotazione.id_prenotazione}">
-       
-       <h3 class="comment"><b>${prenotazione.nome_prenotazione}</b></h3>
+    const pdaogginotavolo = prenotaconsole.log(pdaogginotavolo);
+    if(pdaogginotavolo.length){
+     
+        lavagna_prenotazioni_notavolo.innerHTML = pdaogginotavolo.map(prenotazione=>`
+            <!--elementi prenotazioni-->
+        <div class="prenotazione" id="${prenotazione.id_prenotazione}">
+        
+        <h3 class="comment"><b>${prenotazione.nome_prenotazione}</b></h3>
 
-       <p class="comment">${prenotazione.ora_prenotazione.slice(0, 5)}</p>
-       <p class="comment">Prezzo: ${prenotazione.data_in_prenotazione.split('-').reverse().join('/')} </p> 
-       <!--va fatto così perché dentro un litteral il foreach non funziona per il problema dell'hosting, risulta undefine-->
-       <button class="${prenotazione.attiva ? 'btn-disattiva-prenotazione' : 'btn-attiva-prenotazione'}" data-id="${prenotazione.id_prenotazione}">  ${prenotazione.attiva ? 'Disattiva' : 'Attiva'} </button>
-       <ul id="elenco_prenotazioni" class="elenco_prenotazioni">
-         ${prenotazione.tavoli ? prenotazione.tavoli.split(', ').map(a => `<li class="comment">Tavolo : ${a}</li>`).join(''):'<li>Prenotazione Non Associata a un tavolo</li>'}
-       </ul>
-       <!--link AJAX per inviare la modifica prenotazione-->
-       <a class="btn" href="modificaprenotazione.php?id=${prenotazione.id_prenotazione}">Modifica ✏️</a>
+        <p class="comment">${prenotazione.ora_prenotazione.slice(0, 5)}</p>
+        <p class="comment">Prezzo: ${prenotazione.data_in_prenotazione.split('-').reverse().join('/')} </p> 
+        <!--va fatto così perché dentro un litteral il foreach non funziona per il problema dell'hosting, risulta undefine-->
+        <button class="${prenotazione.attiva ? 'btn-disattiva-prenotazione' : 'btn-attiva-prenotazione'}" data-id="${prenotazione.id_prenotazione}">  ${prenotazione.attiva ? 'Disattiva' : 'Attiva'} </button>
+        <ul id="elenco_prenotazioni" class="elenco_prenotazioni">
+            ${prenotazione.tavoli ? prenotazione.tavoli.split(', ').map(a => `<li class="comment">Tavolo : ${a}</li>`).join(''):'<li>Prenotazione Non Associata a un tavolo</li>'}
+        </ul>
+        <!--link AJAX per inviare la modifica prenotazione-->
+        <a class="btn" href="modificaprenotazione.php?id=${prenotazione.id_prenotazione}">Modifica ✏️</a>
 
-       <!--button AJAX per richiedere l'eliminazione' della prenotazione-->
-       
-       <button class="btn-elimina-prenotazione" data-id="${prenotazione.id_prenotazione}">Elimina 🗑️</button>
-    </div>`).join('');
-       
+        <!--button AJAX per richiedere l'eliminazione' della prenotazione-->
+        
+        <button class="btn-elimina-prenotazione" data-id="${prenotazione.id_prenotazione}">Elimina 🗑️</button>
+        </div>`).join('');
+    }else{
+         lavagna_prenotazioni_notavolo.innerHTML = '<p> Non ci sono prenotazioni non assegnate a un tavolo</p>'
+         
+    }   
   }
 
   async function togliPrenotazioneDalTavolo(id_disattiva){
@@ -408,7 +434,7 @@
     const lavagna = document.getElementById('tavoli_checkbox');
     //da aggiungere la visualizzazione delle prenotazioni e dei conti e delle comande  
     lavagna.innerHTML = data.map(tavolo=>`
-       <li><label><input type="checkbox" name="tavoliSelezionati[]" value="${tavolo.id_tavolo}">Numero Tavolo ${tavolo.numero_tavolo} posti ${tavolo.posti_min}</label></li>`).join('');
+       <li><label><input type="checkbox" name="tavoliSelezionati[]" value="${tavolo.id_tavolo}" data-posti="${tavolo.posti_max}">Numero Tavolo ${tavolo.numero_tavolo} posti ${tavolo.posti_max}</label></li>`).join('');
     
     const attivaInput = document.querySelector(`input[name="attiva"][value="1"]`);
     if (attivaInput) attivaInput.checked = true;    
@@ -550,6 +576,55 @@ function getTurno(orario) {
      
 }
 
+async function controllaPostiTavoloDisponibili(tavoliSelezionati){
+    const avviso = document.getElementById("avviso1");
+    const sezione = document.querySelector('#controllo1');
+
+    if(tavoliSelezionati.length === 0){
+        sezione.classList.remove('warning', 'controllopositivo');
+        avviso.innerHTML = "";
+        return true;
+    }
+
+    const numeroPersone = parseInt(document.getElementById('numero-persone').value, 10); // FIX: cast esplicito
+    if (Number.isNaN(numeroPersone) || numeroPersone <= 0) {
+        sezione.classList.add('warning');
+        avviso.innerHTML = `Inserisci un numero di persone valido`;
+        return false;
+    }
+
+    // FIX: somma posti letti da data-posti delle checkbox selezionate, non dagli id grezzi
+    const postiTotali = tavoliSelezionati.reduce((acc, id) => {
+        const checkbox = document.querySelector(`input[name="tavoliSelezionati[]"][value="${id}"]`);
+        return acc + (parseInt(checkbox?.dataset.posti, 10) || 0);
+    }, 0);
+    console.log(postiTotali)
+    // FIX: confronto diretto, niente più chained comparison invalido
+    if (numeroPersone > postiTotali) {
+        sezione.classList.remove('controllopositivo');
+        sezione.classList.add('warning');
+        avviso.innerHTML = `Hai bisogno di più tavoli per ${numeroPersone} persone ti mancano da inserire ${numeroPersone-postiTotali}. Se vuoi procedere comunque, premi inserisci.`;
+        return false;
+    }
+
+    sezione.classList.remove('warning');
+    avviso.innerHTML = "";
+    sezione.classList.add('controllopositivo');
+    return true;
+}
+
+function getTurno(orario) {
+    const [h] = orario.slice(0, 5).split(':').map(Number);
+    return h < 15 ? 'pranzo' : 'cena';
+}
+
+ async function mostraDataOra() {
+    
+    const dataOggi = document.getElementById('oggi');
+    dataOggi.innerHTML = `<p>${oggi()}</p>`
+     
+}
+
 
 
  async function precaricaFormModificaPrenotazione() {
@@ -634,41 +709,40 @@ async function modificaPrenotazioneClick(e){
   
 
    //esempio di funzione ricerca nel file storico caricato
+  //1 H persa per capire che siccome riscriveva va lasciata una chace fuori
+  let storicoCache = []; // cache globale
 
-  async function caricaStorico() {
-      try {
-          const risposta = await fetch(`${API}?type=storico`);
+  async function caricaStorico(filtro = '') {
+    try {
+        // fetch solo se cache vuota
+        if (storicoCache.length === 0) {
+            const risposta = await fetch(`${API}?type=storico`);
+            if (!risposta.ok) throw new Error(`Errore HTTP ${risposta.status}`);
+            const json = await risposta.json();
+            storicoCache = json.data;
+        }
 
-          if (!risposta.ok) {
-              const json = await risposta.json().catch(() => null);
-              throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
-          }
+        const righe = filtro
+            ? storicoCache.filter(r => r.toLowerCase().includes(filtro.toLowerCase()))
+            : storicoCache;
 
-          const json = await risposta.json();
+        storico.innerHTML = [...righe].reverse().map(riga => { // spread evita di mutare la cache
+            const match = riga.match(/^\[(.+?)\]\s+\[(.+?)\]\s+(.+)$/);
+            if (!match) return `<div class="storico-item"><p class="comment">${riga}</p></div>`;
 
-          storico.innerHTML = json.data.map(riga => {
-              // estrae: [data ora] [TIPO] resto del messaggio
-              const match = riga.match(/^\[(.+?)\]\s\[(.+?)\]\s(.+)$/);
-              
-              if (!match) {
-                  // fallback se una riga non rispetta il formato atteso
-                  return `<div class="storico-item"><p class="comment">${riga}</p></div>`;
-              }
+            const [, dataOra, tipo, messaggio] = match;
+            const classeTipo = tipo.toLowerCase().replace(/\s+/g, '-');
+            return `
+                <div class="storico-item storico-${classeTipo}">
+                    <span class="storico-data">${dataOra}</span>
+                    <span class="storico-tipo">${tipo}</span>
+                    <p class="comment">${messaggio.trim()}</p>
+                </div>
+            `;
+        }).join('');
 
-              const [, dataOra, tipo, messaggio] = match;
-              const classeTipo = tipo.toLowerCase().replace(/\s+/g, '-'); // es. "non-presentati"
-
-              return `
-                  <div class="storico-item storico-${classeTipo}">
-                      <span class="storico-data">${dataOra}</span>
-                      <span class="storico-tipo">${tipo}</span>
-                      <p class="comment">${messaggio.trim()}</p>
-                  </div>
-              `;
-          }).join('');
-
-      } catch (errore) {
-          console.error(errore);
-          alert(errore.message);
-      }
-  }
+    } catch (errore) {
+        console.error(errore);
+        alert(errore.message);
+    }
+   }   

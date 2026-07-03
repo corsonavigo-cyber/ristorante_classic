@@ -13,3 +13,4 @@
 [2026-07-02 15:32:22] [CANCELLATA] Prenotazione id 3 (Luca Verdi) del 2026-07-01 rimossa automaticamente (scaduta)
 [2026-07-02 15:32:22] [CANCELLATA] Prenotazione id 3 (Luca Verdi) del 2026-07-01 rimossa automaticamente (scaduta)
 [2026-07-02 16:08:02] [CANCELLATA] Prenotazione id 7 (gianni) del 2024-07-02 rimossa automaticamente (scaduta)
+[2026-07-03 09:02:04] [CANCELLATA] Prenotazione id 1 (Mario Rossi) del 2026-07-01 rimossa automaticamente (scaduta)
