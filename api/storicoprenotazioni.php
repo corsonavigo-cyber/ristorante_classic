@@ -13,6 +13,10 @@ try {
             http_response_code(200);
             echo json_encode(['data' => $leggiStoricoService->ottieniStorico()]);
         })(),
+        ['GET', 'ordinistorico'] => (function () use ($leggiStoricoOrdiniService) {
+            http_response_code(200);
+            echo json_encode(['data' => $leggiStoricoOrdiniService->ottieniStorico()]);
+        })(),
         default => throw new \InvalidArgumentException('Endpoint non valido'),
     };
 } catch (\ValueError $e) {
