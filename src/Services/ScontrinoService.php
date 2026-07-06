@@ -28,14 +28,7 @@ class ScontrinoService {
     }
 
      //visualizza scontrini
-    public function visualizzaPrenotazione(int $id_prenotazione): array {
-        try {
-            return $this->scontrinoRepo->visualizzaPrenotazione($id_prenotazione) ?? [];
-        } catch (\Throwable $e) {
-            $this->logger->error("Errore recupero prenotazione: {$e->getMessage()}");
-            return []; 
-        }
-    }
+    
     private function isDataValida(string $data): bool
     {
         $d = \DateTime::createFromFormat('Y-m-d', $data);
