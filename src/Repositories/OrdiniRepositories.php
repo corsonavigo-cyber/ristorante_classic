@@ -220,7 +220,16 @@ class OrdiniRepositories {
         return $stmt->rowCount()>0;     
         }
 
-    public function eliminaRelazionePiattoMomento(int $id_piatto):bool{
+     public function eliminaRelazioneBevandaMomento(int $id_bevanda):bool{
+
+        $stmt = $this->pdo->prepare('DELETE FROM  dettaglio_ordine_bar WHERE id_bevanda = :id_bevanda');
+        $stmt->execute([
+            'id_ordine' => $id_ordine
+            ]);
+        return $stmt->rowCount()>0;     
+        }
+
+     public function eliminaRelazionePiattiOrdine(int $id_ordine):bool{
 
         $stmt = $this->pdo->prepare('DELETE FROM dettaglio_ordine_cucina WHERE id_ordine = :id_ordine');
         $stmt->execute([
@@ -229,7 +238,17 @@ class OrdiniRepositories {
         return $stmt->rowCount()>0;     
         }
 
+     public function eliminaRelazionePiattoOrdine(int $id_piatto):bool{
+
+        $stmt = $this->pdo->prepare('DELETE FROM dettaglio_ordine_cucina WHERE id_piatto = :id_piatto');
+        $stmt->execute([
+            'id_ordine' => $id_ordine
+            ]);
+        return $stmt->rowCount()>0;     
+        }
+   
      //UPDATE
+     //nel service deve inviare anche il conto allo scontrino e chiudersi, poi automaticamnete gli ordini di "ieri" saranno cancellati e inseriti nello storico
      public function aggiornaRelazioneOrdineStato(int $id_ordine, int $id_stato):bool
      {
         $stmt = $this->pdo->prepare('UPDATE stato_ordine SET id_stato = :id_stato WHERE id_ordine = :id_ordine');
@@ -273,7 +292,7 @@ class OrdiniRepositories {
 
     public function relazioneBevandeMomentoAggiorna(int $id_bevanda,int $id_momento):bool{
 
-        $stmt = $this->pdo->prepare('UPDATE  dettaglio_ordine_bar SET id_bevanda :id_piatto WHERE id_bevanda :id_momento ');
+        $stmt = $this->pdo->prepare('UPDATE  dettaglio_ordine_bar SET id_momento :id_momento WHERE id_bevanda :id_bevanda ');
         $stmt->execute([
             'id_bevanda'=>$id_bevanda,
             'id_momento'=>$id_momento
@@ -284,7 +303,7 @@ class OrdiniRepositories {
 
     public function relazionePiattoMomentoAggiorna(int $id_piatto,int $id_momento):bool{
 
-        $stmt = $this->pdo->prepare('UPDATE dettaglio_ordine_cucina SET id_piatto :id_piatto WHERE id_momento :id_momento ');
+        $stmt = $this->pdo->prepare('UPDATE dettaglio_ordine_cucina SET id_momento :id_momento WHERE  id_piatto :id_piatto');
         $stmt->execute([
             'id_piatto'=>$id_piatto,
             'id_momento'=>$id_momento
@@ -318,50 +337,23 @@ class OrdiniRepositories {
         return $stmt->rowCount()>0;     
         }
 
+        
+
 }
 
-/* da aggiungere  5. Recuperare un momento
+/* 
 
-
-Così eviti di scaricare tutto l'ordine.
-
-6. Chiudere un ordine
+ Chiudere un ordine
 
 Io farei proprio una funzione dedicata.
 
 
 
 
-8. Spostare un ordine
-spostaOrdine(
-    int $id_ordine,
-    array $nuoviTavoli
-)
 
-internamente elimina le vecchie relazioni e inserisce le nuove.
 
-9. Eliminare un singolo piatto
 
-Non l'intero ordine.
 
-eliminaPiatto(
-    int $id_ordine,
-    int $id_piatto,
-    Momento $momento
-)
-10. Eliminare una bevanda
 
-Stessa logica.
 
-11. Cambiare momento
-
-Molto utile.
-
-spostaPiattoMomento(
-    int $id_ordine,
-    int $id_piatto,
-    Momento $origine,
-    Momento $destinazione
-)
-
-Il cameriere può spostare un piatto da "primo" a "secondo" senza cancellarlo.*/
+*/
