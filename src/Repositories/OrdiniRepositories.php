@@ -30,6 +30,13 @@ class OrdiniRepositories {
         return $stmt->fetchAll() ?:null;
      }
 
+     public function visualizzaTuttiGliOrdiniDiIeri():?array
+     {
+        $stmt =$this->pdo->prepare('SELECT * FROM api_tot WHERE data_e_ora < CURDATE()');
+        $stmt->execute();
+        return $stmt->fetchAll() ?:null;
+     }
+
      public function visualizzaTuttiGliOrdiniStato(Stato $nome_stato):?array
      {
         $stmt =$this->pdo->prepare('SELECT * FROM api_tot WHERE data_e_ora >= CURDATE() AND nome_stato = :nome_stato ');
@@ -43,11 +50,11 @@ class OrdiniRepositories {
         return $stmt->fetchAll() ?:null;
      }
 
-     public function visualizzaIlMomentoDiUnOrdine(int $id_ordine,Momento $nome_momento):?array
+     public function visualizzaIlMomentoDiUnOrdine(int $id_ordine,int $id_momento):?array
      {
-        $stmt =$this->pdo->prepare('SELECT * FROM api_tot WHERE data_e_ora >= CURDATE()  AND id_ordine = :id_ordine AND nome_momento = :nome_momento');
+        $stmt =$this->pdo->prepare('SELECT * FROM api_tot WHERE data_e_ora >= CURDATE()  AND id_ordine = :id_ordine AND id_momento = :id_momento');
         $stmt->execute([
-            'nome_momento' => $nome_momento->value,
+            'nome_momento' => $id_momento,
             'id_ordine' => $id_ordine
         ]);
         return $stmt->fetchAll() ?:null;
@@ -163,88 +170,91 @@ class OrdiniRepositories {
      //DELETE
 
      
-//domani prevedere elimina la relazione in base id_ordine e poi elimina le relazioni e le prenotazioni, inserendole in un file storico in base al giorno s eè passato
+//domani prevedere elimina la relazione in base id_ordine e poi elimina le relazioni e ordine, inserendole in un file storico in base al giorno s eè passato
 //delete di supporto per le relazioni
      public function eliminaRelazioneOrdineTavolo(int $id_ordine):bool
      {
         $stmt = $this->pdo->prepare('DELETE FROM ordine_tavolo WHERE id_ordine = :id_ordine');
-        $stmt->execute([
+        return $stmt->execute([
             'id_ordine' => $id_ordine
         ]);
-        return $stmt->rowCount()>0;
+         
      }
      
 
      public function eliminaOrdine(int $id_ordine):bool
      {
         $stmt = $this->pdo->prepare('DELETE FROM ordine WHERE id_ordine = :id_ordine');
-        $stmt->execute([
+        return $stmt->execute([
             'id_ordine' => $id_ordine
         ]);
-        return $stmt->rowCount()>0;
+        
      }
 
      public function eliminaRelazioneOrdinePiatto(int $id_ordine):bool
      {
         $stmt = $this->pdo->prepare('DELETE FROM dettaglio_ordine_cucina WHERE id_ordine = :id_ordine');
-        $stmt->execute([
+        return $stmt->execute([
             'id_ordine' => $id_ordine
         ]);
-        return $stmt->rowCount()>0;
+        
      }
 
      public function eliminaRelazioneOrdineBevanda(int $id_ordine):bool
      {
         $stmt = $this->pdo->prepare('DELETE FROM dettaglio_ordine_bar WHERE id_ordine = :id_ordine');
-        $stmt->execute([
+        return $stmt->execute([
             'id_ordine' => $id_ordine
         ]);
-        return $stmt->rowCount()>0;
      }
      //elimana la relazione quando voglio cancellare l'ordine (per esempio se è sbagliato)
      public function eliminaRelazioneOrdineStato(int $id_ordine):bool
      {
         $stmt = $this->pdo->prepare('DELETE FROM stato_ordine WHERE id_ordine = :id_ordine');
-        $stmt->execute([
+        return $stmt->execute([
             'id_ordine' => $id_ordine
         ]);
-        return $stmt->rowCount()>0;
+        
      }
 
-     public function eliminaRelazioneBevandeMomento(int $id_ordine):bool{
+     public function eliminaRelazioneBevandeMomento(int $id_momento):bool{
 
-        $stmt = $this->pdo->prepare('DELETE FROM  dettaglio_ordine_bar WHERE id_ordine = :id_ordine');
-        $stmt->execute([
-            'id_ordine' => $id_ordine
-            ]);
-        return $stmt->rowCount()>0;     
+        $stmt = $this->pdo->prepare('DELETE FROM  dettaglio_ordine_bar WHERE id_momento = :id_momento');
+        return $stmt->execute([
+            'id_momento' => $id_momento
+            ]);  
         }
 
      public function eliminaRelazioneBevandaMomento(int $id_bevanda):bool{
 
         $stmt = $this->pdo->prepare('DELETE FROM  dettaglio_ordine_bar WHERE id_bevanda = :id_bevanda');
-        $stmt->execute([
+        return $stmt->execute([
             'id_ordine' => $id_ordine
-            ]);
-        return $stmt->rowCount()>0;     
+            ]);  
         }
 
      public function eliminaRelazionePiattiOrdine(int $id_ordine):bool{
 
         $stmt = $this->pdo->prepare('DELETE FROM dettaglio_ordine_cucina WHERE id_ordine = :id_ordine');
-        $stmt->execute([
+        return $stmt->execute([
             'id_ordine' => $id_ordine
-            ]);
-        return $stmt->rowCount()>0;     
+            ]);  
         }
 
+     public function eliminaRelazionePiattiMomento(int $id_momento):bool{
+
+        $stmt = $this->pdo->prepare('DELETE FROM  dettaglio_ordine_cucina WHERE id_momento = :id_momento');
+        return $stmt->execute([
+            'id_momento' => $id_momento
+            ]);  
+        }
+     
      public function eliminaRelazionePiattoOrdine(int $id_piatto):bool{
 
         $stmt = $this->pdo->prepare('DELETE FROM dettaglio_ordine_cucina WHERE id_piatto = :id_piatto');
-        $stmt->execute([
+        return  $stmt->execute([
             'id_ordine' => $id_ordine
-            ]);
-        return $stmt->rowCount()>0;     
+            ]);    
         }
    
      //UPDATE
@@ -292,7 +302,7 @@ class OrdiniRepositories {
 
     public function relazioneBevandeMomentoAggiorna(int $id_bevanda,int $id_momento):bool{
 
-        $stmt = $this->pdo->prepare('UPDATE  dettaglio_ordine_bar SET id_momento :id_momento WHERE id_bevanda :id_bevanda ');
+        $stmt = $this->pdo->prepare('UPDATE  dettaglio_ordine_bar SET id_momento = :id_momento WHERE id_bevanda =:id_bevanda ');
         $stmt->execute([
             'id_bevanda'=>$id_bevanda,
             'id_momento'=>$id_momento
@@ -303,7 +313,7 @@ class OrdiniRepositories {
 
     public function relazionePiattoMomentoAggiorna(int $id_piatto,int $id_momento):bool{
 
-        $stmt = $this->pdo->prepare('UPDATE dettaglio_ordine_cucina SET id_momento :id_momento WHERE  id_piatto :id_piatto');
+        $stmt = $this->pdo->prepare('UPDATE dettaglio_ordine_cucina SET id_momento =:id_momento WHERE  id_piatto =:id_piatto');
         $stmt->execute([
             'id_piatto'=>$id_piatto,
             'id_momento'=>$id_momento
@@ -312,12 +322,34 @@ class OrdiniRepositories {
         return $stmt->rowCount()>0;     
         }
 
+
+    public function relazioneMomentoBevAggiorna(int $id_ordine,int $id_momento_vecchio,int $id_momento_nuovo ):bool{
+
+    $stmt = $this->pdo->prepare('UPDATE  dettaglio_ordine_bar SET id_momento = :id_momento_nuovo  WHERE id_ordine =:id_ordine AND id_momento =: id_momento_vecchio');
+         $stmt->execute([
+            'id_ordine' => $id_ordine,
+            'id_momento_vecchio' => $id_momento_vecchio,
+            'id_momento_nuovo' => $id_momento_nuovo
+         ]);
+        return $stmt->rowCount()>0;     
+        }
+
+    public function relazioneMomentoPiatAggiorna(int $id_ordine,int $id_momento_vecchio,int $id_momento_nuovo ):bool{
+
+    $stmt = $this->pdo->prepare('UPDATE  dettaglio_ordine_cucina SET id_momento = :id_momento_nuovo  WHERE id_ordine =:id_ordine AND id_momento =: id_momento_vecchio');
+         $stmt->execute([
+            'id_ordine' => $id_ordine,
+            'id_momento_vecchio' => $id_momento_vecchio,
+            'id_momento_nuovo' => $id_momento_nuovo
+         ]);
+        return $stmt->rowCount()>0;     
+        }
         
     
 
     public function cambiaQuantitaBevanda(int $id_bevanda,int $quantita):bool{
 
-        $stmt = $this->pdo->prepare('UPDATE dettaglio_ordine_bar SET id_bevanda :id_bevanda WHERE quantita : quantita ');
+        $stmt = $this->pdo->prepare('UPDATE dettaglio_ordine_bar SET id_bevanda =:id_bevanda WHERE quantita =: quantita ');
         $stmt->execute([
             'id_bevanda'=>$id_bevanda,
             'quantita'=>$quantita
@@ -328,7 +360,7 @@ class OrdiniRepositories {
 
     public function cambiaQuantitaPiatto(int $id_piatto,int $quantita):bool{
 
-        $stmt = $this->pdo->prepare('UPDATE dettaglio_ordine_cucina SET id_piatto :id_piatto WHERE quantita : quantita');
+        $stmt = $this->pdo->prepare('UPDATE dettaglio_ordine_cucina SET id_piatto =:id_piatto WHERE quantita =: quantita');
         $stmt->execute([
             'id_piatto'=>$id_piatto,
             'quantita'=>$quantita
