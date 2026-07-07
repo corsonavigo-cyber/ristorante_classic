@@ -18,9 +18,9 @@ class OrdiniService {
         }
     }
     //visualizza Ordini sul tavolo
-    public function visualizzaOrdiniTavoloAperto( int $id_tavolo, Stato $nome_stato): array {
+    public function visualizzaOrdiniTavoloAperto( int $id_tavolo, int $id_stato): array {
         try {
-            return $this->ordiniRepo->visualizzaOrdiniTavoloAperto($id_tavolo,$nome_stato) ?? [];
+            return $this->ordiniRepo->visualizzaOrdiniTavoloAperto($id_tavolo,$id_stato) ?? [];
         } catch (\Throwable $e) {
             $this->logger->error("Errore recupero ordini del tavolo: {$e->getMessage()}");
             return []; 
@@ -37,9 +37,9 @@ class OrdiniService {
         }
     }
 
-    public function visualizzaTuttiGliOrdiniStato(Stato $nome_stato): array {
+    public function visualizzaTuttiGliOrdiniStato(int $id_stato): array {
         try {
-            return $this->ordiniRepo->visualizzaTuttiGliOrdiniStato($nome_stato) ?? [];
+            return $this->ordiniRepo->visualizzaTuttiGliOrdiniStato($id_stato) ?? [];
         } catch (\Throwable $e) {
             $this->logger->error("Errore recupero ordini: {$e->getMessage()}");
             return []; 
@@ -548,10 +548,10 @@ class OrdiniService {
         }
 
     }
-    public function relazionePiattiMomentoAggiorna(int $id_piatto,int $id_momento):bool{
+    public function relazionePiattiMomentoAggiorna(int $id_ordine, int $id_piatto,int $id_momento):bool{
        
        try {
-             $this->ordiniRepo->relazionePiattiMomentoAggiorna($id_piatto, $id_momento);
+             $this->ordiniRepo->relazionePiattiMomentoAggiorna($id_ordine,$id_piatto, $id_momento);
              
              $this->logger->info("piatto id {$id_piatto} : aggiornata con successo sul/i momento {$id_momento} ");
              return true;
@@ -562,10 +562,10 @@ class OrdiniService {
 
     }
 
-    public function cambiaQuantitaBevanda(int $id_bevanda,int $quantita):bool{
+    public function cambiaQuantitaBevanda(int $id_ordine,int $id_bevanda,int $quantita):bool{
        
        try {
-             $this->ordiniRepo->cambiaQuantitaBevanda( $id_bevanda, $quantita);
+             $this->ordiniRepo->cambiaQuantitaBevanda( $id_ordine,$id_bevanda, $quantita);
              
              $this->logger->info("bevanda id {$id_bevanda} : aggiornata con successo sul/i quantita {$quantita} ");
              return true;

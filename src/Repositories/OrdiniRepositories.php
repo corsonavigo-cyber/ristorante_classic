@@ -37,10 +37,10 @@ class OrdiniRepositories {
         return $stmt->fetchAll() ?:null;
      }
 
-     public function visualizzaTuttiGliOrdiniStato(Stato $nome_stato):?array
+     public function visualizzaTuttiGliOrdiniStato(id $id_stato):?array
      {
-        $stmt =$this->pdo->prepare('SELECT * FROM api_tot WHERE data_e_ora >= CURDATE() AND nome_stato = :nome_stato ');
-        $stmt->execute(['nome_stato' => $nome_stato->value]);
+        $stmt =$this->pdo->prepare('SELECT * FROM api_tot WHERE data_e_ora >= CURDATE() AND id_stato = :id_stato ');
+        $stmt->execute(['id_stato' => $id_stato]);
         return $stmt->fetchAll() ?:null;
      }
      public function visualizzaTuttiGliOrdiniMomento(Momento $nome_momento):?array
@@ -78,15 +78,15 @@ class OrdiniRepositories {
         return $stmt->fetchAll() ?:null;
      }
 
-     public function visualizzaOrdiniTavoloAperto(int $id_tavolo, Stato $nome_stato):?array
+     public function visualizzaOrdiniTavoloAperto(int $id_tavolo, int $id_stato):?array
      {
         $stmt =$this->pdo->prepare(<<<'SQL'
             SELECT  * FROM api_tot
-            WHERE data_e_ora >= CURDATE() AND nome_stato = :nome_stato AND id_tavolo = :id_tavolo
+            WHERE data_e_ora >= CURDATE() AND id_stato = :id_stato AND id_tavolo = :id_tavolo
         SQL);
         $stmt->execute([
             'id_tavolo' => $id_tavolo,
-            'nome_stato' => $nome_stato
+            'id_stato' => $id_stato
         ]);
         return $stmt->fetchAll() ?:null;
      }
@@ -300,24 +300,25 @@ class OrdiniRepositories {
      
 // PATCH  Ordini
 
-    public function relazioneBevandeMomentoAggiorna(int $id_bevanda,int $id_momento):bool{
+    public function relazioneBevandeMomentoAggiorna(int $id_ordine ,int $id_bevanda,int $id_momento):bool{
 
-        $stmt = $this->pdo->prepare('UPDATE  dettaglio_ordine_bar SET id_momento = :id_momento WHERE id_bevanda =:id_bevanda ');
+        $stmt = $this->pdo->prepare('UPDATE  dettaglio_ordine_bar SET id_momento = :id_momento WHERE id_ordine =:id_ordine  AND id_bevanda =:id_bevanda ');
         $stmt->execute([
             'id_bevanda'=>$id_bevanda,
+            'id_ordine'=>$id_ordine,
             'id_momento'=>$id_momento
             
             ]);
         return $stmt->rowCount()>0;     
         }
 
-    public function relazionePiattoMomentoAggiorna(int $id_piatto,int $id_momento):bool{
+    public function relazionePiattoMomentoAggiorna(int $id_ordine, int $id_piatto,int $id_momento):bool{
 
-        $stmt = $this->pdo->prepare('UPDATE dettaglio_ordine_cucina SET id_momento =:id_momento WHERE  id_piatto =:id_piatto');
+        $stmt = $this->pdo->prepare('UPDATE dettaglio_ordine_cucina SET id_momento =:id_momento WHERE id_ordine =:id_ordine  AND id_piatto =:id_piatto');
         $stmt->execute([
             'id_piatto'=>$id_piatto,
-            'id_momento'=>$id_momento
-            
+            'id_momento'=>$id_momento,
+            'id_ordine'=>$id_ordine
             ]);
         return $stmt->rowCount()>0;     
         }
