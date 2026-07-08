@@ -156,11 +156,12 @@ async function caricaOrdiniTavolo(id_tavolo){
             <p class="comment">Piatti:<br>${comanda.piatti.join('<br>')}<br></p>
             <p class="comment">Bevande:<br>${comanda.bevande.join('<br>')}</p>
             <p class="comment">ora di arrivo ${comanda.data_e_ora.split(' ')[1]}</p>
-            <a class="btn" href="modificaprenotazione.php?id=${comanda.id_ordine}">Modifica ✏️</a>
+            <p class="comment">stato comanda ${comanda.nome_stato}</p>
+            <a class="btn" href="modificaordine.php?id=${comanda.id_ordine}">Modifica ✏️</a>
             <button class="btn-elimina-ordine" data-id="${comanda.id_ordine}">Elimina 🗑️</button>
         `).join('');
     } else {
-        contenitore.innerHTML = `<a class="btn" href="inserisciordine.php">+ Nuova Comanda</a>`;
+        contenitore.innerHTML = `<a class="btn" href="inserisciordine.php?id=${id_tavolo}">+ Nuova Comanda</a>`;
     }
 }
   //------------------DELETE-------------------------------------

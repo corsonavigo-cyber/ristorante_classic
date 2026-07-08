@@ -208,3 +208,6 @@ td,th{
     list-style-type:none;
 
 }
+.hide{
+    display: none;
+}

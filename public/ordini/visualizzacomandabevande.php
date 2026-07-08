@@ -7,7 +7,7 @@ require_once __DIR__ . '/../head.php';
 require_once __DIR__ . '/../navbar.php';
 
 //si occupa di mostrare al gestore quello che vedranno i clienti
-$title = 'Storico Ordini';
+$title = 'Stampa Bevande';
 ?>
 
 
@@ -17,18 +17,15 @@ $title = 'Storico Ordini';
     
     </div>
     
-    <div>
-      <label for="ricerca-storico"> Ricerca: </label>
-      <input type="text" id="ricerca-storico" nome="ricerca-storico">
-    </div>
-    <div class="menu" id="storico">
+    
+    <div class="menu" id="comada-stampa">
        
    
     </div>
 <script>
-    const API = '/ristorante_classic/api/storicoordini.php';
+    const API = '/ristorante_classic/api/storicoprenotazioni.php';
 </script>
-<script src="/ristorante_classic/public/assets/js/ordini.js" defer></script>    
+<script src="/ristorante_classic/public/assets/js/prenotazioni.js" defer></script>    
 
 </main>
 
