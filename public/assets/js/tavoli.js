@@ -8,7 +8,7 @@
   const form_inserisci= document.getElementById('form_inserisci');
   const form_modifica= document.getElementById('form_modifica');
   const da_inserire = document.getElementById("numero-tavolo");
-  
+  const lavagna_ordini = document.getElementById('lavagna_tavoli_ordini');
 
   //controllo che siamo nella pagina elenco tavoli prima di avviare il riempimento
 
@@ -29,6 +29,12 @@
       document.addEventListener('click', modificaTavoloClick);
       document.addEventListener('input', controllaNumeroDisponibile);    
        
+  }else if(lavagna_ordini){
+      //attiva il bottone inserisci
+      document.addEventListener('DOMContentLoaded', caricaTavoli);
+      //il bottone elimina lo attivo solo se seno nell'elenco tavoli
+      document.addEventListener('click', eliminaTavoloClick);   
+      document.addEventListener('click', eliminaOrdineClick);
   }
   
   
@@ -89,6 +95,31 @@
         contenitore.innerHTML = `<h4>LIBERO</h4>`;
     }
 }
+
+async function caricaOrdiniTavolo(id_tavolo){
+    const risposta = await fetch(`API_ORDINI?type=oggi`);
+    const json = await risposta.json();
+
+    // seleziono il div giusto tramite il data-attribute, non un id fisso "prenotato"
+    // (un id duplicato per ogni tavolo è invalido in HTML)
+    const contenitore = document.querySelector(`#ordine[data-id-tavolo="${id_tavolo}"]`);
+    if (!contenitore) return;
+
+    const ordiniOggi = json.data.filter(ordine=>id_stato === 1);  
+
+    if (ordiniOggi.length > 0){
+        contenitore.innerHTML = json.data.map(comanda => `
+            <h4 class="comment"><b>${comanda.numero_tavolo}</b></h4>
+            <p class="comment">${comanda.nome_servizio} persone</p>
+            <p class="comment">Piatti:<br>${comanda.piatti}</p>
+            <p class="comment">Bevande:<br>${comanda.bevande}</p>
+            <a class="btn" href="modificaprenotazione.php?id=${comanda.id_ordine}">Modifica ✏️</a>
+            <button class="btn-elimina-ordine" data-id="${comanda.id_ordine}">Elimina 🗑️</button>
+        `).join('');
+    } else {
+        contenitore.innerHTML = `<a class="btn" href="inserisciordine.php">+ Nuova Comanda</a>`;
+    }
+}
   //------------------DELETE-------------------------------------
 
     async function eliminaPrenotazioneClick(e){
@@ -130,6 +161,47 @@
     }
     
   }
+
+   async function eliminaOrdineClick(e){
+    
+    //come utilizzare fetch(URL,METHOD)
+    try{
+
+        //seleziono l'elemento bottone per l'elimina
+        const btn_elimina_ordine = e.target.closest('.btn-elimina-ordine');
+        //escludo click per errore
+        if(!btn_elimina_ordine) return;
+        //questa funzione di js genera un alet bool
+        if(!confirm('vuoi eliminare questo ordine?')){
+          return;
+        }
+        //recupero il data set da data-id
+        const id_elimina = btn_elimina_ordine.dataset.id;
+        //blocco l'esecuzione se non arriva l'id
+        if(!id_elimina){
+          throw new Error('Id Mancante nel bottone!');
+        }
+            
+        //salvo il response dentro risposta, chiamo la fetch su un id specifico e scelgo il metodo delete definito in tavoli.php
+        const risposta = await fetch(`API_ORDINI?type=composto?id=${id_elimina}`, {
+            method: 'DELETE'
+        });
+        //se la risposta non è ok dat che il 400 e il 500 non interrompono il codice, lo interrompo con l'if e trow new error
+        if (!risposta.ok) {
+          //prendo la risposta json 
+          const json = await risposta.json().catch(()=>null);
+          throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+        //se il flusso del programma non viene interrotto ricarico gli ordini
+        await caricaOrdiniTavolo();
+    }catch (errore){
+        console.error(errore);
+        //mostro la risposta json
+        alert(errore.message);
+    }
+    
+  }
+
 
   async function eliminaTavoloClick(e){
     

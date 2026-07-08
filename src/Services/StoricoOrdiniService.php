@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-class StoricoPrenotazioniService
+class StoricoOrdiniService
 {
     private string $storicoFile; 
 

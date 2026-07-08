@@ -5,8 +5,7 @@ use App\Repositories\ScontrinoRepositories;
 use PDO;
 
 class ScontrinoService {
-    public function __construct(private ScontrinoRepositories $scontrinoRepo, private LoggerService $logger,private StoricoService $storicoOrdini, private PDO $pdo){} #inietta il repository dei tavoli
-
+    public function __construct(private ScontrinoRepositories $scontrinoRepo, private LoggerService $logger,private StoricoOrdiniService $storicoOrdini){} 
 //------------------------------LETTURA---------------------------------------
 
     public function visualizzaTuttiGliScontrini(): array {

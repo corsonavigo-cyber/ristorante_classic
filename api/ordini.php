@@ -19,11 +19,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-$id = isset($_GET['id']) ? (int)$_GET['id'] : null;
+$id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+
+if ($id === false) {
+    throw new InvalidArgumentException('ID non valido');
+}
 $type = isset($_GET['type']) ? strtolower(trim($_GET['type'])) : '';
-$id_stato = $_GET['id_stato'] ?? null; // 
-$momento = $_GET['momento'] ?? null;
-$id_momento = $_GET['id_momento'] ?? null;
+$id_stato = filter_input(INPUT_GET, 'id_stato', FILTER_VALIDATE_INT);
+if ($id_stato === false) {
+    throw new InvalidArgumentException('ID stato non valido');
+}
+$momento = isset($_GET['momento']) ? strtolower(trim($_GET['momento'])) : null ;
+$id_momento = filter_input(INPUT_GET, 'id_momento', FILTER_VALIDATE_INT);
+if ($id_momento === false) {
+    throw new InvalidArgumentException('ID momento non valido');
+}
 function risposta(mixed $data, int $status = 200): void {
     http_response_code($status);
     echo json_encode(['success' => $status < 400, 'data' => $data]);
@@ -37,16 +47,16 @@ try {
                 throw new \InvalidArgumentException('Parametro type mancante');
             }
             match (true) {
-                $type === 'ordini' && $id !== null => risposta($ordiniService->visualizzaUnOrdine($id_ordine)),
+                $type === 'ordini' && $id !== null => risposta($ordiniService->visualizzaUnOrdine($id)),
 
 
                 $type === 'ordini' => risposta($ordiniService->visualizzaOrdini()),
 
                 $type === 'stato' && $id !== null && $id_stato => risposta($ordiniService->visualizzaOrdiniTavoloAperto($id , $id_stato)),
 
-                $type === 'stato' && $id_stato!== null =>risposta($ordiniService->visualizzaTuttiGliOrdiniStato($id_stato)),
+                $type === 'stato' && $id!== null =>risposta($ordiniService->visualizzaTuttiGliOrdiniStato($id)),
 
-                $type === 'momento' && $id !== null && $id_momento!== null =>risposta($ordiniService->visualizzaIlMomentoDiUnOrdine($id_ordine, $id_momento)),
+                $type === 'momento' && $id !== null && $id_momento!== null =>risposta($ordiniService->visualizzaIlMomentoDiUnOrdine($id, $id_momento)),
 
                 $type === 'momento' && $momento =>risposta($ordiniService->visualizzaTuttiGliOrdiniMomento($momento)),
   
@@ -84,20 +94,20 @@ try {
 
                 'ordinebevanda' => risposta($ordiniService->inserisciOrdineBevande(
                     $body['id_ordine'], $body['id_bevanda'], $body['id_momento'],
-                    $body['quantita'] ?? 0
-                )),
+                    $body['quantita']) ??  []
+                ),
                 'ordinepiatto' => risposta($ordiniService->inserisciOrdinePiatto(
                     $body['id_ordine'], $body['id_piatto'], $body['id_momento'],
-                    $body['quantita'] ?? 0
-                )),
+                    $body['quantita']) ??  []
+                ),
 
                 'ordinecompleto' => risposta($ordiniService->inserisciOrdineDirettamenteNelTavolo(
-                    $body['id_stato'], $body['numero_persone'], $body['tavoli'] ?? []
-                )),
+                    $body['id_stato'], $body['numero_persone'], $body['tavoli'] ) ?? []
+                ),
 
                 'tavolo' => risposta($ordiniService->relazioneOrdineTavolo(
-                    $body['id_ordine'], $body['tavoli']
-                )),
+                    $body['id_ordine'], $body['tavoli']) ?? []
+                ),
 
                 default => throw new \InvalidArgumentException('Tipo non valido')
             };
@@ -109,7 +119,7 @@ try {
             if (!$type) {
                 throw new \InvalidArgumentException('Parametro type mancante');
             }
-            if (!$body) {
+            if (!is_array($body)) {
                 risposta('JSON non valido', 400);
             }
 
@@ -117,22 +127,18 @@ try {
                 'ordini' => risposta($ordiniService->aggiornaOrdine($id, $body['numero_persone'])),
 
                 'bevanda' => risposta($ordiniService->relazioneBevandeMomentoAggiorna(
-                    $id, $body['id_momento'],$body['id_bevanda'] ?? []
-                )),
+                    $id, $body['id_momento'],$body['id_bevanda'] )?? []
+                ),
                 'piatto' => risposta($ordiniService->relazionePiattiMomentoAggiorna(
-                    $id, $body['id_momento'],$body['id_piatto'] ?? []
-                )),
+                    $id, $body['id_momento'],$body['id_piatto'] )?? []
+                ),
                 'momento_bevande' => risposta($ordiniService->relazioneMomentoBevAggiorna(
-                    $id, $body['id_momento_nuovo'],$body['id_momento_vecchio'] ?? []
-                )),
+                    $id, $body['id_momento_nuovo'],$body['id_momento_vecchio']) ?? []
+                ),
                 'momento_piatti' => risposta($ordiniService->relazioneMomentoPiatAggiorna(
-                    $id, $body['id_momento_nuovo'],$body['id_momento_vecchio'] ?? []
-                )),
+                    $id, $body['id_momento_nuovo'],$body['id_momento_vecchio']) ?? []
+                ),
 
-                'ordini_tavolo' => risposta($ordiniService->modificaPrenotazioneETavolo(
-                    $id, $body['nome_prenotazione'], $body['ora_prenotazione'],
-                    $body['data_in_prenotazione'], $body['attiva'], $body['numero_persone'], $body['tavoli'] ?? []
-                )),
 
                 default => throw new \InvalidArgumentException('Tipo non valido')
             };
@@ -151,7 +157,7 @@ try {
             match ($type) {
                 'ordini' => risposta($ordiniService->aggiornaRelazioneOrdineStato($id, $body['id_stato'])),
                 'bevanda' => risposta($ordiniService->cambiaQuantitaBevanda($id, $body['quantita'])),
-                'piatto' => risposta($ordiniService->cambiaQuantitaPiatto($id, $body['quantita'])),
+                'piatto' => risposta($ordiniService->cambiaQuantitaPiatti($id, $body['quantita'])),
                 'tavolo' => risposta($ordiniService->aggiornaTavoloOrdine($id, $body['tavoli'])),
 
                 default => throw new \InvalidArgumentException('Tipo non valido')

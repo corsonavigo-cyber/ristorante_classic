@@ -5,7 +5,7 @@ use App\Repositories\OrdiniRepositories;
 use PDO;
 
 class OrdiniService {
-    public function __construct(private OrdiniRepositories $ordiniRepo, private LoggerService $logger, private StoricoOrdiniService $storicoordini, private PDO $pdo){} #inietta il repository dei tavoli
+    public function __construct(private OrdiniRepositories $ordiniRepo, private LoggerService $logger, private StoricoOrdiniService $storicoordini){} 
 
 //------------------------------LETTURA---------------------------------------
 
@@ -205,7 +205,7 @@ class OrdiniService {
 
     //inserimento composto
 
-    public function inserisciOrdineDirettamenteNelTavolo(int $id_stato = 1, int $numero_persone, array $tavoli):bool{
+    public function inserisciOrdineDirettamenteNelTavolo(int $id_stato , int $numero_persone, array $tavoli):bool{
         #salto l'autorizzazione in base al ruolo
 
         try {

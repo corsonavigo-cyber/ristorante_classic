@@ -26,7 +26,7 @@ use App\Services\StoricoPrenotazioniService;
 use App\Services\LeggiStoricoService;
 use App\Services\OrdiniService;
 use App\Services\ScontrinoService;
-
+use App\Services\StoricoOrdiniService;
 
 
 
@@ -66,7 +66,7 @@ $prenotazioniService= new PrenotazioniService($prenotazioniRepository, $logger,$
 $leggiStoricoService = new LeggiStoricoService($leggistoricoRepository); 
 $leggiStoricoOrdiniService = new LeggiStoricoService($leggistoricoordiniRepository);
 $ordiniService = new OrdiniService($ordiniRepository,$logger,$storicoOrdini);
-$scontrinoService = new ScontrinoService($scontrinoRepository.$logger,$storicoOrdini);
+$scontrinoService = new ScontrinoService($scontrinoRepository,$logger,$storicoOrdini);
 /*inserisco l'aurorizzazione nelle pagine
 
 $paginePubbliche = ['/login.php'];

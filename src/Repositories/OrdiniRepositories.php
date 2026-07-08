@@ -25,7 +25,7 @@ class OrdiniRepositories {
     
      public function visualizzaTuttiGliOrdiniOggi():?array
      {
-        $stmt =$this->pdo->prepare('SELECT * FROM api_tot WHERE data_e_ora >= CURDATE()');
+        $stmt =$this->pdo->prepare('SELECT * FROM api_tot WHERE data_e_ora >= CURDATE() ');
         $stmt->execute();
         return $stmt->fetchAll() ?:null;
      }
