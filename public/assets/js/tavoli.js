@@ -31,7 +31,7 @@
        
   }else if(lavagna_ordini){
       //attiva il bottone inserisci
-      document.addEventListener('DOMContentLoaded', caricaTavoli);
+      document.addEventListener('DOMContentLoaded', caricaTavoliConOrdini);
       //il bottone elimina lo attivo solo se seno nell'elenco tavoli
       document.addEventListener('click', eliminaTavoloClick);   
       document.addEventListener('click', eliminaOrdineClick);
@@ -63,6 +63,30 @@
        <button class="btn-elimina" data-id="${tavolo.id_tavolo}">Elimina 🗑️</button>
     </div>`).join('');
     json.data.forEach(tavolo => caricaPrenotazioniTavolo(tavolo.id_tavolo));
+  }
+
+  async function caricaTavoliConOrdini(){
+    const risposta = await fetch(API);
+    const json = await risposta.json();
+   
+    //da aggiungere la visualizzazione delle prenotazioni e dei conti e delle comande  
+    lavagna_ordini.innerHTML = json.data.map(tavolo=>`
+    <div class="tavolo" id="${tavolo.id_tavolo}">
+       
+       <h3 class="comment"><b>Numero Tavolo ${tavolo.numero_tavolo}</b></h3>
+
+       <p class="comment">Posti max ${tavolo.posti_max} prenotabili</p>
+       <p class="comment">Posti min ${tavolo.posti_min} prenotabili</p> 
+       <!--per visualizzazione in caso di tavolo prenotato-->
+       <div class=tavolo id=ordine data-id-tavolo="${tavolo.id_tavolo}">  </div> 
+       <!--link AJAX per inviare la modifica tavolo-->
+       <a class="btn" href="modificatavolo.php?id=${tavolo.id_tavolo}">Modifica ✏️</a>
+
+       <!--button AJAX per richiedere l'eliminazione del tavolo-->
+
+       <button class="btn-elimina" data-id="${tavolo.id_tavolo}">Elimina 🗑️</button>
+    </div>`).join('');
+    json.data.forEach(tavolo => caricaOrdiniTavolo(tavolo.id_tavolo));
   }
 
   //carica la le prenotazioni
@@ -97,22 +121,41 @@
 }
 
 async function caricaOrdiniTavolo(id_tavolo){
-    const risposta = await fetch(`API_ORDINI?type=oggi`);
+    const risposta = await fetch(`${API_ORDINI}?type=oggi`);
     const json = await risposta.json();
 
     // seleziono il div giusto tramite il data-attribute, non un id fisso "prenotato"
     // (un id duplicato per ogni tavolo è invalido in HTML)
     const contenitore = document.querySelector(`#ordine[data-id-tavolo="${id_tavolo}"]`);
     if (!contenitore) return;
+    const ordiniOggi = json.data.filter(ordini=>ordini.data_e_ora.split(' ')[0] === today());
+    const ordiniOggiTav = ordiniOggi.filter(ordine=>Number(ordine.id_stato) === 1 && Number(ordine.id_tavolo) === Number(id_tavolo));  
+    const ordiniRaggruppati = Object.values(ordiniOggiTav.reduce((acc, comanda) => {
 
-    const ordiniOggi = json.data.filter(ordine=>id_stato === 1);  
+        if (!acc[comanda.id_ordine]) {
+            acc[comanda.id_ordine] = {
+                ...comanda,
+                servizi: [],
+                piatti: [],
+                bevande:[]
+            };
+        }
 
-    if (ordiniOggi.length > 0){
-        contenitore.innerHTML = json.data.map(comanda => `
-            <h4 class="comment"><b>${comanda.numero_tavolo}</b></h4>
-            <p class="comment">${comanda.nome_servizio} persone</p>
-            <p class="comment">Piatti:<br>${comanda.piatti}</p>
-            <p class="comment">Bevande:<br>${comanda.bevande}</p>
+        acc[comanda.id_ordine].servizi.push(comanda.nome_servizio);
+        acc[comanda.id_ordine].piatti.push(comanda.piatti);
+        acc[comanda.id_ordine].bevande.push(comanda.bevande);
+        return acc;
+    }, {})
+    );
+    if (ordiniRaggruppati.length > 0){
+        contenitore.innerHTML = ordiniRaggruppati.map(comanda => `
+          
+            <h4 class="comment"><b>Tav: ${comanda.numero_tavolo}</b></h4>
+            <h4 class="comment"><b>${comanda.servizi.join(', ')}</b></h4>
+            <p class="comment">${comanda.numero_persone} persone</p>
+            <p class="comment">Piatti:<br>${comanda.piatti.join('<br>')}<br></p>
+            <p class="comment">Bevande:<br>${comanda.bevande.join('<br>')}</p>
+            <p class="comment">ora di arrivo ${comanda.data_e_ora.split(' ')[1]}</p>
             <a class="btn" href="modificaprenotazione.php?id=${comanda.id_ordine}">Modifica ✏️</a>
             <button class="btn-elimina-ordine" data-id="${comanda.id_ordine}">Elimina 🗑️</button>
         `).join('');
