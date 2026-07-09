@@ -4,8 +4,11 @@
  //--------------------READ-------------------------------------
   
   //per caricare e selezionare dove avverà l'insert dei menu
-  const fuorimenu = document.getElementById("form-inserisci-fuorimenu");
-  //funzione di controlo multipla negli inserimenti/modifiche
+  const fuorimenupiatto = document.getElementById("form-inserisci-fuorimenu-piat");
+  const fuorimenubevanda = document.getElementById("form-inserisci-fuorimenu-bev");
+  const inserisciordine = document.getElementById("form_inserisci_ordine");
+  const form_modifica_ordine = document.getElementById("form_modifica_ordine");
+  //funzione di controlo multipla negli inserimenti/modifiche form_inserisci_ordine
   
 
   let initialized = false;
@@ -46,9 +49,15 @@
       document.addEventListener('click', disattivaPrenotazione);
       document.addEventListener('click', attivaPrenotazione);
 
-  }else*/ if(fuorimenu){
+  }else*/ if(fuorimenupiatto){
       //attiva il bottone inserisci
-     document.addEventListener('click', inserisciPiattoFuoriMenuClick);}
+       document.addEventListener('click', inserisciPiattoFuoriMenuClick);
+     }else if (fuorimenubevanda){
+      //attiva il bottone inserisci
+       document.addEventListener('click', inserisciBevandaFuoriMenuClick);
+     }else if(inserisciordine){
+
+     }
 /**
     document.addEventListener('DOMContentLoaded', () => {
         const runCheck = () => {
@@ -106,9 +115,117 @@
 
  //Caricare reiderizza tutte le prenotazioni attivie
 
+  async function precaricaTavoliForm(id_tavolo) {
+    // legge l'id dall'URL:modificaprenotazione.php?id=5
+    //funzione dell'URL in js per la ricerca al suo interno
+    
+
+    const risposta = await fetch(`${API}`);
+    
+    const json = await risposta.json();
+    const data = json.data; // ← prendi il primo elemento
+    
+    const lavagna = document.getElementById('tavoli_checkbox');
+    //da aggiungere la visualizzazione delle prenotazioni e dei conti e delle comande  
+    lavagna.innerHTML = data.map(tavolo=>`
+       <li><label><input type="checkbox" name="tavoliSelezionati[]" value="${tavolo.id_tavolo}" data-posti="${tavolo.posti_max}">Numero Tavolo ${tavolo.numero_tavolo} posti ${tavolo.posti_max}</label></li>`).join('');
+    
+    const attivaInput = document.querySelector(`input[name="tavoliSelezionati[]"][value="${id_tavolo}"]`);
+    if (attivaInput) attivaInput.checked = true;    
+
+    if(form_modifica_ordine){
+      await initModifica();
+    }
+  }
+
+  async function precaricaBevandeForm() {
+
+
+    const rispostabevande = await fetch(`${API}?type=bevande`);
+    
+    if (!rispostabevande.ok) {
+        throw new Error("Errore nel caricamento delle bevande");
+    }
+    const jsonbevande = await rispostabevande.json();
+    const lavagnabevande = document.getElementById('bevande');
+    //elementi Bevande per fare il filtro dalla REST API va previsto sia nel menu.php (api) che nel serviceMenu
+    lavagnabevande.innerHTML = jsonbevande.data.filter(bevanda => bevanda.in_menu === 'si').map(bevanda=>`
+    <label for="quantita"> Quantità </label>   
+    <input type="number" step="1" name="quantita" id="quantita" required> 
+    <button type="button" class="btn-inserisci-bevandamenu-ordine" data-id="${bevanda.id_bevanda}">
+       <div class="bevanda" >
+       
+       <h3 class="comment"><b> ${bevanda.nome_bevanda}</b></h3>
+
+       <p class="comment">${bevanda.descrizione}</p>
+       <p class="comment">Prezzo: ${bevanda.prezzo} € </p> 
+       <ul  class="elenco_allergeni">
+         ${bevanda.allergeni ? bevanda.allergeni.split(', ').map(a => `<li class="comment">${a}</li>`).join(''):'<li>Nessun allergene</li>'}
+       </ul>
+       <p class="comment">Contiene Alcol: ${bevanda.alcol} </p> 
+             
+    </div></button>`).join('');
+  }
+   
+  async function precaricaPiattiForm() {
+
+
+    const rispostapiatti = await fetch(`${API}?type=piatti`);
+    
+    if (!rispostapiatti.ok) {
+        throw new Error("Errore nel caricamento delle bevandei piatti");
+    }
+    const jsonpiatti = await rispostapiatti.json();
+    const lavagnapiatti = document.getElementById('piatti');
+    //elementi Bevande per fare il filtro dalla REST API va previsto sia nel menu.php (api) che nel serviceMenu
+    lavagnapiatti.innerHTML = jsonpiatti.data.filter(piatti => piatti.in_menu === 'si').map(piatto=>`
+    <label for="quantita"> Quantità </label>   
+    <input type="number" step="1" name="quantita" id="quantita" required> 
+    <button id="inserisci-piatto-ordine  data-id="${piatto.id_piatto}">
+       <div class="piatto" >
+       
+       <h3 class="comment"><b> ${piatto.nome_piatto}</b></h3>
+
+       <p class="comment">${piatto.descrizione}</p>
+       <p class="comment">Prezzo: ${piatto.prezzo} € </p> 
+       <ul  class="elenco_allergeni">
+         ${piatto.allergeni ? piatto.allergeni.split(', ').map(a => `<li class="comment">${a}</li>`).join(''):'<li>Nessun allergene</li>'}
+       </ul>
+       <p class="comment">${piatto.categoria.toUpperCase()}</p> 
+             
+    </div></button>`).join('');
+  }
+
+
+  async function stepMomentoMOdifica(id_momento,id_ordine) {
+
+    const rispostaapi_tot_id = await fetch(`${API_ORDINI}?type=ordini&id=${id_ordine}`);
+    const jsonapi_tot_id = await rispostaapi_tot_id.json();
+    
+    if (!rispostaapi_tot_id.ok) {
+        throw new Error("Errore nel caricamento della comanda");
+    }
+    
+    const lavagna = document.getElementById('1');
+    //elementi Bevande per fare il filtro dalla REST API va previsto sia nel menu.php (api) che nel serviceMenu
+    
+     
+    
+    document.addEventListener('click',async (e)=>{
+        if (e.target.id !== "btn-indietro") return;
+        const indietro = document.getElementById('btn-indietro');
+        
+        e.preventdefault();
+        step2.classList.add("hide");
+        step1.classList.remove("hide");
+
+    })
+    
+    return true;
+  }
   
   //cambia i tavoli all'input della checkbok
-  async function cambiaOrdineDalTavoloInput(id_ordine,tavoli){
+  async function cambiaOrdineDalTavolo(id_ordine,tavoli){
     
     //come utilizzare fetch(URL,METHOD)
     try{
@@ -343,47 +460,10 @@
 }
 
  //funzione ottimizzato con claude, tolte le ridondazze e sistemati i controlli in particolare la data 
-*/async function inserisciPiattoFuoriMenuClick(e){
+*/async function inserisciPiattoFuoriMenu(nome_piatto,descrizione,prezzo){
     
     //come utilizzare fetch(URL,METHOD)
     try{
-
-        //seleziono l'elemento bottone per l'inserisci
-        const btn = e.target.closest('.btn-inserisci-piattomenu-ordine');
-        
-        //escludo click per errore
-        if(!btn) return;
-
-        //recupero il nome del piatto dal form INPUT
-        const nome_piatto = document.getElementById('nome-piatto').value.trim();
-        
-
-        //questa funzione di js genera un alet bool
-        if(!confirm(`vuoi inserire ${nome_piatto}?`)){
-          return;
-        }
-        //recupero gli altri dati dal form INPUT
-        const descrizione = document.getElementById('descrizione').value;
-        const prezzo = parseFloat(document.getElementById('prezzo').value);
-        //metodo per selezionare i checked della checkbox dal form in js [... converte la node list in un array accessibile importante
-        
-
-
-      //validazione dati
-      // Nome piatto
-        if (typeof nome_piatto !== "string" || nome_piatto === "") {
-            throw new Error("Il nome del piatto è obbligatorio");
-        }
-
-        // Descrizione
-        if (typeof descrizione !== "string" || descrizione.trim() === "") {
-            throw new Error("La descrizione è obbligatoria");
-        }
-
-        // Prezzo
-        if (typeof prezzo !== "number" || Number.isNaN(prezzo) || prezzo <= 1) {
-            throw new Error("Inserisci un prezzo valido");
-        }
 
 
         //salvo il response dentro risposta, chiamo la fetch su un id specifico 
@@ -407,10 +487,9 @@
           const json = await risposta.json().catch(()=>null);
           throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
         }
-        const id_piatto = risposta.lastisertID
-        await inserisciOrdinePiatto(id_piatto);
-        //reindirizzo il cliente
-        window.location.href = "inseriscipiatto.php";
+        
+        return risposta.json().id;
+        
        
     }catch (errore){
         console.error(errore);
@@ -419,20 +498,99 @@
     }
     
   }
-  async function inserisciOrdinePiatto(id_piatto){
-    try{
-        const btn = e.target.closest('.btn-inserisci-piattomenu-ordine');
-        const id_ordine = btn.daset_id;
-        // FIX: body condiviso, evita duplicazione tra i due rami
-        const body = {
-            id_ordine: id_ordine,
-            id_piatto : id_piatto
-        };
 
-        const conTavolo = tavoli.length >= 1;
+  async function inserisciBevandaFuoriMenu(nome_bevanda,descrizione,prezzo,alcol){
+    
+    //come utilizzare fetch(URL,METHOD)
+    try{
+
+
+        //salvo il response dentro risposta, chiamo la fetch su un id specifico 
+        const risposta = await fetch(`${API}?type=bevande`, {
+            method: 'POST',
+            headers:{
+              'Content-Type': 'application/json'
+                },
+            body: JSON.stringify({
+                nome_bevanda: String(nome_bevanda),
+                descrizione: String(descrizione),
+                prezzo: prezzo,
+                allergeni: [],
+                in_menu: 'no',
+                alcol: alcol
+            })
+        });
+        //se la risposta non è ok dat che il 400 e il 500 non interrompono il codice, lo interrompo con l'if e trow new error
+        if (!risposta.ok) {
+          //prendo la risposta json 
+          const json = await risposta.json().catch(()=>null);
+          throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+        const json = await risposta.json();
+        return json.id;
+        
+       
+    }catch (errore){
+        console.error(errore);
+        //mostro la risposta json
+        alert(errore.message);
+    }
+    
+  }
+  async function inserisciOrdinePiattoClick(e){
+    try{
+        const btn_ordine_piattomenu = e.target.closest('.btn-inserisci-piattomenu-ordine');
+        
+        //escludo click per errore
+        if(!btn_ordine_piattomenu) return;
+
+        //recupero il nome del piatto dal form INPUT
+        const nome_piatto = document.getElementById('nome-piatto').value.trim();
         
 
-        const risposta = await fetch(`${API}?type=${type}`, {
+        //questa funzione di js genera un alet bool
+        if(!confirm(`vuoi inserire ${nome_piatto}?`)){
+          return;
+        }
+        //recupero gli altri dati dal form INPUT
+        const descrizione = document.getElementById('descrizione').value;
+        const prezzo = parseFloat(document.getElementById('prezzo').value);
+        //metodo per selezionare i checked della checkbox dal form in js [... converte la node list in un array accessibile importante
+        const quantita = parseFloat(document.getElementById('quantita').value);
+        const id_momento = document.querySelector('input[name="momento"]:checked').value;
+        const id_ordine = parseInt(btn_ordine_piattomenu.dataset.id);
+        
+      //validazione dati
+      // Nome piatto
+        if (typeof nome_piatto !== "string" || nome_piatto === "") {
+            throw new Error("Il nome del piatto è obbligatorio");
+        }
+
+        // Descrizione
+        if (typeof descrizione !== "string" || descrizione.trim() === "") {
+            throw new Error("La descrizione è obbligatoria");
+        }
+
+        // Prezzo
+        if (typeof prezzo !== "number" || Number.isNaN(prezzo) || prezzo <= 1) {
+            throw new Error("Inserisci un prezzo valido");
+        }
+        //quantita
+        if (typeof quantita !== "number" || Number.isNaN(prezzo) ||  quantita <= 1) {
+            throw new Error("Inserisci un prezzo valido");
+        }
+
+        const id_piatto = await inserisciPiattoFuoriMenu(nome_piatto,descrizione,prezzo)
+        
+        const body = {
+            id_ordine: id_ordine,
+            id_piatto : id_piatto,
+            id_momento : id_momento,
+            quantita : quantita
+        };
+        
+
+        const risposta = await fetch(`${API_ORDINI}?type=ordinepiatto`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -451,12 +609,84 @@
     }
   }
 
-  async function inserisciOrdineClick(e){
+  async function inserisciOrdineBevandaClick(e){
     try{
-        const btn = e.target.closest('.btn-inserisci-ordine');
+        const btn_ordine_bevandamenu = e.target.closest('.btn-inserisci-bevandamenu-ordine');
+        
+        //escludo click per errore
+        if(!btn_ordine_bevandamenu) return;
+
+        //recupero il nome del bevanda dal form INPUT
+        const nome_bevanda = document.getElementById('nome-bevanda').value.trim();
+        
+
+        //questa funzione di js genera un alet bool
+        if(!confirm(`vuoi inserire ${nome_bevanda}?`)){
+          return;
+        }
+        //recupero gli altri dati dal form INPUT
+        const descrizione = document.getElementById('descrizione').value;
+        const prezzo = parseFloat(document.getElementById('prezzo').value);
+        //metodo per selezionare i checked della checkbox dal form in js [... converte la node list in un array accessibile importante
+        const quantita = parseFloat(document.getElementById('quantita').value);
+        const id_momento = document.querySelector('input[name="momento"]:checked').value;
+        const id_ordine = parseInt(btn_ordine_bevandamenu.dataset.id);
+        const alcol = document.querySelector('input[name="alcol"]:checked').value;
+      //validazione dati
+      // Nome bevanda
+        if (typeof nome_bevanda !== "string" || nome_bevanda === "") {
+            throw new Error("Il nome del bevanda è obbligatorio");
+        }
+
+        // Descrizione
+        if (typeof descrizione !== "string" || descrizione.trim() === "") {
+            throw new Error("La descrizione è obbligatoria");
+        }
+
+        // Prezzo
+        if (typeof prezzo !== "number" || Number.isNaN(prezzo) || prezzo <= 1) {
+            throw new Error("Inserisci un prezzo valido");
+        }
+        //quantita
+        if (typeof quantita !== "number" || Number.isNaN(prezzo) ||  quantita <= 1) {
+            throw new Error("Inserisci un prezzo valido");
+        }
+
+        const id_bevanda = await inserisciBevandaFuoriMenu(nome_bevanda,descrizione,prezzo,alcol)
+        
+        const body = {
+            id_ordine: id_ordine,
+            id_bevanda : id_bevanda,
+            id_momento : id_momento,
+            quantita : quantita
+        };
+        
+
+        const risposta = await fetch(`${API_ORDINI}?type=ordinebevanda`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        if (!risposta.ok) {
+            const json = await risposta.json().catch(() => null);
+            throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+
+        window.location.href = "gestioneordini.php";
+
+    } catch (errore){
+        console.error(errore);
+        alert(errore.message);
+    }
+  }
+
+
+  async function inserisciOrdine(){
+    try{
+        const btn = e.target.closest('.btn-avanti');
         if(!btn) return;
 
-        const tavoli = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')].map(el => parseInt(el.value));
         const numero_persone = document.getElementById('numero-persone').value;
 
         // --- validazione ---
@@ -471,10 +701,37 @@
             numero_persone: numPersone // FIX: uso il valore già validato/castato, non la stringa grezza
         };
 
-        const conTavolo = tavoli.length >= 1;
-        
+        const risposta = await fetch(`${API_ORDINI}?type=${type}ordine`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
 
-        const risposta = await fetch(`${API}?type=${type}`, {
+        if (!risposta.ok) {
+            const json = await risposta.json().catch(() => null);
+            throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+        const json = await risposta.json()
+        await inserisciOrdineTavolo(json.id);
+        
+        return true;
+    } catch (errore){
+        console.error(errore);
+        alert(errore.message);
+    }
+}
+
+async function inserisciOrdineTavolo(id_ordine){
+    try{
+        
+        const tavoli = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')].map(el => parseInt(el.value));
+
+        const body = {
+            id_ordine :id_ordine,
+            tavoli: tavoli // FIX: uso il valore già validato/castato, non la stringa grezza
+        };
+
+        const risposta = await fetch(`${API_ORDINI}?type=tavolo`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -485,7 +742,7 @@
             throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
         }
 
-        window.location.href = "gestioneordini.php";
+        return true;
 
     } catch (errore){
         console.error(errore);
@@ -493,44 +750,32 @@
     }
 }
 
- async function controllaTavoloDataDisponibile(tavoliSelezionati){
+
+ async function controllaTavoloDisponibile(tavoliSelezionati){
     const avviso = document.getElementById("avviso");
     const sezione = document.querySelector('#controllo');
 
-    // guard: niente data, niente controllo
-    if(!da_inserire_data.value.trim()){
+    // guard: niente tavoli
+    if(tavoliSelezionati.length === 0){
         sezione.classList.remove('controllopositivo');
         sezione.classList.add('warning');
-        avviso.innerHTML = `La prenotazione deve avere una data!`;
+        avviso.innerHTML = `l'ordine ha bisogno di essere associato almeno tavolo!`;
         return false;
     }
 
-    // guard: nessun tavolo selezionato, nessun conflitto possibile
-    if(tavoliSelezionati.length === 0){
-        sezione.classList.remove('warning');
-        avviso.innerHTML = "";
-        return true;
-    }
+    const risposta = await fetch(`${API}?type=stato&id=1`);
+    const jsonordini = await risposta.json();
 
-    const risposta = await fetch(`${API}?type=prenotazioni`);
-    const jsonprenotazioni = await risposta.json();
-
-    const jsonTavoliPrenotati = jsonprenotazioni.data.filter(p =>
+    const jsonTavoliConOrdine = jsonordini.data.filter(p =>
         p.id_tavoli && tavoliSelezionati.some(id => p.id_tavoli.includes(id)) // FIX: tipi normalizzati a monte (int), un solo controllo
     );
-    const ora_p = document.getElementById('ora-prenotazione').value;
+   
    
     
-    // FIX: conflitto su data + ora, non solo data
-    const conflitto = jsonTavoliPrenotati.some(p =>
-        p.data_in_prenotazione === da_inserire_data.value && 
-       getTurno(p.ora_prenotazione) === getTurno(ora_p)
-    );
-
-    if (conflitto) {
+    if (jsonTavoliConOrdine.length>0) {
         sezione.classList.remove('controllopositivo');
         sezione.classList.add('warning');
-        avviso.innerHTML = `Questo tavolo è già prenotato per data e ora selezionate!`;
+        avviso.innerHTML = `Questo tavolo ha già un ordine attivo!`;
         return false;
     }
 
@@ -540,12 +785,9 @@
     return true;
 }
 
-function getTurno(orario) {
-    const [h] = orario.slice(0, 5).split(':').map(Number);
-    return h < 15 ? 'pranzo' : 'cena';
-}
 
- async function mostraDataOra() {
+
+async function mostraDataOra() {
     
     const dataOggi = document.getElementById('oggi');
     dataOggi.innerHTML = `<p>${oggi()}</p>`
@@ -589,11 +831,6 @@ async function controllaPostiTavoloDisponibili(tavoliSelezionati){
     return true;
 }
 
-function getTurno(orario) {
-    const [h] = orario.slice(0, 5).split(':').map(Number);
-    return h < 15 ? 'pranzo' : 'cena';
-}
-
  async function mostraDataOra() {
     
     const dataOggi = document.getElementById('oggi');
@@ -602,7 +839,7 @@ function getTurno(orario) {
 }
 
 
-
+/*
  async function precaricaFormModificaPrenotazione() {
     // legge l'id dall'URL:modificaprenotazione.php?id=5
     //funzione dell'URL in js per la ricerca al suo interno
@@ -721,4 +958,4 @@ async function modificaPrenotazioneClick(e){
         console.error(errore);
         alert(errore.message);
     }
-   }   
+   }   */

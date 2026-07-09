@@ -47,7 +47,7 @@ try {
                 throw new \InvalidArgumentException('Parametro type mancante');
             }
             match (true) {
-                $type === 'ordini' && $id !== null => risposta($ordiniService->visualizzaUnOrdine($id)),
+                $type === 'ordine' && $id !== null => risposta($ordiniService->visualizzaUnOrdine($id)),
 
 
                 $type === 'ordini' => risposta($ordiniService->visualizzaOrdini()),

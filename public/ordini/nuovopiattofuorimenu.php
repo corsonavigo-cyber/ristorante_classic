@@ -17,7 +17,7 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
      <p>compila i campi richiesti per inserire il Piatto</p>
    </div>
    <div class="piatto">
-     <form action="" id="form-inserisci-fuorimenu" method="POST">
+     <form action="" id="form-inserisci-fuorimenu-piat" method="POST">
         <label for="nome-piatto" >Nome del Piatto : </label>
         <input type="text"  id="nome-piatto" name="nome-piatto" required>
 
@@ -26,32 +26,24 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
         <textarea placeholder="inserisci qui la descrizione del piatto" id="descrizione" name="descrizione"></textarea>
 
         <label for="prezzo">Prezzo : </label>
-        <input type="number"  id="prezzo" name="prezzo" required> €
+        <input type="number"  id="prezzo" name="prezzo" required> 
         
-        <!--da mettere dentro ogni bevanda che poi selezionare
-   select momento del servizio placeholder subito
-    <label for="quantita">Quantità: </label>
-    <input type="number"  id="prezzo" name="prezzo" required> €-->
+        <label for="quantita"> Quantità : </label>
+        <input type="number"  id="quantita" name="quantita" required> Porsioni
+       
+        <fieldset>
+        <legend >Momento di Servizio </legend>
 
+            <label><input type="radio" id="antipasto" name="momento" value=1>Antipasto</label>
+            <label><input type="radio" id="primo" name="momento" value=2 >Primo</label>
+            <label><input type="radio" id="secondo" name="momento" value=3>Secondo</label>
+            <label><input type="radio" id="dolce" name="momento" value=4>Dolce</label>
+            <label><input type="radio" id="altro" name="momento" value=5 checked>Altro</label>
+            <label><input type="radio" id="prioritario" name="momento" value=6 >Prioritario</label>
+        </fieldset>
         
-      
-        <legend class="hide">Il Piatto va Immediatamente inserito nel Menu Clienti? </legend>
-
-            <label><input type="radio" id="in-menu-si" name="in_menu" value="si"> Sì</label>
-            <label><input type="radio" id="in-menu-no" name="in_menu" value="no" selected> No</label>
-        </fieldset>
-
-        <fieldset class="hide">
-            <legend>A Quale Categoria Appartiene il Piatto </legend>
-
-            <label><input type="radio" id="antipasto" name="categoria" value="antipasto">Antipasto</label>
-            <label><input type="radio" id="primo" name="categoria" value="primo">Primo</label>
-            <label><input type="radio" id="secondo" name="categoria" value="secondo">Secondo</label>
-            <label><input type="radio" id="dolce" name="categoria" value="dolce">Dolce</label>
-            <label><input type="radio" id="altro" name="categoria" value="altro" selected>altro</label>
-        </fieldset>
-
-        <button type="button" class="btn-inserisci-piattomenu-ordine" dataset_id=<?=$id?>>Inserisci</button>
+       
+        <button type="button" class="btn-inserisci-piattomenu-ordine" data-id=<?=(int)$id?>>Inserisci</button>
      </form>
    </div>
   </div>

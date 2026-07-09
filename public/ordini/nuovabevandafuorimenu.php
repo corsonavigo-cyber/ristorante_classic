@@ -17,7 +17,7 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
      <p>compila i campi richiesti per inserire la Bevanda</p>
    </div>
    <div class="Bevanda">
-     <form action="" id="form_inserisci" method="POST">
+     <form action="" id="form_inserisci-fuorimenu-bev" method="POST">
         <label for="nome-bevanda" >Nome del Bevanda : </label>
         <input type="text"  id="nome-bevanda" name="nome-bevanda" required>
 
@@ -28,29 +28,26 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
         <label for="prezzo">Prezzo : </label>
         <input type="number"  id="prezzo" name="prezzo" required> €
         
-        <!--da mettere dentro ogni bevanda che poi selezionare
-   select momento del servizio placeholder subito
-    <label for="quantita">Quantità: </label>
-    <input type="number"  id="prezzo" name="prezzo" required> €-->
+        <label for="quantita"> Quantità : </label>
+        <input type="number"  id="quantita" name="quantita" required> Porsioni
+       
+        <fieldset>
+        <legend >Momento di Servizio </legend>
 
+            <label><input type="radio" id="antipasto" name="momento" value=1>Antipasto</label>
+            <label><input type="radio" id="primo" name="momento" value=2 >Primo</label>
+            <label><input type="radio" id="secondo" name="momento" value=3>Secondo</label>
+            <label><input type="radio" id="dolce" name="momento" value=4>Dolce</label>
+            <label><input type="radio" id="altro" name="momento" value=5 checked>Altro</label>
+            <label><input type="radio" id="prioritario" name="momento" value=6 >Prioritario</label>
+        </fieldset>
+
+       <fieldset>
+            <legend>La Bevanda Contiene Alcol?</legend>
+            <label><input type="radio" id="alcol-si" name="alcol" value="si"> Sì</label>
+            <label><input type="radio" id="alcol-no" name="alcol" value="no"> No</label>
+        </fieldset>
         
-      
-        <legend class="hide">Il bevanda va Immediatamente inserito nel Menu Clienti? </legend>
-
-            <label><input type="radio" id="in-menu-si" name="in_menu" value="si"> Sì</label>
-            <label><input type="radio" id="in-menu-no" name="in_menu" value="no" checked> No</label>
-        </fieldset>
-
-        <fieldset class="hide">
-            <legend>A Quale Categoria Appartiene il Bevanda </legend>
-
-            <label><input type="radio" id="antipasto" name="categoria" value="antipasto">Antipasto</label>
-            <label><input type="radio" id="primo" name="categoria" value="primo">Primo</label>
-            <label><input type="radio" id="secondo" name="categoria" value="secondo">Secondo</label>
-            <label><input type="radio" id="dolce" name="categoria" value="dolce">Dolce</label>
-            <label><input type="radio" id="altro" name="categoria" value="altro" checked>altro</label>
-        </fieldset>
-
         <button type="button" class="btn-inserisci-bevandamenu-ordine" >Inserisci</button>
      </form>
    </div>

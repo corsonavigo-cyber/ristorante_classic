@@ -32,22 +32,23 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
         </fieldset>
         <div id="momento_del_servizio">
             //per la modifica veloce della quantità del momento e dell'elimina
+            <div id="piatti">
+            //per la modifica veloce della quantità del momento e dell'elimina
+            //(localstorage)da aggiungere un campo note che funziona solo allo scopo di stampare , al limite si salva nella sezione online  e poi si cancella ogni giorno
             <div>   
             <h3>Piatti:</h3>  
             <a class="btn" href="inseriscipiatto.php">+ piatto</a>
             <div id="piatti_input">
         
             </div> 
-            </div>
-            <fieldset id="tavoli_checkbox">
-        
-            <div>   
+        </div>
+        <div id=bevande>
 
             <h3>Bevande:</h3>  
-            <a class="btn" href="inseriscipiatto.php">+ bevanda</a>
+            <a class="btn" href="inseriscibevanda.php">+ bevanda</a>
             <div id="bevande_input">
         
-            </div> 
+        </div> 
             </div>
             <fieldset id="tavoli_checkbox">
                 
