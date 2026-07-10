@@ -82,7 +82,6 @@ $id = $_GET['id'] ?? null;
 <script src="/ristorante_classic/public/assets/js/tavoli.js" defer></script>    
 <script src="/ristorante_classic/public/assets/js/ordiniprima.js" defer></script> 
 <script src="/ristorante_classic/public/assets/js/ordiniseconda.js" defer></script> 
-<script src="/ristorante_classic/public/assets/js/ordiniprecarica.js" defer></script> 
 <script src="/ristorante_classic/public/assets/js/ordiniutil.js" defer></script> 
 
 

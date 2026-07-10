@@ -19,6 +19,15 @@ function initModifica() {
         minute: "2-digit"
     });
 
+    async function mostraDataOra() {
+    
+    const dataOggi = document.getElementById('oggi');
+    dataOggi.innerHTML = `<p>${oggi()}</p>`
+     
+   }
+
+
+
     async function controllaTavoloDisponibile(tavoliSelezionati){
     const avviso = document.getElementById("avviso");
     const sezione = document.querySelector('#controllo');

@@ -357,4 +357,78 @@ async function modificaPrenotazioneClick(e){
 }
   
 
-   */
+//------------------------------DELETE-----------------------------------------
+ async function eliminaPrenotazioneClick(e){
+    
+    //come utilizzare fetch(URL,METHOD)
+    try{
+
+        //seleziono l'elemento bottone per l'elimina
+        const btn_elimina = e.target.closest('.btn-elimina-prenotazione');
+        //escludo click per errore
+        if(!btn_elimina) return;
+        //questa funzione di js genera un alet bool
+        if(!confirm('vuoi eliminare questa prenotazione?')){
+          return;
+        }
+        //recupero il data set da data-id
+        const id_elimina = btn_elimina.dataset.id;
+        //blocco l'esecuzione se non arriva l'id
+        if(!id_elimina){
+          throw new Error('Id Mancante nel bottone!');
+        }
+            
+        //salvo il response dentro risposta, chiamo la fetch su un id specifico e scelgo il metodo delete definito in tavoli.php
+        const risposta = await fetch(`/ristorante_classic/api/prenotazioni.php?type=tavolo_prenotazioni&id=${id_elimina}`, {
+            method: 'DELETE'
+        });
+        //se la risposta non è ok dat che il 400 e il 500 non interrompono il codice, lo interrompo con l'if e trow new error
+        if (!risposta.ok) {
+          //prendo la risposta json 
+          const json = await risposta.json().catch(()=>null);
+          throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+        //se il flusso del programma non viene interrotto ricarico le prenotazioni
+        window.location.reload();
+    }catch (errore){
+        console.error(errore);
+        //mostro la risposta json
+        alert(errore.message);
+    }
+    
+  }
+
+
+  async function eliminaStoricoPrenotazione(e){
+    
+    //come utilizzare fetch(URL,METHOD)
+    try{
+
+        
+        const oggi = new Date().toISOString().slice(0, 10); 
+        const ultimaEsecuzione = localStorage.getItem('ultimaPuliziaPrenotazioni');
+
+        if (ultimaEsecuzione === oggi) return; // già eseguita oggi, esci
+
+          
+        //salvo il response dentro risposta, chiamo la fetch su un id specifico e scelgo il metodo delete definito in tavoli.php
+        const risposta = await fetch(`${API}?type=pulisci`, {
+            method: 'DELETE'
+        });
+        //se la risposta non è ok dat che il 400 e il 500 non interrompono il codice, lo interrompo con l'if e trow new error
+        if (!risposta.ok) {
+          //prendo la risposta json 
+          const json = await risposta.json().catch(()=>null);
+          throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+        localStorage.setItem('ultimaPuliziaPrenotazioni', oggi);
+        //se il flusso del programma non viene interrotto ricarico le prenotazioni
+        window.location.reload();
+    }catch (errore){
+        console.error(errore);
+        //mostro la risposta json
+        alert(errore.message);
+    }
+    
+  }
+  
