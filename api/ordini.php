@@ -58,8 +58,10 @@ try {
 
                 $type === 'momento' && $id !== null && $id_momento!== null =>risposta($ordiniService->visualizzaIlMomentoDiUnOrdine($id, $id_momento)),
 
-                $type === 'momento' && $momento =>risposta($ordiniService->visualizzaTuttiGliOrdiniMomento($momento)),
+                $type === 'momento' && $id_momento!== null =>risposta($ordiniService->visualizzaTuttiGliOrdiniMomento($id_momento)),
   
+                $type === 'momenti' =>risposta($ordiniService->visualizzaTuttiIMomenti()),
+
                 $type === 'piatti' && $id !== null =>risposta($ordiniService->visualizzaPiattiDiUnOrdine($id)),
 
                 $type === 'bevande' && $id !== null=>risposta($ordiniService->visualizzaBevandeDiUnOrdine($id)),

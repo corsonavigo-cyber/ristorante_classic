@@ -46,9 +46,18 @@ class OrdiniService {
         }
     }
 
-    public function visualizzaTuttiGliOrdiniMomento(Momento $nome_momento): array {
+    public function visualizzaTuttiGliOrdiniMomento(int $id_momento): array {
         try {
-            return $this->ordiniRepo->visualizzaTuttiGliOrdiniMomento($nome_momento) ?? [];
+            return $this->ordiniRepo->visualizzaTuttiGliOrdiniMomento($id_momento) ?? [];
+        } catch (\Throwable $e) {
+            $this->logger->error("Errore recupero ordini: {$e->getMessage()}");
+            return []; 
+        }
+    }
+
+    public function visualizzaTuttiIMomenti(): array {
+        try {
+            return $this->ordiniRepo->visualizzaTuttiIMomenti() ?? [];
         } catch (\Throwable $e) {
             $this->logger->error("Errore recupero ordini: {$e->getMessage()}");
             return []; 

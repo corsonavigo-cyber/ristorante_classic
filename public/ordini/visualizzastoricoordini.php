@@ -28,7 +28,7 @@ $title = 'Storico Ordini';
 <script>
     const API = '/ristorante_classic/api/storicoordini.php';
 </script>
-<script src="/ristorante_classic/public/assets/js/ordini.js" defer></script>    
+<script src="/ristorante_classic/public/assets/js/ordinistorico.js" defer></script>    
 
 </main>
 

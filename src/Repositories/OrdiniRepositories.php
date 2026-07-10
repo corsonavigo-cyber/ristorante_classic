@@ -43,10 +43,16 @@ class OrdiniRepositories {
         $stmt->execute(['id_stato' => $id_stato]);
         return $stmt->fetchAll() ?:null;
      }
-     public function visualizzaTuttiGliOrdiniMomento(Momento $nome_momento):?array
+     public function visualizzaTuttiGliOrdiniMomento(int $id_momento):?array
      {
-        $stmt =$this->pdo->prepare('SELECT * FROM api_tot WHERE data_e_ora >= CURDATE() AND nome_momento = :nome_momento ');
-        $stmt->execute(['nome_momento' => $nome_momento->value]);
+        $stmt =$this->pdo->prepare('SELECT * FROM api_tot WHERE data_e_ora >= CURDATE() AND id_momento = :id_momento ');
+        $stmt->execute(['id_momento' => $id_momento]);
+        return $stmt->fetchAll() ?:null;
+     }
+     public function visualizzaTuttiIMomenti():?array
+     {
+        $stmt =$this->pdo->prepare('SELECT * FROM momento_del_servizio ');
+        $stmt->execute();
         return $stmt->fetchAll() ?:null;
      }
 

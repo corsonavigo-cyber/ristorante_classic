@@ -39,27 +39,11 @@ $id = $_GET['id'] ?? null;
        <div>
     </div>
     
-      <div id="compila" class="hide">
+      <div id="secondo-step" class="hide">
         <div id="momenti-servizio">
-            <div id="1">
-
-            </div>
-            <div id="2">
-
-            </div>
-            <div id="3">
-
-            </div>
-            <div id="4">
-
-            </div>
-            <div id="5">
-
-            </div>
-            <div id="6">
-
-            </div>
-             <button id="avanti" class="btn-avanti">Avanti<button> 
+          
+        </div>
+             <button id="aggiorna" class="aggiorna">Aggiorna<button> 
              <button id="indietro" class="btn-indietro">Indietro<button> 
         </div>
         <div id="contenitore">
@@ -96,7 +80,10 @@ $id = $_GET['id'] ?? null;
 
 </script>
 <script src="/ristorante_classic/public/assets/js/tavoli.js" defer></script>    
-<script src="/ristorante_classic/public/assets/js/ordini.js" defer></script> 
+<script src="/ristorante_classic/public/assets/js/ordiniprima.js" defer></script> 
+<script src="/ristorante_classic/public/assets/js/ordiniseconda.js" defer></script> 
+<script src="/ristorante_classic/public/assets/js/ordiniprecarica.js" defer></script> 
+<script src="/ristorante_classic/public/assets/js/ordiniutil.js" defer></script> 
 
 
 </main>
