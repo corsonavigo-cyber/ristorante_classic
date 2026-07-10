@@ -216,3 +216,18 @@ td,th{
 .hider{
    display : none;
 }
+.momenti-servizio{
+    display: flex;
+    justify-content: space-between;
+}
+
+.attivo{
+    background-color: aqua;
+}
+#piatti_input, #bevande_input{
+    display: grid;
+    /* Crea colonne dinamiche: minimo 150px, massimo 5 colonne */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 25px; /* Spazio tra i bottoni */
+    margin: 30px 0;
+}

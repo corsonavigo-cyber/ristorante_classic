@@ -28,6 +28,7 @@ require_once __DIR__ . '/../bootstrap.php';
 <script>
     const API = '/ristorante_classic/api/tavoli.php';
     const API_ORDINI = '/ristorante_classic/api/ordini.php';
+    
 </script>
 <script src="/ristorante_classic/public/assets/js/tavoli.js" defer></script>    
 <script src="/ristorante_classic/public/assets/js/ordini.js" defer></script> 

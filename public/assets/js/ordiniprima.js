@@ -16,10 +16,10 @@ let piatti = []; // FIX: mancava, usata in aggiornaVoceComanda() ma mai dichiara
 let momenti = [];
 let tavoli = [];
 let comanda = [];
-let momentoAttivo = null;
+let momentoAttivo = 1;
 let idTavoloComanda = null;
 let idOrdineInserito = null;
-
+let id_tavolo_arrivato_url= new URLSearchParams(window.location.search).get('id');
 let initialized = false;
 const primo_step = document.getElementById('primo-step');
 const secondo_step = document.getElementById('secondo-step');
@@ -51,7 +51,7 @@ const secondo_step = document.getElementById('secondo-step');
  document.addEventListener('DOMContentLoaded', ripristinaOrdine);
  document.addEventListener('input', gestisciInputGlobali);
  document.addEventListener('click', globalClick);
- if(secondo_step.className('piatti')){
+ if(secondo_step.className.includes("piattir")){
     document.addEventListener('DOMContentLoaded', precaricaPiattiForm);
     document.addEventListener('DOMContentLoaded', precaricaBevandeForm);
     document.addEventListener('DOMContentLoaded',  disegnaMomenti);
@@ -97,7 +97,7 @@ const secondo_step = document.getElementById('secondo-step');
 
 //Caricare reiderizza tutte le prenotazioni attivie
 
-async function precaricaTavoliForm(id_tavolo) {
+async function precaricaTavoliForm(id_tavolo_arrivato_url) {
     // legge l'id dall'URL: modificaprenotazione.php?id=5
     const risposta = await fetch(`${API}`);
     const json = await risposta.json();
@@ -108,7 +108,7 @@ async function precaricaTavoliForm(id_tavolo) {
     lavagna.innerHTML = data.map(tavolo => `
        <li><label><input type="checkbox" name="tavoliSelezionati[]" value="${tavolo.id_tavolo}" data-posti="${tavolo.posti_max}">Numero Tavolo ${tavolo.numero_tavolo} posti ${tavolo.posti_max}</label></li>`).join('');
 
-    const attivaInput = document.querySelector(`input[name="tavoliSelezionati[]"][value="${id_tavolo}"]`);
+    const attivaInput = document.querySelector(`input[name="tavoliSelezionati[]"][value="${id_tavolo_arrivato_url}"]`);
     if (attivaInput) attivaInput.checked = true;
 
     if (form_modifica_ordine) {
@@ -123,19 +123,23 @@ async function disegnaMomenti() {
     }
     const jsonmomenti = await risposta.json();
     const contmomento = document.getElementById('momenti-servizio');
+    const momentoAttivojson =jsonmomenti.data.find(m=> m.id_momento === momentoAttivo);
+    const stringaTitolo = momentoAttivojson ? `<br><h3>${momentoAttivojson.nome_servizio.toUpperCase()}</h3>` : '';
+    
     // ATTENZIONE: assumo che l'endpoint risponda con {data: [...]} come gli altri, verifica lato PHP
-    contmomento.innerHTML = jsonmomenti.data.map(m => `<div class="mmomenti"><button class="btn-momento ${momentoAttivo === m.id_momento ? 'attivo' : ''}" data-id="${m.id_momento}">${m.nome_momento}</button></div>`).join("<br>");
+    const selettori_momento=jsonmomenti.data.map(m => `<br><div class="mmomenti"><button class="btn-momento ${momentoAttivo === m.id_momento ? 'attivo' : ''}" data-id="${m.id_momento}">${m.nome_servizio}</button></div>`).join("<br>");
+    contmomento.innerHTML = `<div class="momenti-servizio">${selettori_momento}</div><div> ${stringaTitolo}</div>`;
 }
 
 async function precaricaBevandeForm() {
 
-    const rispostabevande = await fetch(`${API}?type=bevande`);
+    const rispostabevande = await fetch(`${API_MENU}?type=bevande`);
 
     if (!rispostabevande.ok) {
         throw new Error("Errore nel caricamento delle bevande");
     }
     const jsonbevande = await rispostabevande.json();
-    const lavagnabevande = document.getElementById('bevande');
+    const lavagnabevande = document.getElementById('bevande_input');
     //elementi Bevande per fare il filtro dalla REST API va previsto sia nel menu.php (api) che nel serviceMenu
     lavagnabevande.innerHTML = jsonbevande.data.filter(bevanda => bevanda.in_menu === 'si').map(bevanda => `
     <div class="bevanda" >
@@ -147,21 +151,22 @@ async function precaricaBevandeForm() {
         ${bevanda.allergeni ? bevanda.allergeni.split(', ').map(a => `<li class="comment">${a}</li>`).join('') : '<li>Nessun allergene</li>'}
      </ul>
      <p class="comment">Contiene Alcol: ${bevanda.alcol} </p>
-    </button>
-    <label for="quantita"> Quantità </label>
+     <label for="quantita"> Quantità </label>
     <input type="number" step="1" name="quantita-bev" class="quantita-bev" id="quantita-bev" data-id="${bevanda.id_bevanda}" value="0" min="0" required>
+    
+    </button>
     </div>`).join(''); // FIX: era "b.id_bevanda", "b" non esisteva (la variabile del map è "bevanda")
 }
 
 async function precaricaPiattiForm() {
 
-    const rispostapiatti = await fetch(`${API}?type=piatti`);
+    const rispostapiatti = await fetch(`${API_MENU}?type=piatti`);
 
     if (!rispostapiatti.ok) {
         throw new Error("Errore nel caricamento dei piatti");
     }
     const jsonpiatti = await rispostapiatti.json();
-    const lavagnapiatti = document.getElementById('piatti');
+    const lavagnapiatti = document.getElementById('piatti_input');
     //elementi Piatti per fare il filtro dalla REST API va previsto sia nel menu.php (api) che nel serviceMenu
     lavagnapiatti.innerHTML = jsonpiatti.data.filter(piatti => piatti.in_menu === 'si').map(piatto => `
     <div class="piatto" >
@@ -172,9 +177,10 @@ async function precaricaPiattiForm() {
     <p  class="elenco_allergeni">
         ${piatto.allergeni ? piatto.allergeni.split(', ').map(a => `${a}`).join(',') : 'Nessun allergene'}
     </p>
-    </button>
     <label for="quantita"> Quantità </label>
     <input type="number" step="1" name="quantita" class="quantita" id="quantita" data-id="${piatto.id_piatto}" value="0" min="0" required>
+    
+    </button>
     </div>
     `).join(''); // FIX: id="btn-inserisci-piatto-ordine non chiudeva le virgolette (HTML rotto); allineato al pattern del bottone bevanda (class + data-id). "p.id_piatto" → "piatto.id_piatto"
 }
@@ -235,7 +241,7 @@ function globalClick(e) {
 
     if (btn_indietro) {
         e.preventDefault();
-        momentoAttivo = null;
+        momentoAttivo = 1;
         document.querySelectorAll(".btn-momento").forEach(b => b.classList.add('attivo'));
         return;
     }
@@ -245,10 +251,7 @@ function globalClick(e) {
         momentoAttivo = Number(btn_momento.dataset.id);
         document.querySelectorAll(".btn-momento").forEach(b => b.classList.remove('attivo'));
         btn_momento.classList.add('attivo');
-        if (btn_aggiorna) {
-            aggiornaComanda();
-            return;
-        }
+        disegnaMomenti();
         return;
     }
     const btn_piatto = e.target.closest('.btn-inserisci-piatto-ordine'); // FIX: idem
@@ -260,12 +263,12 @@ function globalClick(e) {
         aggiornaVoceComanda("piatto", id_piattoDaInserire, Number(quantita.value)); // FIX: era "id" (undefined)
         return;
     }
-    const btn_bevanda = e.target.closest(".btn-bevanda");
+    const btn_bevanda = e.target.closest(".btn-inserisci-bevandamenu-ordine");
     if (btn_bevanda) {
         e.preventDefault();
         if (!controllaMomentoSelezionato()) return;
         const id_bevanda = Number(btn_bevanda.dataset.id);
-        const quantita_bev = document.querySelector(`.quantita[data-id="${id_bevanda}"]`);
+        const quantita_bev = document.querySelector(`.quantita-bev[data-id="${id_bevanda}"]`);
         if (Number(quantita_bev.value) === 0) quantita_bev.value = 1;
         aggiornaVoceComanda("bevanda", id_bevanda, Number(quantita_bev.value)); // FIX: era "id" (undefined)
         return;
