@@ -35,24 +35,21 @@ $id = $_GET['id'] ?? null;
              <div class="controllopositivo" id="controllo"><p id="avviso"></p> </div>
             <div class="controllopositivo" id="controllo1"><p id="avviso1"></p> </div>
         </fieldset>
-        <button id="avanti" class="btn-avanti" data-id="<?= (int)$id ?>">Avanti<button>
+        <button id="avanti" type="button" class="btn-avanti" data-id="<?= (int)$id ?>">Avanti</button>
        <div>
     </div>
     
-      <div id="secondo-step" class="hide">
-        <div id="momenti-servizio">
-          
-        </div>
-             <button id="aggiorna" class="aggiorna">Aggiorna<button> 
-             <button id="indietro" class="btn-indietro">Indietro<button> 
-        </div>
+      <div id="secondo-step" class="piatti hider">
         <div id="contenitore">
+             <button type="button" id="aggiorna" class="aggiorna">Aggiorna</button> 
+             <button type="button" id="indietro" class="btn-indietro">Indietro</button>
+        <div id="momenti-servizio">
+        </div>
+         
             <div id="piatti">
-                //per la modifica veloce della quantità del momento e dell'elimina
-                //(localstorage)da aggiungere un campo note che funziona solo allo scopo di stampare , al limite si salva nella sezione online  e poi si cancella ogni giorno
-                <div>   
+              <div>   
                 <h3>Piatti:</h3>  
-                <a class="btn" href="nuovopiattofuorimenu.php">+ piatto</a>
+                <a class="btn" href="nuovopiattofuorimenu.php">+ piatto fuorimenu</a>
                 <div id="piatti_input">
             
                 </div> 
@@ -60,7 +57,7 @@ $id = $_GET['id'] ?? null;
             <div id=bevande>
 
                 <h3>Bevande:</h3>  
-                <a class="btn" href="nuovabevandafuorimenu.php">+ bevanda</a>
+                <a class="btn" href="nuovabevandafuorimenu.php">+ bevanda  fuorimenu</a>
                 <div id="bevande_input">
             
                </div>
@@ -81,7 +78,6 @@ $id = $_GET['id'] ?? null;
 </script>
 <script src="/ristorante_classic/public/assets/js/tavoli.js" defer></script>    
 <script src="/ristorante_classic/public/assets/js/ordiniprima.js" defer></script> 
-<script src="/ristorante_classic/public/assets/js/ordiniseconda.js" defer></script> 
 <script src="/ristorante_classic/public/assets/js/ordiniutil.js" defer></script> 
 
 

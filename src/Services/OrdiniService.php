@@ -193,7 +193,7 @@ class OrdiniService {
     }
 
     //inserimento dell ordine sul tavolo
-    public function inserisciOrdine( int $numero_persone):int{
+    public function inserisciOrdine(int $numero_persone):int{
 
         #salto l'autorizzazione in base al ruolo
        try {

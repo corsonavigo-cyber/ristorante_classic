@@ -62,6 +62,11 @@ nav ul li{
     display: inline-block;
     list-style-type: none;
 }
+li {
+    
+    list-style-type: none;
+}
+
 table{
     background:white;
     width:80%;
@@ -208,6 +213,6 @@ td,th{
     list-style-type:none;
 
 }
-.hide{
-    display: none;
+.hider{
+   display : none;
 }
