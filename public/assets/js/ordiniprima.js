@@ -7,6 +7,7 @@ const fuorimenupiatto = document.getElementById("form-inserisci-fuorimenu-piat")
 const fuorimenubevanda = document.getElementById("form-inserisci-fuorimenu-bev");
 const inserisciordine = document.getElementById("form_inserisci_ordine");
 const form_modifica_ordine = document.getElementById("form_modifica_ordine");
+const contenitore_bev = document.getElementById('bevande_bar');
 
 //funzione di controllo multipla negli inserimenti/modifiche form_inserisci_ordine
 let momento = [];
@@ -43,39 +44,34 @@ const secondo_step = document.getElementById('secondo-step');
 } else if (fuorimenubevanda) {
     //attiva il bottone inserisci
     document.addEventListener('click', inserisciBevandaFuoriMenuClick);
+}else if (contenitore_bev) {
+    document.addEventListener('DOMContentLoaded', precaricaBevandeBar);
 } else if (inserisciordine) {
+
+    document.addEventListener('DOMContentLoaded', () => {
+    const runCheck = () => {
+        const tavoliSelezionati = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')].map(el => parseInt(el.value));
+        controllaPostiTavoloDisponibili(tavoliSelezionati);
+    };
+
+    // FIX: delegation  (es. #tavoli_checkbox), funziona anche per checkbox iniettate dopo
+    document.getElementById('tavoli_checkbox').addEventListener('change', (e) => {
+        if (e.target.name === 'tavoliSelezionati[]') runCheck();
+    });
+
     
-    
-   
- document.addEventListener('DOMContentLoaded', precaricaTavoliForm);
- document.addEventListener('DOMContentLoaded', ripristinaOrdine);
- document.addEventListener('input', gestisciInputGlobali);
- document.addEventListener('click', globalClick);
- if(secondo_step.className.includes("piattir")){
+        });  
+    document.addEventListener('DOMContentLoaded', precaricaTavoliForm);
+    document.addEventListener('DOMContentLoaded', controllaPostiTavoloDisponibili);
+    document.addEventListener('input', gestisciInputGlobali);
+    document.addEventListener('click', globalClick);
+
+    } else if(secondo_step.className.includes("piattir")){
     document.addEventListener('DOMContentLoaded', precaricaPiattiForm);
     document.addEventListener('DOMContentLoaded', precaricaBevandeForm);
     document.addEventListener('DOMContentLoaded',  disegnaMomenti);
     }
-     document.addEventListener('DOMContentLoaded', () => {
-        const runCheck = () => {
-            const tavoliSelezionati = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')]
-                .map(el => parseInt(el.value));
-            controllaPostiTavoloDisponibili(tavoliSelezionati);
-        };
 
-        // FIX: delegation  (es. #tavoli_checkbox), funziona anche per checkbox iniettate dopo
-        document.getElementById('tavoli_checkbox').addEventListener('change', (e) => {
-            if (e.target.name === 'tavoliSelezionati[]') runCheck();
-        });
-
-       
-         });
-
-    // TODO: questo ramo è vuoto. Probabilmente qui vanno agganciati
-    // precaricaTavoliForm / precaricaBevandeForm / precaricaPiattiForm / disegnaMomenti
-    // e i listener globalClick / gestisciInputGlobali. Da verificare e completare.
-}
-        
 /**
    
 
@@ -96,6 +92,53 @@ const secondo_step = document.getElementById('secondo-step');
   */
 
 //Caricare reiderizza tutte le prenotazioni attivie
+
+async function precaricaBevandeBar() {
+    
+    const risposta = await fetch(`${API_ORDINI}?type=oggi`);
+    if (!risposta.ok) {
+        throw new Error("Errore nel caricamento delle bevande");
+    }
+    const json = await risposta.json();
+    
+
+    // seleziono il div giusto tramite il data-attribute, non un id fisso "prenotato"
+    // (un id duplicato per ogni tavolo è invalido in HTML)
+    
+    if (!contenitore_bev) return;
+    const ordiniOggi = json.data.filter(ordini=>ordini.data_e_ora.split(' ')[0] === today());
+    const ordiniRaggruppati = Object.values(ordiniOggi.reduce((acc, comanda) => {
+
+        if (!acc[comanda.id_ordine]) {
+            acc[comanda.id_ordine] = {
+                ...comanda,
+                servizi: [],
+                bevande:[]
+            };
+        }
+
+        acc[comanda.id_ordine].servizi.push(comanda.nome_servizio);
+        acc[comanda.id_ordine].bevande.push(comanda.bevande);
+        return acc;
+    }, {})
+    );
+    if (ordiniRaggruppati.length > 0){
+        contenitore.innerHTML = ordiniRaggruppati.map(comanda => `
+          
+            <h4 class="comment"><b>Tav: ${comanda.numero_tavolo}</b></h4>
+            <h4 class="comment"><b>${comanda.servizi.join(', ')}</b></h4>
+            <p class="comment">${comanda.numero_persone} persone</p>
+            <p class="comment">Bevande:<br>${comanda.bevande.join('<br>')}</p>
+            <p class="comment">ora di arrivo ${comanda.data_e_ora.split(' ')[1]}</p>
+            <p class="comment">stato comanda ${comanda.nome_stato}</p>
+            <a class="btn" href="modificaordine.php?id=${comanda.id_ordine}">Modifica ✏️</a>
+            <button class="btn-elimina-ordine" data-id="${comanda.id_ordine}">Elimina 🗑️</button>
+        `).join('');
+    } else {
+    }
+
+}
+
 
 async function precaricaTavoliForm(id_tavolo_arrivato_url) {
     // legge l'id dall'URL: modificaprenotazione.php?id=5
@@ -131,6 +174,44 @@ async function disegnaMomenti() {
     contmomento.innerHTML = `<div class="momenti-servizio">${selettori_momento}</div><div> ${stringaTitolo}</div>`;
 }
 
+async function disegnaPreComanda() {
+
+    const visualizza_modifiche_json = document.getElementById('riassunto-ordine');
+
+    const ordine = JSON.parse(localStorage.getItem(CHIAVE_ORDINE));
+
+    if (!ordine || !ordine.comanda || ordine.comanda.length === 0) {
+        visualizza_modifiche_json.innerHTML = `<li>Non hai ancora aggiunto nessun elemento</li>`;
+        return;
+    }
+
+   const raggruppati = ordine.comanda.reduce((acc, e) => {
+
+    if (!acc[e.id_momento]) {
+        acc[e.id_momento] = [];
+    }
+
+    acc[e.id_momento].push(e);
+
+    return acc;
+
+}, {});
+
+
+visualizza_modifiche_json.innerHTML = Object.entries(raggruppati).map(([id_momento, elementi]) => `
+
+    <h4>Momento ${id_momento}</h4>
+
+    ${elementi.map(e => `
+        <li>
+            ${e.nome} - X ${e.quantita}
+        </li>
+    `).join("")}
+
+`).join("");
+
+}
+
 async function precaricaBevandeForm() {
 
     const rispostabevande = await fetch(`${API_MENU}?type=bevande`);
@@ -144,9 +225,9 @@ async function precaricaBevandeForm() {
     lavagnabevande.innerHTML = jsonbevande.data.filter(bevanda => bevanda.in_menu === 'si').map(bevanda => `
     <div class="bevanda" >
     <button type="button" class="btn-inserisci-bevandamenu-ordine" data-id="${bevanda.id_bevanda}">
-     <h3 class="comment"><b> ${bevanda.nome_bevanda}</b></h3>
-     <p class="comment">${bevanda.descrizione}</p>
-     <p class="comment">Prezzo: ${bevanda.prezzo} € </p>
+     <h3 class="comment" data-name="${bevanda.nome_bevanda}"><b> ${bevanda.nome_bevanda}</b></h3>
+     <p class="comment"  >${bevanda.descrizione}</p>
+     <p class="comment" data-prezzo="${bevanda.prezzo}">Prezzo: ${bevanda.prezzo} € </p>
      <ul  class="elenco_allergeni">
         ${bevanda.allergeni ? bevanda.allergeni.split(', ').map(a => `<li class="comment">${a}</li>`).join('') : '<li>Nessun allergene</li>'}
      </ul>
@@ -171,9 +252,9 @@ async function precaricaPiattiForm() {
     lavagnapiatti.innerHTML = jsonpiatti.data.filter(piatti => piatti.in_menu === 'si').map(piatto => `
     <div class="piatto" >
     <button type="button" class="btn-inserisci-piatto-ordine" data-id="${piatto.id_piatto}">
-    <h3 class="comment"><b> ${piatto.nome_piatto}</b></h3>
+    <h3 class="comment" id="nome"  data-name="${piatto.nome_piatto}"><b> ${piatto.nome_piatto}</b></h3>
     <p class="comment">${piatto.descrizione}</p>
-    <p class="comment">Prezzo: ${piatto.prezzo} € </p>
+    <p class="comment" id="prezzo" data-prezzo="${piatto.prezzo}>Prezzo: ${piatto.prezzo} € </p>
     <p  class="elenco_allergeni">
         ${piatto.allergeni ? piatto.allergeni.split(', ').map(a => `${a}`).join(',') : 'Nessun allergene'}
     </p>
@@ -185,41 +266,59 @@ async function precaricaPiattiForm() {
     `).join(''); // FIX: id="btn-inserisci-piatto-ordine non chiudeva le virgolette (HTML rotto); allineato al pattern del bottone bevanda (class + data-id). "p.id_piatto" → "piatto.id_piatto"
 }
 // Chiavi per salvare l'ordine in corso nel browser
-const CHIAVE_STEP = 'ordineStep';
-const CHIAVE_COMANDA = 'ordineComanda';
+const CHIAVE_ORDINE = "id_ordine";
 
 // Salva a che punto siamo e cosa c'è nella comanda
-function salvaOrdine() {
+function salvaOrdine(id_ordine, salvatavoli = true) {
+
+    const tavoliSelezionati = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')]
+        .map(el => parseInt(el.value));
+    
     const step = document.getElementById('secondo-step').classList.contains('hider') ? 1 : 2;
-    localStorage.setItem(CHIAVE_STEP, step);
-    localStorage.setItem(CHIAVE_COMANDA, JSON.stringify(comanda));
+    const ordine = {
+        id: id_ordine,
+        step: step,
+        comanda: comanda,
+        if(salvatavoli){
+           tavoli: tavoliSelezionati
+        }
+    };
+    
+
+    localStorage.setItem(CHIAVE_ORDINE, JSON.stringify(ordine));
 }
+
+
 
 // Al caricamento, ripristina step e comanda salvati
 async function ripristinaOrdine() {
-    const stepSalvato = localStorage.getItem(CHIAVE_STEP);
-    const comandaSalvata = localStorage.getItem(CHIAVE_COMANDA);
 
-    if (comandaSalvata) {
-        comanda = JSON.parse(comandaSalvata); // riassegna l'array (è un "let", quindi si può)
+    const id_tavolo_arrivato_url = parseInt(new URLSearchParams(window.location.search).get('id'));
+
+    const ordine = JSON.parse(localStorage.getItem(CHIAVE_ORDINE));
+
+    if (!ordine) return;
+
+    if (ordine.tavoli.includes(id_tavolo_arrivato_url)) {
+
+        comanda = ordine.comanda;
+
+        if (ordine.step === 2) {
+                document.getElementById('primo-step').classList.add('hider');
+                document.getElementById('secondo-step').classList.remove('hider');
+
+                await precaricaPiattiForm();
+                await precaricaBevandeForm();
+                await disegnaMomenti();
+            }
+        }
     }
 
-    if (stepSalvato === '2') {
-        document.getElementById('primo-step').classList.add('hider');
-        document.getElementById('secondo-step').classList.remove('hider');
-
-        // FIX: se si riparte già dallo step 2, il contenuto va ridisegnato
-        // (di solito lo faceva il click su "avanti", ma qui saltiamo direttamente)
-        await precaricaPiattiForm();
-        await precaricaBevandeForm();
-        await disegnaMomenti();
-    }
-}
 
 // Da chiamare quando la comanda viene inviata definitivamente al server
 function svuotaOrdineSalvato() {
-    localStorage.removeItem(CHIAVE_STEP);
-    localStorage.removeItem(CHIAVE_COMANDA);
+    localStorage.removeItem(CHIAVE_ORDINE);
+
 }
 function globalClick(e) {
     const btn_avanti = e.target.closest('.btn-avanti'); // FIX: mancava il "." per il selettore di classe
@@ -252,6 +351,7 @@ function globalClick(e) {
         document.querySelectorAll(".btn-momento").forEach(b => b.classList.remove('attivo'));
         btn_momento.classList.add('attivo');
         disegnaMomenti();
+        salvaOrdine();
         return;
     }
     const btn_piatto = e.target.closest('.btn-inserisci-piatto-ordine'); // FIX: idem
@@ -301,19 +401,26 @@ function controllaMomentoSelezionato() {
 function aggiornaVoceComanda(tipo, id, quantita) {
     // Cerca se l'elemento dello stesso tipo, id e nello stesso momento di servizio esiste già nell'array comanda
     const indice = comanda.findIndex(id_momento => id_momento.tipo === tipo && id_momento.id === id && id_momento.id_momento === momentoAttivo);
-
+    
     if (quantita <= 0) {
         // Rimozione (Deselezione quando la quantità torna a 0)
         if (indice !== -1) comanda.splice(indice, 1);
     } else {
         // Recupero il nome dell'elemento dall'anagrafica corretta
         let nomeItem = "";
+        let prezzoItem = 0;
         if (tipo === "piatto") {
             const piatto = piatti.find(el => el.id === id);
-            nomeItem = piatto ? piatto.nome_piatto : "";
+            if (piatto) {
+                nomeItem = piatto.nome_piatto;
+                prezzoItem = piatto.prezzo;
+            }
         } else {
             const bevanda = bevande.find(el => el.id === id);
-            nomeItem = bevanda ? bevanda.nome_bevanda : "";
+              if (bevanda) {
+                nomeItem = bevanda.nome_bevanda;
+                prezzoItem = bevanda.prezzo;
+            }
         }
 
         if (indice !== -1) {
@@ -324,7 +431,8 @@ function aggiornaVoceComanda(tipo, id, quantita) {
             comanda.push({
                 tipo: tipo,
                 id: id,
-                nome: nomeItem,
+                nome: nome, 
+                prezzo : prezzo,
                 id_momento: momentoAttivo,
                 quantita: quantita
             });
@@ -431,6 +539,8 @@ async function inserisciOrdine() {
         }
 
         const json = await risposta.json();
+        //da sviluppare
+        await inserisciOrdineStato(json.id);
         await inserisciOrdineTavolo(json.id);
 
         return true;
@@ -604,8 +714,35 @@ async function inserisciOrdineTavolo(id_ordine) {
     }
 }
 
-async function precaricaFormModificaPrenotazione() {
-    // legge l'id dall'URL: modificaprenotazione.php?id=5
+async function inserisciOrdineStato(id_ordine) {
+    try {
+
+        const body = {
+            id_ordine: id_ordine,
+            stato: parseInt(1)
+        };
+
+        const risposta = await fetch(`${API_ORDINI}?type=stato`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        if (!risposta.ok) {
+            const json = await risposta.json().catch(() => null);
+            throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+
+        return true;
+
+    } catch (errore) {
+        console.error(errore);
+        alert(errore.message);
+    }
+}
+/*modificare per funzione*/
+async function precaricaFormModificaPiatti() {
+    /*legge l'id dall'URL: modificaprenotazione.php?id=5
     const id = new URLSearchParams(window.location.search).get('id');
     if (!id) return;
 
@@ -624,7 +761,7 @@ async function precaricaFormModificaPrenotazione() {
 
     document.querySelectorAll('input[name="tavoliSelezionati[]"]').forEach(checkbox => {
         checkbox.checked = tavoliEsistenti.includes(parseInt(checkbox.value));
-    });
+    });*/
 }
 
 async function modificaPrenotazioneClick(e) {
@@ -729,3 +866,126 @@ async function eliminaStoricoPrenotazione(e) {
         alert(errore.message);
     }
 }
+
+
+//utilità
+
+function initModifica() {
+    if (initialized) return;
+    initialized = true;
+    precaricaFormModificaPrenotazione();
+   }
+
+  function today(){
+    const d = new Date();
+    return d.toISOString().split('T')[0]; // "2026-06-30"
+  }
+
+  function oggi(){
+    const d = new Date();
+    return d.toLocaleString("it-IT", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+}
+    async function mostraDataOra() {
+    
+    const dataOggi = document.getElementById('oggi');
+    dataOggi.innerHTML = `<p>${oggi()}</p>`
+     
+   }
+
+
+
+    async function controllaTavoloDisponibile(tavoliSelezionati){
+    const avviso = document.getElementById("avviso");
+    const sezione = document.querySelector('#controllo');
+
+    // guard: niente tavoli
+    if(tavoliSelezionati.length === 0){
+        sezione.classList.remove('controllopositivo');
+        sezione.classList.add('warning');
+        avviso.innerHTML = `l'ordine ha bisogno di essere associato almeno tavolo!`;
+        return false;
+    }
+
+    const risposta = await fetch(`${API}?type=stato&id=1`);
+    const jsonordini = await risposta.json();
+
+    const jsonTavoliConOrdine = jsonordini.data.filter(p =>
+        p.id_tavoli && tavoliSelezionati.some(id => p.id_tavoli.includes(id)) // FIX: tipi normalizzati a monte (int), un solo controllo
+    );
+   
+   
+    
+    if (jsonTavoliConOrdine.length>0) {
+        sezione.classList.remove('controllopositivo');
+        sezione.classList.add('warning');
+        avviso.innerHTML = `Questo tavolo ha già un ordine attivo!`;
+        return false;
+    }
+
+    sezione.classList.remove('warning');
+    avviso.innerHTML = "";
+    sezione.classList.add('controllopositivo');
+    return true;
+}
+
+
+
+
+
+ async function controllaPostiTavoloDisponibili(tavoliSelezionati){
+    const avviso = document.getElementById("avviso1");
+    const sezione = document.querySelector('#controllo1');
+    const ordine = JSON.parse(localStorage.getItem(CHIAVE_ORDINE));
+
+    if (ordine && ordine.tavoli.some(tavolo => tavoliSelezionati.includes(tavolo))) {
+        const conferma = confirm('Questo tavolo ha già un inserimento in corso, vuoi utilizzarlo?');
+        if(!conferma){
+           svuotaOrdineSalvato();
+           return false;
+        }
+        ripristinaOrdine();
+        return true;
+    }
+
+
+    if(tavoliSelezionati.length === 0){
+        sezione.classList.remove('warning', 'controllopositivo');
+        avviso.innerHTML = "";
+        return true;
+    }
+
+    const numeroPersone = parseInt(document.getElementById('numero-persone').value, 10); // FIX: cast esplicito
+    if (Number.isNaN(numeroPersone) || numeroPersone <= 0) {
+        sezione.classList.add('warning');
+        avviso.innerHTML = `Inserisci un numero di persone valido`;
+        return false;
+    }
+
+    // FIX: somma posti letti da data-posti delle checkbox selezionate, non dagli id grezzi
+    const postiTotali = tavoliSelezionati.reduce((acc, id) => {
+        const checkbox = document.querySelector(`input[name="tavoliSelezionati[]"][value="${id}"]`);
+        return acc + (parseInt(checkbox?.dataset.posti, 10) || 0);
+    }, 0);
+    console.log(postiTotali)
+    // FIX: confronto diretto, niente più chained comparison invalido
+    if (numeroPersone > postiTotali) {
+        sezione.classList.remove('controllopositivo');
+        sezione.classList.add('warning');
+        avviso.innerHTML = `Hai bisogno di più tavoli per ${numeroPersone} persone ti mancano da inserire ${numeroPersone-postiTotali}. Se vuoi procedere comunque, premi inserisci.`;
+        return false;
+    }
+
+    sezione.classList.remove('warning');
+    avviso.innerHTML = "";
+    sezione.classList.add('controllopositivo');
+    return true;
+}
+
+
+

@@ -1,35 +1,49 @@
 <?php
 ini_set('display_errors', '1');
 error_reporting(E_ALL);
-require_once __DIR__ . '/../bootstrap.php';
+$title = 'Visualizza Comande Bar';
+$id = $_GET['id'] ?? null; //per preselezionare il tavolo
 
+
+require_once __DIR__ . '/../bootstrap.php'; // prima le dipendenze
 require_once __DIR__ . '/../head.php';
-require_once __DIR__ . '/../navbar.php';
+require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
 
-//si occupa di mostrare al gestore quello che vedranno i clienti
-$title = 'Stampa Bevande';
 ?>
+<main>
+  <div class="piatti">
+   <div class="supporto-titolo">
+     <h2><?= $title ?></h2>
+  
+        <div id="contenitore">
+            <div id="bevande">
 
-
-<main> 
-    <div class="supporto-titolo">
-        <h2  class="title"><?= $title ?></h2>
-    
-    </div>
-    
-    
-    <div class="menu" id="comada-stampa">
+                <h3>Bevande:</h3>  
+               
+                <div id="bevande_bar">
+            
+               </div>
+            </div>
+        </div>    
+           
        
+      </div>
    
-    </div>
+      </form>
+  
+   
 <script>
-    const API = '/ristorante_classic/api/storicoprenotazioni.php';
+    const API = '/ristorante_classic/api/tavoli.php';
+    const API_ORDINI = '/ristorante_classic/api/ordini.php';
+    const API_MENU = '/ristorante_classic/api/menu.php';
+
 </script>
-<script src="/ristorante_classic/public/assets/js/prenotazioni.js" defer></script>    
+<script src="/ristorante_classic/public/assets/js/tavoli.js" defer></script>    
+<script src="/ristorante_classic/public/assets/js/ordiniprima.js" defer></script> 
+<script src="/ristorante_classic/public/assets/js/ordiniutil.js" defer></script> 
+
 
 </main>
-
 <?php 
 require_once __DIR__ . '/../footer.php';
  ?>
-

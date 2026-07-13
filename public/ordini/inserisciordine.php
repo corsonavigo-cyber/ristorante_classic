@@ -33,7 +33,7 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
              <div class="controllopositivo" id="controllo"><p id="avviso"></p> </div>
             <div class="controllopositivo" id="controllo1"><p id="avviso1"></p> </div>
         </fieldset>
-        <button id="avanti" type="button" class="btn-avanti" data-id="<?= (int)$id ?>">Avanti</button>
+        <button id="avanti" type="button" class="btn-avanti" >Avanti</button>
        <div>
     </div>
    </div>
@@ -44,7 +44,7 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
            <div id="momenti-servizio">
            </div>
          
-            
+            <div class="schermo">
               <div id="piatti">   
                 <h3>Piatti:</h3>  
                 <a class="btn" href="nuovopiattofuorimenu.php">+ piatto fuorimenu</a>
@@ -60,6 +60,12 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
             
                </div>
             </div>
+         </div> 
+         <div >
+            <ul id="riassunto-ordine"></ul>
+         <div>
+
+
         </div>    
            
        <button type="button"  class="btn-modifica-ordine" >Inserisci & Stampa Comanda</button>
@@ -76,7 +82,7 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
 </script>
 <script src="/ristorante_classic/public/assets/js/tavoli.js" defer></script>    
 <script src="/ristorante_classic/public/assets/js/ordiniprima.js" defer></script> 
-<script src="/ristorante_classic/public/assets/js/ordiniutil.js" defer></script> 
+
 
 
 </main>
