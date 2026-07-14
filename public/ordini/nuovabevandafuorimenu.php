@@ -32,15 +32,7 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
         <input type="number"  id="quantita" name="quantita" required> Porsioni
        
         <fieldset>
-        <legend >Momento di Servizio </legend>
-
-            <label><input type="radio" id="antipasto" name="momento" value=1>Antipasto</label>
-            <label><input type="radio" id="primo" name="momento" value=2 >Primo</label>
-            <label><input type="radio" id="secondo" name="momento" value=3>Secondo</label>
-            <label><input type="radio" id="dolce" name="momento" value=4>Dolce</label>
-            <label><input type="radio" id="altro" name="momento" value=5 checked>Altro</label>
-            <label><input type="radio" id="prioritario" name="momento" value=6 >Prioritario</label>
-        </fieldset>
+        
 
        <fieldset>
             <legend>La Bevanda Contiene Alcol?</legend>
@@ -48,7 +40,7 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
             <label><input type="radio" id="alcol-no" name="alcol" value="no"> No</label>
         </fieldset>
         
-        <button type="button" class="btn-inserisci-bevandamenu-ordine" >Inserisci</button>
+        <button type="button" id="btn-inserisci-bevandamenu-ordine" class="btn-inserisci-bevandamenu-ordine" data-id=<?=(int)$id?>>Inserisci</button>
      </form>
    </div>
   </div>

@@ -33,7 +33,7 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
              <div class="controllopositivo" id="controllo"><p id="avviso"></p> </div>
             <div class="controllopositivo" id="controllo1"><p id="avviso1"></p> </div>
         </fieldset>
-        <button id="avanti" type="button" class="btn-avanti" >Avanti</button>
+        <button id="avanti" type="button" class="btn-avanti" dataset-id="#">Avanti</button>
        <div>
     </div>
    </div>
@@ -47,7 +47,7 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
             <div class="schermo">
               <div id="piatti">   
                 <h3>Piatti:</h3>  
-                <a class="btn" href="nuovopiattofuorimenu.php">+ piatto fuorimenu</a>
+                <a class="btn" id="linkpiat" href="#">+ piatto fuorimenu</a>
                 <div id="piatti_input">
             
                 </div> 
@@ -55,7 +55,7 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
             <div id="bevande">
 
                 <h3>Bevande:</h3>  
-                <a class="btn" href="nuovabevandafuorimenu.php">+ bevanda  fuorimenu</a>
+                <a class="btn" id="linkbev" href="#">+ bevanda  fuorimenu</a>
                 <div id="bevande_input">
             
                </div>
@@ -68,7 +68,7 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
 
         </div>    
            
-       <button type="button"  class="btn-modifica-ordine" >Inserisci & Stampa Comanda</button>
+       <button type="button"  class="btn-inserisci-ordine" >Inserisci & Stampa Comanda</button>
       </div>
    
       </form>

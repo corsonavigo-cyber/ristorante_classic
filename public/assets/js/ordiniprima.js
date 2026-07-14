@@ -154,9 +154,6 @@ async function precaricaTavoliForm(id_tavolo_arrivato_url) {
     const attivaInput = document.querySelector(`input[name="tavoliSelezionati[]"][value="${id_tavolo_arrivato_url}"]`);
     if (attivaInput) attivaInput.checked = true;
 
-    if (form_modifica_ordine) {
-        await initModifica();
-    }
 }
 
 async function disegnaMomenti() {
@@ -212,14 +209,17 @@ visualizza_modifiche_json.innerHTML = Object.entries(raggruppati).map(([id_momen
 
 }
 
-async function precaricaBevandeForm() {
+async function precaricaBevandeForm(comanda) {
 
     const rispostabevande = await fetch(`${API_MENU}?type=bevande`);
+    const btn_fuorimenu_p = document.getElementById('linkbevpiat');
+    btn_fuorimenu_p.setAttribute('href', `nuovopiattofuorimenu.php?id=${comanda.id_ordine}`);
 
     if (!rispostabevande.ok) {
         throw new Error("Errore nel caricamento delle bevande");
     }
     const jsonbevande = await rispostabevande.json();
+    bevande = jsonbevande;
     const lavagnabevande = document.getElementById('bevande_input');
     //elementi Bevande per fare il filtro dalla REST API va previsto sia nel menu.php (api) che nel serviceMenu
     lavagnabevande.innerHTML = jsonbevande.data.filter(bevanda => bevanda.in_menu === 'si').map(bevanda => `
@@ -233,20 +233,23 @@ async function precaricaBevandeForm() {
      </ul>
      <p class="comment">Contiene Alcol: ${bevanda.alcol} </p>
      <label for="quantita"> Quantità </label>
-    <input type="number" step="1" name="quantita-bev" class="quantita-bev" id="quantita-bev" data-id="${bevanda.id_bevanda}" value="0" min="0" required>
+    <input type="number" step="1" name="quantita-bev" class="quantita-bev" id="quantita-bev" data-id="${bevanda.id_bevanda}" data-tipo="bevanda" value="0" min="0" required>
     
     </button>
     </div>`).join(''); // FIX: era "b.id_bevanda", "b" non esisteva (la variabile del map è "bevanda")
 }
 
-async function precaricaPiattiForm() {
+async function precaricaPiattiForm(comanda) {
 
     const rispostapiatti = await fetch(`${API_MENU}?type=piatti`);
+    const btn_fuorimenu = document.getElementById('linkbev');
+    btn_fuorimenu.setAttribute('href', `nuovabevandafuorimenu.php?id=${comanda.id_ordine}`);
 
     if (!rispostapiatti.ok) {
         throw new Error("Errore nel caricamento dei piatti");
     }
     const jsonpiatti = await rispostapiatti.json();
+    piatti = jsonpiatti;
     const lavagnapiatti = document.getElementById('piatti_input');
     //elementi Piatti per fare il filtro dalla REST API va previsto sia nel menu.php (api) che nel serviceMenu
     lavagnapiatti.innerHTML = jsonpiatti.data.filter(piatti => piatti.in_menu === 'si').map(piatto => `
@@ -254,12 +257,12 @@ async function precaricaPiattiForm() {
     <button type="button" class="btn-inserisci-piatto-ordine" data-id="${piatto.id_piatto}">
     <h3 class="comment" id="nome"  data-name="${piatto.nome_piatto}"><b> ${piatto.nome_piatto}</b></h3>
     <p class="comment">${piatto.descrizione}</p>
-    <p class="comment" id="prezzo" data-prezzo="${piatto.prezzo}>Prezzo: ${piatto.prezzo} € </p>
+    <p class="comment" id="prezzo" data-prezzo="${piatto.prezzo}">Prezzo: ${piatto.prezzo} € </p>
     <p  class="elenco_allergeni">
         ${piatto.allergeni ? piatto.allergeni.split(', ').map(a => `${a}`).join(',') : 'Nessun allergene'}
     </p>
     <label for="quantita"> Quantità </label>
-    <input type="number" step="1" name="quantita" class="quantita" id="quantita" data-id="${piatto.id_piatto}" value="0" min="0" required>
+    <input type="number" step="1" name="quantita" class="quantita" id="quantita" data-id="${piatto.id_piatto}" data-tipo={"piatto"}  value="0" min="0" required>
     
     </button>
     </div>
@@ -275,14 +278,19 @@ function salvaOrdine(id_ordine, salvatavoli = true) {
         .map(el => parseInt(el.value));
     
     const step = document.getElementById('secondo-step').classList.contains('hider') ? 1 : 2;
-    const ordine = {
-        id: id_ordine,
-        step: step,
-        comanda: comanda,
-        if(salvatavoli){
+     if(salvatavoli){
+         const ordine = {
+           id: id_ordine,
+           step: step,
+           comanda: comanda,
            tavoli: tavoliSelezionati
-        }
-    };
+         }
+        }else{
+            const ordine = {
+                id: id_ordine,
+                step: step,
+                comanda: comanda}
+            };
     
 
     localStorage.setItem(CHIAVE_ORDINE, JSON.stringify(ordine));
@@ -298,7 +306,7 @@ async function ripristinaOrdine() {
     const ordine = JSON.parse(localStorage.getItem(CHIAVE_ORDINE));
 
     if (!ordine) return;
-
+    if (!ordine.tavoli) return;
     if (ordine.tavoli.includes(id_tavolo_arrivato_url)) {
 
         comanda = ordine.comanda;
@@ -332,16 +340,16 @@ function globalClick(e) {
         primo_step.classList.add('hider');
         alert("classi modificate!");
         salvaOrdine();
-        /*inserisciOrdine();*/
+        /*id_ordine = inserisciOrdine();*/
+        btn_avanti.dataset.id = id_ordine;
         return;
     }
 
-    const btn_momento = e.target.closest('.btn-momento'); // FIX: idem
-
+    const btn_momento = e.target.closest('.btn-momento'); 
     if (btn_indietro) {
         e.preventDefault();
+        document.querySelectorAll(".btn-momento").forEach(b => b.classList.remove('attivo'));
         momentoAttivo = 1;
-        document.querySelectorAll(".btn-momento").forEach(b => b.classList.add('attivo'));
         return;
     }
 
@@ -350,8 +358,9 @@ function globalClick(e) {
         momentoAttivo = Number(btn_momento.dataset.id);
         document.querySelectorAll(".btn-momento").forEach(b => b.classList.remove('attivo'));
         btn_momento.classList.add('attivo');
-        disegnaMomenti();
         salvaOrdine();
+        disegnaMomenti();
+        aggiornaInputPernuovoMomento();
         return;
     }
     const btn_piatto = e.target.closest('.btn-inserisci-piatto-ordine'); // FIX: idem
@@ -371,6 +380,16 @@ function globalClick(e) {
         const quantita_bev = document.querySelector(`.quantita-bev[data-id="${id_bevanda}"]`);
         if (Number(quantita_bev.value) === 0) quantita_bev.value = 1;
         aggiornaVoceComanda("bevanda", id_bevanda, Number(quantita_bev.value)); // FIX: era "id" (undefined)
+        return;
+    }
+
+    const btn__inserisci_ordine = e.target.closest(".btn-inserisci-ordine");
+    if (btn__inserisci_ordine) {
+        e.preventDefault();
+        if (!controllaMomentoSelezionato()) {
+            if(!confirm("vuoi stampare la comada ? ")) return false;
+        };
+        /*inserisciComandaDb();*/
         return;
     }
 } // FIX: mancava questa chiusura → tutte le funzioni sotto erano nidificate dentro globalClick e irraggiungibili
@@ -397,6 +416,24 @@ function controllaMomentoSelezionato() {
 }
 
 //--------------------------COMANDA-------------------
+async function inserisciComandaDb(id_ordine, comanda){
+    
+    if (!comanda || comanda.length === 0) {
+        alert("elementi non selezionati");
+        return;
+    }
+    if (!id_ordine && id_ordine !== 0 && !(btn_avanti.dataset.id === "#" ) && (btn_avanti.dataset.id !== id_ordine)) {
+        alert("ID ordine non valido");
+        return;
+    } 
+    await inserisciOrdinePiatto(comanda.filter(e => e.tipo === "piatto").map(e => e.id));
+    await inserisciOrdineBevanda(comanda.filter(e => e.tipo === "bevanda").map(e => e.id));
+    await stampaComanda(id_ordine, comanda);
+}
+
+async function stampaComanda(id_ordine,comanda){
+
+}
 
 function aggiornaVoceComanda(tipo, id, quantita) {
     // Cerca se l'elemento dello stesso tipo, id e nello stesso momento di servizio esiste già nell'array comanda
@@ -412,14 +449,14 @@ function aggiornaVoceComanda(tipo, id, quantita) {
         if (tipo === "piatto") {
             const piatto = piatti.find(el => el.id === id);
             if (piatto) {
-                nomeItem = piatto.nome_piatto;
-                prezzoItem = piatto.prezzo;
+                nome = piatto.nome_piatto;
+                prezzo = piatto.prezzo;
             }
         } else {
             const bevanda = bevande.find(el => el.id === id);
               if (bevanda) {
-                nomeItem = bevanda.nome_bevanda;
-                prezzoItem = bevanda.prezzo;
+                nome = bevanda.nome_bevanda;
+                prezzo = bevanda.prezzo;
             }
         }
 
@@ -443,9 +480,24 @@ function aggiornaVoceComanda(tipo, id, quantita) {
 }
 
 // Ripristina i valori numerici degli input grafici quando si cambia momento del servizio
-function aggiornaInputPernuovoMomento() {
-    // Azzera tutti gli input grafici correnti prima del ricalcolo
-    document.querySelectorAll(".quantita-piatto, .quantita-bevanda").forEach(input => input.value = 0);
+function aggiornaInputPernuovoMomento(comanda) {
+    btn_avanti = document.querySelector('.btn-avanti');
+    if( btn_avanti.dataset.id = "#"){
+        // Azzera tutti gli input grafici correnti prima del ricalcolo
+        document.querySelectorAll(".quantita, .quantita-bev").forEach(input => input.value = 0);
+    }
+    if(comanda.id_ordine ===  btn_avanti.dataset.id){
+        if(comanda.comanda.length > 0){
+            // Popola gli input grafici con i valori della comanda
+            comanda.comanda.forEach(voce => {
+                const input = document.querySelector(`[data-id="${voce.id}"][data-tipo="${voce.tipo}"]`);
+                if (input) {
+                    input.value = voce.quantita;
+                }
+            });
+        }
+    }
+    
 }
 
 /*
@@ -474,7 +526,9 @@ async function inserisciPiattoFuoriMenu(nome_piatto, descrizione, prezzo) {
 
         // FIX: .json() ritorna una Promise, serve await prima di leggere .id
         const json = await risposta.json();
-        return json.id;
+        const id_piatto = json.id;
+        await inserisciOrdinePiatto(id_piatto);
+        return id_piatto;
 
     } catch (errore) {
         console.error(errore);
@@ -503,7 +557,9 @@ async function inserisciBevandaFuoriMenu(nome_bevanda, descrizione, prezzo, alco
         }
 
         const json = await risposta.json();
-        return json.id;
+        const id_bevanda = json.id;
+        await inserisciOrdineBevanda(id_bevanda);
+        return id_bevanda;
 
     } catch (errore) {
         console.error(errore);
@@ -550,7 +606,7 @@ async function inserisciOrdine() {
     }
 }
 
-async function inserisciOrdinePiatto() {
+async function inserisciOrdinePiatto(id_piatto) {
     try {
         // ATTENZIONE: "nome_piatto" non veniva mai letto dal DOM, era undefined.
         // Assumo un input con id "nome-piatto": verifica che corrisponda al tuo HTML.
@@ -558,9 +614,16 @@ async function inserisciOrdinePiatto() {
         const descrizione = document.getElementById('descrizione').value;
         const prezzo = parseFloat(document.getElementById('prezzo').value);
         const quantita = parseFloat(document.getElementById('quantita').value);
-        const id_momento = document.querySelector('input[name="momento"]:checked').value;
-        const id_ordine = parseInt(btn_ordine_piattomenu.dataset.id);
-
+        const id_momento = document.querySelector('input[name="momento"]:checked');
+        if(!id_momento){
+            alert('devi selezionare quando va somministrata la bevanda!')
+            return;
+        }
+        //come renderlo piu robusto e sicuro
+        const id_ordine_arrivato_url = parseInt(new URLSearchParams(window.location.search).get('id'));
+        if(!id_ordine_arrivato_url){
+           return;
+        }
         if (typeof nome_piatto !== "string" || nome_piatto === "") {
             throw new Error("Il nome del piatto è obbligatorio");
         }
@@ -575,10 +638,9 @@ async function inserisciOrdinePiatto() {
             throw new Error("Inserisci una quantità valida");
         }
 
-        const id_piatto = await inserisciPiattoFuoriMenu(nome_piatto, descrizione, prezzo);
 
         const body = {
-            id_ordine: id_ordine,
+            id_ordine: id_ordine_arrivato_url,
             id_piatto: id_piatto,
             id_momento: id_momento,
             quantita: quantita
@@ -594,8 +656,9 @@ async function inserisciOrdinePiatto() {
             const json = await risposta.json().catch(() => null);
             throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
         }
-
-        window.location.href = "gestioneordini.php";
+        const json = await risposta.json();
+        const id_ordine = json.id;
+        return id_ordine;
 
     } catch (errore) {
         console.error(errore);
@@ -632,20 +695,23 @@ async function cambiaOrdineDalTavolo(id_ordine, tavoli) {
     }
 }
 
-async function inserisciOrdineBevanda() {
+async function inserisciOrdineBevanda(id_bevanda) {
     try {
-        // ATTENZIONE: "nome_bevanda" non veniva mai letto dal DOM, era undefined.
-        // Assumo un input con id "nome-bevanda": verifica che corrisponda al tuo HTML.
+        
         const nome_bevanda = document.getElementById('nome-bevanda').value;
         const descrizione = document.getElementById('descrizione').value;
         const prezzo = parseFloat(document.getElementById('prezzo').value);
         const quantita = parseFloat(document.getElementById('quantita').value);
-        const id_momento = document.querySelector('input[name="momento"]:checked').value;
-        const id_ordine = parseInt(btn_ordine_bevandamenu.dataset.id);
-        const alcol = document.querySelector('input[name="alcol"]:checked').value;
+        const id_momento = parseInt(document.getElementById('btn-inserisci-bevandamenu-ordine').dataset.id);
+        const alcol = document.querySelector('input[name="alcol"]:checked');
+        if(!id_momento){
+            alert('devi selezionare quando va somministrata la bevanda!');
+            return;
+        }
+        const id_ordine_arrivato_url = parseInt(new URLSearchParams(window.location.search).get('id'));
 
-        if (typeof nome_bevanda !== "string" || nome_bevanda === "") {
-            throw new Error("Il nome della bevanda è obbligatorio");
+        if (typeof nome_bevanda !== "string" || nome_piatto === "") {
+            throw new Error("Il nome del piatto è obbligatorio");
         }
         if (typeof descrizione !== "string" || descrizione.trim() === "") {
             throw new Error("La descrizione è obbligatoria");
@@ -657,11 +723,10 @@ async function inserisciOrdineBevanda() {
         if (typeof quantita !== "number" || Number.isNaN(quantita) || quantita <= 1) {
             throw new Error("Inserisci una quantità valida");
         }
-
-        const id_bevanda = await inserisciBevandaFuoriMenu(nome_bevanda, descrizione, prezzo, alcol);
+        
 
         const body = {
-            id_ordine: id_ordine,
+            id_ordine: id_ordine_arrivato_url,
             id_bevanda: id_bevanda,
             id_momento: id_momento,
             quantita: quantita
@@ -764,7 +829,7 @@ async function precaricaFormModificaPiatti() {
     });*/
 }
 
-async function modificaPrenotazioneClick(e) {
+/*async function modificaPrenotazioneClick(e) {
     try {
         const btn = e.target.closest('.btn-modifica-prenotazione');
         if (!btn) return;
@@ -814,11 +879,34 @@ async function modificaPrenotazioneClick(e) {
         alert(errore.message);
     }
 }
-
+*/
 //------------------------------DELETE-----------------------------------------
-async function eliminaPrenotazioneClick(e) {
+async function eliminaOrdineClick(id_ordine) {
+    try {       
+
+        const risposta = await fetch(`${API_ORDINI}?type=ordine&id=${id_ordine}`, {
+            method: 'DELETE'
+        });
+
+        if (!risposta.ok) {
+            const json = await risposta.json().catch(() => null);
+            throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+
+        return;
+    } catch (errore) {
+        console.error(errore);
+        alert(errore.message);
+    }
+}
+
+
+
+
+
+async function eliminaComandaClick(e) {
     try {
-        const btn_elimina = e.target.closest('.btn-elimina-prenotazione');
+        const btn_elimina = e.target.closest('.btn-elimina-ordine');
         if (!btn_elimina) return;
         if (!confirm('vuoi eliminare questa prenotazione?')) return;
 
@@ -827,7 +915,7 @@ async function eliminaPrenotazioneClick(e) {
             throw new Error('Id Mancante nel bottone!');
         }
 
-        const risposta = await fetch(`/ristorante_classic/api/prenotazioni.php?type=tavolo_prenotazioni&id=${id_elimina}`, {
+        const risposta = await fetch(`${API_ORDINI}?type=composto&id=${id_elimina}`, {
             method: 'DELETE'
         });
 
@@ -843,14 +931,17 @@ async function eliminaPrenotazioneClick(e) {
     }
 }
 
-async function eliminaStoricoPrenotazione(e) {
+async function eliminaBevandaDallaComandaClick(e) {
     try {
-        const oggi = new Date().toISOString().slice(0, 10);
-        const ultimaEsecuzione = localStorage.getItem('ultimaPuliziaPrenotazioni');
+        const btn_elimina_bevanda = e.target.closest('.btn-dissocia-bevanda');
+        if (!btn_elimina) return;
+        
+        const id_elimina = btn_elimina.dataset.id;
+        if (!id_elimina) {
+            throw new Error('Id Mancante nel bottone!');
+        }
 
-        if (ultimaEsecuzione === oggi) return; // già eseguita oggi, esci
-
-        const risposta = await fetch(`${API}?type=pulisci`, {
+        const risposta = await fetch(`${API_ORDINI}?type=ordine_bevanda&id=${id_elimina}`, {
             method: 'DELETE'
         });
 
@@ -859,7 +950,57 @@ async function eliminaStoricoPrenotazione(e) {
             throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
         }
 
-        localStorage.setItem('ultimaPuliziaPrenotazioni', oggi);
+        window.location.reload();
+    } catch (errore) {
+        console.error(errore);
+        alert(errore.message);
+    }
+}
+
+async function eliminaPiattoDallaComandaClick(e) {
+    try {
+        const btn_elimina_piatto = e.target.closest('.btn-dissocia-piatto');
+        if (!btn_elimina) return;
+        
+        const id_elimina = btn_elimina.dataset.id;
+        if (!id_elimina) {
+            throw new Error('Id Mancante nel bottone!');
+        }
+
+        const risposta = await fetch(`${API_ORDINI}?type=ordine_piatto&id=${id_elimina}`, {
+            method: 'DELETE'
+        });
+
+        if (!risposta.ok) {
+            const json = await risposta.json().catch(() => null);
+            throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+
+        window.location.reload();
+    } catch (errore) {
+        console.error(errore);
+        alert(errore.message);
+    }
+}
+
+
+async function eliminaStoricoOrdini(e) {
+    try {
+        const oggi = new Date().toISOString().slice(0, 10);
+        const ultimaEsecuzione = localStorage.getItem('ultimaPuliziaOrdini');
+
+        if (ultimaEsecuzione === oggi) return; // già eseguita oggi, esci
+
+        const risposta = await fetch(`${API_ORDINI}?type=pulisci`, {
+            method: 'DELETE'
+        });
+
+        if (!risposta.ok) {
+            const json = await risposta.json().catch(() => null);
+            throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+
+        localStorage.setItem('ultimaPuliziaOrdini', oggi);
         window.location.reload();
     } catch (errore) {
         console.error(errore);
@@ -870,11 +1011,7 @@ async function eliminaStoricoPrenotazione(e) {
 
 //utilità
 
-function initModifica() {
-    if (initialized) return;
-    initialized = true;
-    precaricaFormModificaPrenotazione();
-   }
+
 
   function today(){
     const d = new Date();
