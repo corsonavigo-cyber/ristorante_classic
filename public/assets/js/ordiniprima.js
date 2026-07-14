@@ -12,9 +12,9 @@ const contenitore_bev = document.getElementById('bevande_bar');
 //funzione di controllo multipla negli inserimenti/modifiche form_inserisci_ordine
 let momento = [];
 let bevande = [];
-let piatti = []; // FIX: mancava, usata in aggiornaVoceComanda() ma mai dichiarata
-// ATTENZIONE: va popolata da qualche parte (es. dentro precaricaPiattiForm, che oggi costruisce solo l'HTML)
+let piatti = []; 
 let momenti = [];
+let tavoliSelezionati = [];
 let tavoli = [];
 let comanda = [];
 let momentoAttivo = 1;
@@ -66,11 +66,12 @@ const secondo_step = document.getElementById('secondo-step');
     document.addEventListener('input', gestisciInputGlobali);
     document.addEventListener('click', globalClick);
 
-    } else if(secondo_step.className.includes("piattir")){
+    if(secondo_step.className.includes("piattir")){
     document.addEventListener('DOMContentLoaded', precaricaPiattiForm);
     document.addEventListener('DOMContentLoaded', precaricaBevandeForm);
     document.addEventListener('DOMContentLoaded',  disegnaMomenti);
     }
+}
 
 /**
    
@@ -212,7 +213,7 @@ visualizza_modifiche_json.innerHTML = Object.entries(raggruppati).map(([id_momen
 async function precaricaBevandeForm(comanda) {
 
     const rispostabevande = await fetch(`${API_MENU}?type=bevande`);
-    const btn_fuorimenu_p = document.getElementById('linkbevpiat');
+    const btn_fuorimenu_p = document.getElementById('linkbev');
     btn_fuorimenu_p.setAttribute('href', `nuovopiattofuorimenu.php?id=${comanda.id_ordine}`);
 
     if (!rispostabevande.ok) {
@@ -276,18 +277,18 @@ function salvaOrdine(id_ordine, salvatavoli = true) {
 
     const tavoliSelezionati = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')]
         .map(el => parseInt(el.value));
-    
+    let ordine = {};
     const step = document.getElementById('secondo-step').classList.contains('hider') ? 1 : 2;
      if(salvatavoli){
-         const ordine = {
-           id: id_ordine,
+        ordine = {
+           id_ordine: id_ordine,
            step: step,
            comanda: comanda,
            tavoli: tavoliSelezionati
          }
         }else{
-            const ordine = {
-                id: id_ordine,
+            constordine = {
+                id_ordine: id_ordine,
                 step: step,
                 comanda: comanda}
             };
@@ -328,26 +329,39 @@ function svuotaOrdineSalvato() {
     localStorage.removeItem(CHIAVE_ORDINE);
 
 }
+
+async function disattivaBottoneAvanti(){
+    const btn_avanti = e.target.closest('.btn-avanti');
+    btn_avanti.disabled = true;
+}
 function globalClick(e) {
     const btn_avanti = e.target.closest('.btn-avanti'); // FIX: mancava il "." per il selettore di classe
-    
+    const div =document.getElementById('piatti_input');
+    div.classList.add('piattir');
+    const divbev =document.getElementById('bevande_input');
+    divbev.classList.add('piattir');
     const btn_aggiorna = e.target.closest('.aggiorna'); // FIX: idem
     const btn_indietro = e.target.closest('.btn-indietro'); // FIX: idem
     
     if (btn_avanti) {
+        
         e.preventDefault();
         secondo_step.classList.remove('hider');
         primo_step.classList.add('hider');
         alert("classi modificate!");
-        salvaOrdine();
-        /*id_ordine = inserisciOrdine();*/
         btn_avanti.dataset.id = id_ordine;
+        salvaOrdine(id_ordine, true);
+        /*id_ordine = inserisciOrdine();*/
+       
         return;
     }
 
     const btn_momento = e.target.closest('.btn-momento'); 
+
     if (btn_indietro) {
         e.preventDefault();
+        div.classList.remove('piattir');
+        divbev.classList.remove('piattir');
         document.querySelectorAll(".btn-momento").forEach(b => b.classList.remove('attivo'));
         momentoAttivo = 1;
         return;
@@ -358,7 +372,7 @@ function globalClick(e) {
         momentoAttivo = Number(btn_momento.dataset.id);
         document.querySelectorAll(".btn-momento").forEach(b => b.classList.remove('attivo'));
         btn_momento.classList.add('attivo');
-        salvaOrdine();
+        salvaOrdine(id_ordine, false);
         disegnaMomenti();
         aggiornaInputPernuovoMomento();
         return;
@@ -369,8 +383,15 @@ function globalClick(e) {
         const id_piattoDaInserire = Number(btn_piatto.dataset.id);
         const quantita = document.querySelector(`.quantita[data-id="${id_piattoDaInserire}"]`);
         if (Number(quantita.value) === 0) quantita.value = 1;
-        aggiornaVoceComanda("piatto", id_piattoDaInserire, Number(quantita.value)); // FIX: era "id" (undefined)
-        return;
+        aggiornaVoceComanda(
+            "piatto",
+            null, // nome: lo recupera comunque aggiornaVoceComanda dall'anagrafica piatti
+            Number(e.target.dataset.id),
+            Number(e.target.value),
+            null, // prezzo: recuperato dall'anagrafica
+            momentoAttivo, // presuppone che questa variabile sia disponibile nello scope (globale o closure)
+            id_ordine       // idem, verifica che sia accessibile qui
+        );        return;
     }
     const btn_bevanda = e.target.closest(".btn-inserisci-bevandamenu-ordine");
     if (btn_bevanda) {
@@ -379,7 +400,15 @@ function globalClick(e) {
         const id_bevanda = Number(btn_bevanda.dataset.id);
         const quantita_bev = document.querySelector(`.quantita-bev[data-id="${id_bevanda}"]`);
         if (Number(quantita_bev.value) === 0) quantita_bev.value = 1;
-        aggiornaVoceComanda("bevanda", id_bevanda, Number(quantita_bev.value)); // FIX: era "id" (undefined)
+        aggiornaVoceComanda(
+            "bevanda",
+            null,
+            Number(e.target.dataset.id),
+            Number(e.target.value),
+            null,
+            momentoAttivo,
+            id_ordine
+        );        
         return;
     }
 
@@ -398,14 +427,40 @@ function gestisciInputGlobali(e) {
     // Variazione manuale quantità piatti
     if (e.target.classList.contains("quantita")) {
         if (!controllaMomentoSelezionato()) { e.target.value = 0; return; }
-        aggiornaVoceComanda("piatto", Number(e.target.dataset.id), Number(e.target.value));
+        aggiornaVoceComanda(
+            "piatto",
+            null, // nome: lo recupera comunque aggiornaVoceComanda dall'anagrafica piatti
+            Number(e.target.dataset.id),
+            Number(e.target.value),
+            null, // prezzo: recuperato dall'anagrafica
+            momentoAttivo, // presuppone che questa variabile sia disponibile nello scope (globale o closure)
+            id_ordine       // idem, verifica che sia accessibile qui
+        );
     }
+
     // Variazione manuale quantità bevande
     if (e.target.classList.contains("quantita-bev")) {
         if (!controllaMomentoSelezionato()) { e.target.value = 0; return; }
-        aggiornaVoceComanda("bevanda", Number(e.target.dataset.id), Number(e.target.value));
+        aggiornaVoceComanda(
+            "bevanda",
+            null,
+            Number(e.target.dataset.id),
+            Number(e.target.value),
+            null,
+            momentoAttivo,
+            id_ordine
+        );
     }
-}
+
+    if (e.target.closest('.tavoli-checkbox')) {
+        const tavoliSelezionati = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')].map(el => parseInt(el.value));
+        const controllo = controllaPostiTavoloDisponibili(tavoliSelezionati);
+        if (!controllo) {
+            disattivaBottoneAvanti();
+            return;
+        }
+    }
+} // <- mancava questa graffa di chiusura
 
 function controllaMomentoSelezionato() {
     if (momentoAttivo === null) {
@@ -435,17 +490,16 @@ async function stampaComanda(id_ordine,comanda){
 
 }
 
-function aggiornaVoceComanda(tipo, id, quantita) {
+function aggiornaVoceComanda(tipo, nome, id, quantita, prezzo, momentoAttivo, id_ordine) {
     // Cerca se l'elemento dello stesso tipo, id e nello stesso momento di servizio esiste già nell'array comanda
-    const indice = comanda.findIndex(id_momento => id_momento.tipo === tipo && id_momento.id === id && id_momento.id_momento === momentoAttivo);
+    const indice = comanda.findIndex(el => el.tipo === tipo && el.id === id && el.id_momento === momentoAttivo);
+    // (rinominato il parametro della callback da id_momento a el: prima "ombreggiava" il campo id_momento dell'oggetto, confondendo la lettura)
     
     if (quantita <= 0) {
         // Rimozione (Deselezione quando la quantità torna a 0)
         if (indice !== -1) comanda.splice(indice, 1);
     } else {
-        // Recupero il nome dell'elemento dall'anagrafica corretta
-        let nomeItem = "";
-        let prezzoItem = 0;
+        // Recupero il nome dell'elemento dall'anagrafica corretta, sovrascrivendo i parametri passati
         if (tipo === "piatto") {
             const piatto = piatti.find(el => el.id === id);
             if (piatto) {
@@ -454,7 +508,7 @@ function aggiornaVoceComanda(tipo, id, quantita) {
             }
         } else {
             const bevanda = bevande.find(el => el.id === id);
-              if (bevanda) {
+            if (bevanda) {
                 nome = bevanda.nome_bevanda;
                 prezzo = bevanda.prezzo;
             }
@@ -468,14 +522,15 @@ function aggiornaVoceComanda(tipo, id, quantita) {
             comanda.push({
                 tipo: tipo,
                 id: id,
-                nome: nome, 
-                prezzo : prezzo,
+                nome: nome,
+                prezzo: prezzo,
                 id_momento: momentoAttivo,
                 quantita: quantita
             });
         }
     }
-    salvaOrdine();
+
+    salvaOrdine(id_ordine, false); // prima non passavi id_ordine: dentro salvaOrdine arrivava undefined
     console.log("Comanda Aggiornata:", comanda);
 }
 
@@ -627,6 +682,8 @@ async function inserisciOrdinePiatto(id_piatto) {
         if (typeof nome_piatto !== "string" || nome_piatto === "") {
             throw new Error("Il nome del piatto è obbligatorio");
         }
+
+        
         if (typeof descrizione !== "string" || descrizione.trim() === "") {
             throw new Error("La descrizione è obbligatoria");
         }
@@ -806,27 +863,33 @@ async function inserisciOrdineStato(id_ordine) {
     }
 }
 /*modificare per funzione*/
-async function precaricaFormModificaPiatti() {
-    /*legge l'id dall'URL: modificaprenotazione.php?id=5
-    const id = new URLSearchParams(window.location.search).get('id');
-    if (!id) return;
+async function precaricaFormModificaComanda() {
+   
+    const id_ordine = new URLSearchParams(window.location.search).get('id');
+    if (!id_ordine) return;
 
-    const risposta = await fetch(`${API}?type=prenotazioni&id=${id}`);
+    const risposta = await fetch(`${API}?type=ordine&id=${id_ordine}`);
     const json = await risposta.json();
-    const data = json.data;
+    const tavoli = json.data;
+    //step_1
+    document.getElementById('numero-persone').value =  parseFloat(tavoli.numero_persone);
 
-    document.getElementById('nome-prenotazione').value = data.nome_prenotazione;
-
-    document.getElementById('numero-persone').value = parseFloat(data.numero_persone);
-
-    const attivaInput = document.querySelector(`input[name="attiva"][value="${data.attiva}"]`);
-    if (attivaInput) attivaInput.checked = true;
-
-    const tavoliEsistenti = data.id_tavoli ? data.id_tavoli.split(',').map(a => parseInt(a.trim())) : [];
+    const tavoliComanda = tavoli.map(tavolo => tavolo.id_tavolo);
 
     document.querySelectorAll('input[name="tavoliSelezionati[]"]').forEach(checkbox => {
-        checkbox.checked = tavoliEsistenti.includes(parseInt(checkbox.value));
-    });*/
+        checkbox.checked = tavoliComanda.includes(parseInt(checkbox.value));
+    });
+    //step_2 
+    comanda = tavoli;
+
+    document.querySelectorAll(".quantita, .quantita-bev").forEach(input => input.value = 0);
+    comanda.forEach(voce => {
+        const input = document.querySelector(`[data-id="${voce.id}"][data-tipo="${voce.tipo}"]`);
+        if (input) {
+            input.value = voce.quantita;
+        }
+    });
+
 }
 
 /*async function modificaPrenotazioneClick(e) {
@@ -1078,24 +1141,33 @@ async function eliminaStoricoOrdini(e) {
  async function controllaPostiTavoloDisponibili(tavoliSelezionati){
     const avviso = document.getElementById("avviso1");
     const sezione = document.querySelector('#controllo1');
-    const ordine = JSON.parse(localStorage.getItem(CHIAVE_ORDINE));
-
-    if (ordine && ordine.tavoli.some(tavolo => tavoliSelezionati.includes(tavolo))) {
-        const conferma = confirm('Questo tavolo ha già un inserimento in corso, vuoi utilizzarlo?');
+    const risposta = await fetch(`${API_ORDINI}?type=oggi`);
+    const json = await risposta.json();
+    const ordine = json.data ? json.data : [];
+    if(tavoliSelezionati.length === 0){
+        sezione.classList.add('warning', 'controllopositivo');
+        avviso.innerHTML = "devi obbligatoriamente selezionare almeno un tavolo per procedere!";
+        
+        return false;
+       
+    }
+    let tavoliSelezione = Array.from(tavoliSelezionati).map(Number); // FIX: assicurati che siano numeri
+    
+    if (ordine && tavoliSelezione.includes(ordine.id_tavolo)) {
+        
+        const conferma = confirm(`Il tavolo ${ordine.numero_tavolo} ha già un inserimento in corso, vuoi utilizzarlo comunque?
+            verrà cancellata la precedente comanda salvata!`);
         if(!conferma){
            svuotaOrdineSalvato();
+           disattivaBottoneAvanti();
            return false;
         }
         ripristinaOrdine();
         return true;
+    
     }
 
-
-    if(tavoliSelezionati.length === 0){
-        sezione.classList.remove('warning', 'controllopositivo');
-        avviso.innerHTML = "";
-        return true;
-    }
+    
 
     const numeroPersone = parseInt(document.getElementById('numero-persone').value, 10); // FIX: cast esplicito
     if (Number.isNaN(numeroPersone) || numeroPersone <= 0) {
