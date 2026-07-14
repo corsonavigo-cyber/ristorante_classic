@@ -26,7 +26,7 @@ require_once __DIR__ . '/../navbar.php';
 <script src="/ristorante_classic/public/assets/js/menu.js" defer></script>    
 
 </main>
-
+<!---questo è un commento-->
 <?php 
 require_once __DIR__ . '/../footer.php';
 ?>
