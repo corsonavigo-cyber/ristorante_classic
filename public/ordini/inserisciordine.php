@@ -33,7 +33,7 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
              <div class="controllopositivo" id="controllo"><p id="avviso"></p> </div>
             <div class="controllopositivo" id="controllo1"><p id="avviso1"></p> </div>
         </fieldset>
-        <button id="avanti" type="button" class="btn-avanti" dataset-id="#">Avanti</button>
+        <button id="avanti" type="button" class="btn-avanti" data-id="#">Avanti</button>
        <div>
     </div>
    </div>

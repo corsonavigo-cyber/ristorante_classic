@@ -12,7 +12,7 @@
   const form_modifica= document.getElementById('form_modifica');
   const da_inserire = document.getElementById("nome_piatto");
   const form_modifica_bevanda= document.getElementById('form_modifica_bevanda');
-  let initialized = false;
+  let initialized = false; 
 
   function initBevande() {
     if (initialized) return;
