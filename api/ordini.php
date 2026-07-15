@@ -69,7 +69,9 @@ try {
                 $type === 'ieri' =>risposta($ordiniService->visualizzaTuttiGliOrdiniDiIeri()),
 
                 $type === 'oggi' =>risposta($ordiniService->visualizzaTuttiGliOrdiniOggi()),
-
+                
+                $type === 'modifica' && $id !== null =>risposta($ordiniService->visualizzaOrdiniTavoloPerModifica($id)),
+                
 
                 default => throw new \InvalidArgumentException('Tipo non valido')
             };

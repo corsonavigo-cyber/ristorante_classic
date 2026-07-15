@@ -36,6 +36,17 @@ class OrdiniService {
             return []; 
         }
     }
+    //visualizzaOrdiniPerModifica
+
+     public function visualizzaOrdiniTavoloPerModifica(int $id_ordine): array {
+        try {
+            return $this->ordiniRepo->visualizzaOrdiniTavoloPerModifica($id_ordine) ?? [];
+        } catch (\Throwable $e) {
+            $this->logger->error("Errore recupero ordine: {$e->getMessage()}");
+            return []; 
+        }
+    }
+
 
     public function visualizzaTuttiGliOrdiniStato(int $id_stato): array {
         try {

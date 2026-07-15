@@ -96,6 +96,16 @@ class OrdiniRepositories {
         ]);
         return $stmt->fetchAll() ?:null;
      }
+
+     public function visualizzaOrdiniTavoloPerModifica(int $id_ordine):?array
+     {
+        $stmt =$this->pdo->prepare('SELECT * FROM dettaglio_ordini_tavoli WHERE id_ordine = :id_ordine');
+        $stmt->execute([
+            'id_ordine' => $id_ordine
+        ]);
+        return $stmt->fetchAll() ?:null;
+     }
+ 
      
                  //INSERIMENTI
 
