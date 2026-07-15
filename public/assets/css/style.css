@@ -231,3 +231,7 @@ td,th{
     gap: 25px; /* Spazio tra i bottoni */
     margin: 30px 0;
 }
+.quantita-stepper { display: flex; align-items: center; gap: 4px; }
+.quantita-stepper .quantita,
+.quantita-stepper .quantita-bev { width: 3em; text-align: center; }
+.btn-quantita { width: 2em; height: 2em; }

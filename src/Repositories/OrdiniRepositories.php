@@ -106,6 +106,18 @@ class OrdiniRepositories {
         return $stmt->fetchAll() ?:null;
      }
  
+
+     //tranzazioni per evitare il roolback
+     public function iniziaTransazione():void{
+        $this->pdo->beginTransaction();
+     }
+     public function confermaTransazione():void{                
+        $this->pdo->commit();
+        }
+     public function annullaTransazione():void{
+        $this->pdo->rollBack();
+        }
+        
      
                  //INSERIMENTI
 

@@ -52,9 +52,9 @@ if (fuorimenupiatto) {
     document.addEventListener('DOMContentLoaded', () => {
     const runCheck = () => {
         const tavoliSelezionati = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')].map(el => parseInt(el.value));
-        controllaPostiTavoloDisponibili(tavoliSelezionati);
+        controllaPostiTavoloDisponibili();
     };
-
+    document.getElementById('numero-persone').addEventListener('input', runCheck);
     // FIX: delegation  (es. #tavoli_checkbox), funziona anche per checkbox iniettate dopo
     document.getElementById('tavoli_checkbox').addEventListener('change', (e) => {
         if (e.target.name === 'tavoliSelezionati[]') runCheck();
@@ -148,17 +148,25 @@ async function precaricaTavoliForm(id_tavolo_arrivato_url) {
     const risposta = await fetch(`${API}`);
     const json = await risposta.json();
     const data = json.data; // ← prendi il primo elemento
-
+       
     const lavagna = document.getElementById('tavoli_checkbox');
    
+    id_tavolo_arrivato_url= new URLSearchParams(window.location.search).get('id');
     lavagna.innerHTML = data.map(tavolo => `
        <li><label><input type="checkbox" name="tavoliSelezionati[]" value="${tavolo.id_tavolo}" data-posti="${tavolo.posti_max}">Numero Tavolo ${tavolo.numero_tavolo} posti ${tavolo.posti_max}</label></li>`).join('');
+    console.log("ID Tavolo arrivato dall'URL:", id_tavolo_arrivato_url);
+    await selezionatavolo(id_tavolo_arrivato_url);
 
-    const attivaInput = document.querySelector(`input[name="tavoliSelezionati[]"][value="${id_tavolo_arrivato_url}"]`);
-    if (attivaInput) attivaInput.checked = true;
-
+    
 }
+async function selezionatavolo(id_tavolo_arrivato_url){
+    document.querySelectorAll('input[name="tavoliSelezionati[]"]').forEach(checkbox => {
+        checkbox.checked = parseInt(id_tavolo_arrivato_url) === parseInt(checkbox.value)? true : false;
+        });
 
+    document.getElementById('numero-persone').value = document.querySelector(`input[name="tavoliSelezionati[]"][value="${id_tavolo_arrivato_url}"]`).dataset.posti;
+    }
+    
 async function disegnaMomenti() {
     const risposta = await fetch(`${API_ORDINI}?type=momenti`); 
     if (!risposta.ok) { 
@@ -356,8 +364,8 @@ async function globalClick(e) {
         //controllo per evitare che il json salvato invii la funzione sena il permesso dell'utente
         
         let id_ordine = await inserisciOrdine();
-        if(typeof(id_ordine) !== Number ){
-            return;
+        if(Number.isNaN(id_ordine)){
+            return alert("Errore nell'inserimento dell'ordine. Riprova.");
         }
         secondo_step.classList.remove('hider');
         primo_step.classList.add('hider');
@@ -365,7 +373,7 @@ async function globalClick(e) {
 
         alert("Nuovo ordine inserito");
 
-        btn_avanti.dataset.id = parseInt(id_ordine);
+        btn_avanti.dataset.id = id_ordine;
 
         salvaOrdine(id_ordine, true);
 
@@ -471,8 +479,7 @@ function gestisciInputGlobali(e) {
     }
 
     if (e.target.closest('.tavoli-checkbox')) {
-        const tavoliSelezionati = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')].map(el => parseInt(el.value));
-        const controllo = controllaPostiTavoloDisponibili(tavoliSelezionati);
+        const controllo = controllaPostiTavoloDisponibili();
         if (!controllo) {
             disattivaBottoneAvanti();
             return;
@@ -678,15 +685,20 @@ async function inserisciOrdine() {
         if (Number.isNaN(numPersone) || numPersone <= 0) {
             throw new Error("Inserisci un numero persone valido");
         }
-
+        const tavoli = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')].map(el => parseInt(el.value));
+        if (tavoli.length === 0) {
+            throw new Error("Seleziona almeno un tavolo");
+        }
+        
+        console.log("Tavoli selezionati:", tavoli);
         const body = {
-            numero_persone: numPersone
+            id_stato: parseInt(1),
+            numero_persone:  parseInt(numPersone),
+            tavoli: tavoli
         };
 
-
-        // ATTENZIONE: "type" non era definito da nessuna parte in questa funzione.
         
-        const risposta = await fetch(`${API_ORDINI}?type=ordine`, {
+        const risposta = await fetch(`${API_ORDINI}?type=ordinecompleto`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -698,11 +710,9 @@ async function inserisciOrdine() {
         }
 
         const json = await risposta.json();
-        //da 
+     
         const id_ordine = parseInt(json.id)
-        await inserisciOrdineStato(id_ordine);
-        await inserisciOrdineTavolo(id_ordine);
-
+        
         return id_ordine;
     } catch (errore) {
         console.error(errore);
@@ -1171,7 +1181,10 @@ async function eliminaStoricoOrdini(e) {
 
 
 
- async function controllaPostiTavoloDisponibili(tavoliSelezionati){
+ async function controllaPostiTavoloDisponibili(){
+
+    const tavoliSelezionati = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')].map(el => parseInt(el.value));
+
     const avviso = document.getElementById("avviso1");
     const sezione = document.querySelector('#controllo1');
     const risposta = await fetch(`${API_ORDINI}?type=oggi`);
@@ -1210,11 +1223,11 @@ async function eliminaStoricoOrdini(e) {
     }
 
     // FIX: somma posti letti da data-posti delle checkbox selezionate, non dagli id grezzi
-    const postiTotali = tavoliSelezionati.reduce((acc, id) => {
+    const postiTotali = tavoliSelezione.reduce((acc, id) => {
         const checkbox = document.querySelector(`input[name="tavoliSelezionati[]"][value="${id}"]`);
         return acc + (parseInt(checkbox?.dataset.posti, 10) || 0);
     }, 0);
-    console.log(postiTotali)
+    console.log(tavoliSelezione);
     // FIX: confronto diretto, niente più chained comparison invalido
     if (numeroPersone > postiTotali) {
         sezione.classList.remove('controllopositivo');

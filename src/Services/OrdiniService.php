@@ -225,11 +225,11 @@ class OrdiniService {
 
     //inserimento composto
 
-    public function inserisciOrdineDirettamenteNelTavolo(int $id_stato , int $numero_persone, array $tavoli):bool{
+    public function inserisciOrdineDirettamenteNelTavoloEStato(int $id_stato , int $numero_persone, array $tavoli):int{
         #salto l'autorizzazione in base al ruolo
 
         try {
-            $this->pdo->beginTransaction();
+            $this->ordiniRepo-> iniziaTransazione();
 
             // FIX: cattura l'id appena creato, ti serve per il secondo insert
             $id_ordine = $this->ordiniRepo->inserisciOrdine($numero_persone);
@@ -238,7 +238,7 @@ class OrdiniService {
 
             $this->ordiniRepo->relazioneOrdineStato($id_ordine,$id_stato);
 
-            $this->pdo->commit();
+            $this->ordiniRepo->confermaTransazione();
 
             // FIX: implode per trasformare l'array in stringa leggibile nel log
             $tavoliStr = implode(', ', $tavoli);
@@ -246,9 +246,9 @@ class OrdiniService {
             $this->logger->info("ordine inserita correttamente id_ordine {$id_ordine} sul tavolo {$tavoliStr} con stato {$id_stato}");
             $this->storicoordini->aperto("ordine inserita correttamente id_ordine {$id_ordine} sul tavolo {$tavoliStr}");
 
-            return true;
+            return $id_ordine;
         } catch (\Throwable $e) {
-            $this->pdo->rollBack();
+            $this->ordiniRepo->annullaTransazione();
             $this->logger->error("Inserimento ordine non riuscito: {$e->getMessage()}");
             throw new \RuntimeException("Errore inserimento ordine: {$e->getMessage()}");
         }

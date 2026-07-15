@@ -105,9 +105,12 @@ try {
                     $body['quantita']) ??  []
                 ),
 
-                'ordinecompleto' => risposta($ordiniService->inserisciOrdineDirettamenteNelTavolo(
-                    $body['id_stato'], $body['numero_persone'], $body['tavoli'] ) ?? []
-                ),
+               'ordinecompleto' => risposta(true, $ordiniService->inserisciOrdineDirettamenteNelTavoloEStato(
+                            (int)$body['id_stato'],
+                            (int)$body['numero_persone'],
+                            $body['tavoli']??  []
+                        ) 
+                    ),
 
                 'tavolo' => risposta($ordiniService->relazioneOrdineTavolo(
                     $body['id_ordine'], $body['tavoli']) ?? []

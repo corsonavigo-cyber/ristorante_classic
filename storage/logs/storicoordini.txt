@@ -2,3 +2,7 @@
 [2026-07-15 11:55:26] [APERTO] Ordine inserito correttamente id_ordine 6 sul tavolo: inserito con successo
 [2026-07-15 12:16:36] [APERTO] Ordine inserito correttamente id_ordine 7 sul tavolo: inserito con successo
 [2026-07-15 13:21:38] [APERTO] Ordine inserito correttamente id_ordine 8 sul tavolo: inserito con successo
+[2026-07-15 15:52:29] [APERTO] ordine inserita correttamente id_ordine 9 sul tavolo 5
+[2026-07-15 15:54:17] [APERTO] ordine inserita correttamente id_ordine 10 sul tavolo 5
+[2026-07-15 15:55:33] [APERTO] ordine inserita correttamente id_ordine 11 sul tavolo 5
+[2026-07-15 15:58:56] [APERTO] ordine inserita correttamente id_ordine 12 sul tavolo 5
