@@ -6,3 +6,17 @@
 [2026-07-15 15:54:17] [APERTO] ordine inserita correttamente id_ordine 10 sul tavolo 5
 [2026-07-15 15:55:33] [APERTO] ordine inserita correttamente id_ordine 11 sul tavolo 5
 [2026-07-15 15:58:56] [APERTO] ordine inserita correttamente id_ordine 12 sul tavolo 5
+[2026-07-15 16:06:54] [APERTO] ordine inserita correttamente id_ordine 13 sul tavolo 5
+[2026-07-15 16:18:28] [APERTO] ordine inserita correttamente id_ordine 14 sul tavolo 5
+[2026-07-16 09:42:24] [APERTO] ordine inserita correttamente id_ordine 15 sul tavolo 5
+[2026-07-16 09:48:01] [APERTO] ordine inserita correttamente id_ordine 16 sul tavolo 5
+[2026-07-16 09:49:03] [APERTO] ordine inserita correttamente id_ordine 17 sul tavolo 5
+[2026-07-16 09:51:02] [APERTO] ordine inserita correttamente id_ordine 18 sul tavolo 7
+[2026-07-16 09:51:04] [APERTO] ordine inserita correttamente id_ordine 19 sul tavolo 7
+[2026-07-16 09:52:48] [APERTO] ordine inserita correttamente id_ordine 20 sul tavolo 6
+[2026-07-16 11:57:28] [APERTO] ordine inserita correttamente id_ordine 21 sul tavolo 6
+[2026-07-16 12:32:11] [APERTO] ordine inserita correttamente id_ordine 22 sul tavolo 6
+[2026-07-16 13:03:11] [APERTO] ordine inserita correttamente id_ordine 23 sul tavolo 8
+[2026-07-16 13:11:04] [APERTO] ordine inserita correttamente id_ordine 24 sul tavolo 7
+[2026-07-16 15:28:36] [APERTO] ordine inserita correttamente id_ordine 25 sul tavolo 7
+[2026-07-16 15:51:36] [APERTO] ordine inserita correttamente id_ordine 26 sul tavolo 7

@@ -104,13 +104,17 @@ try {
                     $body['id_ordine'], $body['id_piatto'], $body['id_momento'],
                     $body['quantita']) ??  []
                 ),
-
-               'ordinecompleto' => risposta(true, $ordiniService->inserisciOrdineDirettamenteNelTavoloEStato(
+               //errore php 
+               'ordinecompleto' => risposta(
+                    [
+                        'id_ordine' => $ordiniService->inserisciOrdineDirettamenteNelTavoloEStato(
                             (int)$body['id_stato'],
                             (int)$body['numero_persone'],
-                            $body['tavoli']??  []
-                        ) 
-                    ),
+                            $body['tavoli'] ?? []
+                        )
+                    ],
+                    201
+                ),
 
                 'tavolo' => risposta($ordiniService->relazioneOrdineTavolo(
                     $body['id_ordine'], $body['tavoli']) ?? []
