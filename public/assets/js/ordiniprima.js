@@ -417,50 +417,7 @@ async function globalClick(e) {
         aggiornaInputPernuovoMomento(comanda);
         return;
     }
-    const btn_piatto = e.target.closest('.btn-inserisci-piatto-ordine'); 
-    if (btn_piatto) {
-        e.preventDefault();
-        const id_piattoDaInserire = Number(btn_piatto.dataset.id);
-        const quantita = document.querySelector(`.quantita[data-id="${id_piattoDaInserire}"]`);
-        const nome_pietanza = document.querySelector(`#nome-piatto${id_piattoDaInserire}`);
-        const prezzo  = document.querySelector('#prezzo');
-        console.log(prezzo);
-        if (Number(quantita.value) === 0) quantita.value = 1;
-        aggiornaVoceComanda(
-            "piatto",
-            nome_pietanza.dataset.nome,
-            id_piattoDaInserire,      
-            Number(quantita.value),  
-            Number(prezzo.dataset.prezzo),
-            momentoAttivo,
-            idOrdineInserito      
-        );   
-        salvaOrdine(idOrdineInserito, true);
-        disegnaPreComanda(comanda);
-        return;
-    }
-    const btn_bevanda = e.target.closest(".btn-inserisci-bevandamenu-ordine");
-    if (btn_bevanda) {
-        e.preventDefault();
-        if (!controllaMomentoSelezionato()) return;
-        const id_bevanda = Number(btn_bevanda.dataset.id);
-        const quantita_bev = document.querySelector(`.quantita-bev[data-id="${id_bevanda}"]`);
-        const nome_pietanza = document.querySelector(`#nome-bevanda${id_bevanda}`);
-        const prezzo  = document.querySelector('#prezzo');
-        if (Number(quantita_bev.value) === 0) quantita_bev.value = 1;
-        aggiornaVoceComanda(
-            "bevanda",
-             nome_pietanza.dataset.nome,
-             nome_pietanza.dataset.id,
-             Number(quantita_bev.value),   
-             Number(prezzo.dataset.prezzo),
-             momentoAttivo,
-             idOrdineInserito
-        );      
-        salvaOrdine(idOrdineInserito, true);  
-        return;
-    }
-
+    
     const btn__inserisci_ordine = e.target.closest(".btn-inserisci-ordine");
     if (btn__inserisci_ordine) {
         e.preventDefault();
@@ -602,10 +559,23 @@ function aggiornaInputPernuovoMomento(comanda) {
     const ordine = localStorage.getItem(CHIAVE_ORDINE) ? JSON.parse(localStorage.getItem(CHIAVE_ORDINE)) : [];
     
     const esisteMomento = ordine.comanda.some(e => e.id_momento === momentoAttivo);
-    
+    console.log(ordine, esisteMomento);
     if(!esisteMomento){
         // Azzera tutti gli input grafici correnti prima del ricalcolo 
-        document.querySelectorAll(".quantita, .quantita-bev").forEach(input => input.value = 0);
+        document.querySelectorAll(".quantita, .quantita-bev").forEach(
+            /**la arrow function ha uno scope tutto suo, faceva una copia di input impedendo che la variazione si visualizzasse nel DOM, cambiava value sganciandolo dall'elemento a cui era seloezionato
+             * (input) => {
+                let valueBefore = input.value;
+                input.value = 0; 
+                console.log(input, valueBefore, input.value); 
+                input.dispatchEvent(new Event("input", { bubbles: true }));
+                input.dispatchEvent(new Event("change", { bubbles: true }));
+            });*/
+            function(input) {
+                let valueBefore = input.value;
+                input.value = 0; 
+                console.log(input, valueBefore, input.value); 
+            });
     }
     if( Number(idOrdineInserito) ===  Number(ordine.id_ordine) ){
         if(comanda.length > 0){
