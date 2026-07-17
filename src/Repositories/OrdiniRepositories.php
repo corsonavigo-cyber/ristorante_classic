@@ -107,16 +107,28 @@ class OrdiniRepositories {
      }
  
 
-     //tranzazioni per evitare il roolback
-     public function iniziaTransazione():void{
-        $this->pdo->beginTransaction();
-     }
-     public function confermaTransazione():void{                
-        $this->pdo->commit();
-        }
-     public function annullaTransazione():void{
-        $this->pdo->rollBack();
-        }
+     // transazioni per evitare il rollback
+      public function inTransaction(): bool {
+         return $this->pdo->inTransaction();
+      }
+
+      public function iniziaTransazione(): void {
+         if (!$this->pdo->inTransaction()) { // evita "There is already an active transaction"
+            $this->pdo->beginTransaction();
+         }
+      }
+
+      public function confermaTransazione(): void {
+         if ($this->pdo->inTransaction()) { // evita errori se non c'è nulla da confermare
+            $this->pdo->commit();
+         }
+      }
+
+      public function annullaTransazione(): void {
+         if ($this->pdo->inTransaction()) { // evita "There is no active transaction"
+            $this->pdo->rollBack();
+         }
+      }
         
      
                  //INSERIMENTI
@@ -281,7 +293,7 @@ class OrdiniRepositories {
 
         $stmt = $this->pdo->prepare('DELETE FROM dettaglio_ordine_cucina WHERE id_piatto = :id_piatto');
         return  $stmt->execute([
-            'id_ordine' => $id_ordine
+            'id_piatto' => $id_piatto
             ]);    
         }
    

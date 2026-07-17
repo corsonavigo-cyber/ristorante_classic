@@ -29,3 +29,6 @@
 [2026-07-17 12:25:28] [APERTO] ordine inserita correttamente id_ordine 33 sul tavolo 5
 [2026-07-17 12:38:47] [APERTO] ordine inserita correttamente id_ordine 34 sul tavolo 5
 [2026-07-17 13:02:00] [APERTO] ordine inserita correttamente id_ordine 35 sul tavolo 5
+[2026-07-17 15:11:13] [CANCELLATO] ordine id 29 ( del     
+[2026-07-17 15:14:05] [CANCELLATO] ordine id 30 ( del 2026-07-17 09:57:35 2   
+[2026-07-17 15:22:53] [CANCELLATO] ordine id 35 ( del 2026-07-17 13:02:00 id tavolo 5 piatti  bevande  )

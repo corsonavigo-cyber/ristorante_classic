@@ -11,6 +11,7 @@ const contenitore_bev = document.getElementById('bevande_bar');
 const primo_step = document.getElementById('primo-step');
 const secondo_step = document.getElementById('secondo-step');
 //funzione di controllo multipla negli inserimenti/modifiche form_inserisci_ordine
+let tavoliInUso;
 let confirmGiaChiesto = false;
 let bevande = [];
 let piatti = []; 
@@ -49,20 +50,34 @@ if (fuorimenupiatto) {
     
     document.addEventListener('DOMContentLoaded', () => {
     const runCheck = () => {
-        console.log("sonoqui 5");
         controllaPostiTavoloDisponibili();
     };
     document.getElementById('numero-persone').addEventListener('input', runCheck);
-    // FIX: delegation  (es. #tavoli_checkbox), funziona anche per checkbox iniettate dopo
     document.getElementById('tavoli_checkbox').addEventListener('change', (e) => {
-        if (e.target.name === 'tavoliSelezionati[]') runCheck() ;
-       });
-        });  
+        if (e.target.name === 'tavoliSelezionati[]') runCheck();
+    });
+
+    // 1) prima controlla se c'è una bozza salvata in localStorage
+    const ordineSalvato = localStorage.getItem('ordine');
+    if (ordineSalvato) {
+        ripristinaOrdine(JSON.parse(ordineSalvato));
+        return; // la bozza locale ha priorità, non serve interrogare il server
+    }
+
+    // 2) solo se NON c'è nulla in localStorage, controlla se il tavolo
+    //    selezionato ha già un ordine attivo lato server
+    const checkboxSelezionata = document.querySelector('input[name="tavoliSelezionati[]"]:checked');
+    if (checkboxSelezionata) {
+        const idTavolo = Number(checkboxSelezionata.value);
+        cercaOrdineAttivo(idTavolo).then(ordine => {
+            if (ordine) ripristinaOrdine(ordine);
+        });
+    }
+});
   
     document.addEventListener('DOMContentLoaded', precaricaTavoliForm);
     document.addEventListener('input', gestisciInputGlobali);
     document.addEventListener('click', globalClick);
-
 }
 
 
@@ -271,11 +286,14 @@ function salvaOrdine(id_ordine, salvatavoli = true) {
            comanda: comanda,
            tavoli: tavoliSelezionati
          }
+         tavoliInUso = tavoliSelezionati;
         }else{
             ordine = {
                 id_ordine: id_ordine,
                 step: step,
-                comanda: comanda}
+                comanda: comanda,
+                tavoli : tavoliInUso
+            }
             };
         
     localStorage.setItem(CHIAVE_ORDINE, JSON.stringify(ordine));
@@ -432,7 +450,7 @@ async function globalClick(e) {
 function gestisciInputGlobali(e) {
     // Variazione manuale quantità piatti
     if (e.target.classList.contains("quantita")) {
-        const id_piatto = Number(btn_piatto.dataset.id);
+        const id_piatto = Number(e.target.dataset.id);
         const quantita = document.querySelector(`.quantita[data-id="${id_piatto}"]`);
         const nome_pietanza = document.querySelector(`#nome-piatto${id_piatto}`);
         const prezzo  = document.querySelector('#prezzo');
@@ -452,7 +470,7 @@ function gestisciInputGlobali(e) {
 
     // Variazione manuale quantità bevande
     if (e.target.classList.contains("quantita-bev")) {
-        const id_bevanda = Number(btn_bevanda.dataset.id);
+        const id_bevanda = Number(e.target.dataset.id);
         const quantita_bev = document.querySelector(`.quantita-bev[data-id="${id_bevanda}"]`);
         const nome_pietanza = document.querySelector(`#nome-piatto${id_bevanda}`);
         console.log(nome_pietanza);
@@ -1023,11 +1041,17 @@ async function eliminaComandaClick(e) {
     try {
         const btn_elimina = e.target.closest('.btn-elimina-ordine');
         if (!btn_elimina) return;
-        if (!confirm('vuoi eliminare questa prenotazione?')) return;
 
-        const id_elimina = btn_elimina.dataset.id;
-        if (!id_elimina) {
+        if (!confirm('vuoi eliminare questa comanda?')) return;
+
+        const id_elimina = Number(btn_elimina.dataset.id);
+        
+        if (!id_elimina ) {
             throw new Error('Id Mancante nel bottone!');
+        }
+
+        if (!Number.isInteger(id_elimina)) {
+            throw new Error('Id Mancante o non valido nel bottone!');
         }
 
         const risposta = await fetch(`${API_ORDINI}?type=composto&id=${id_elimina}`, {

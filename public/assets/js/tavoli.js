@@ -220,14 +220,17 @@ async function caricaOrdiniTavolo(id_tavolo){
           return;
         }
         //recupero il data set da data-id
-        const id_elimina = btn_elimina_ordine.dataset.id;
+        const id_elimina = Number(btn_elimina_ordine.dataset.id);
         //blocco l'esecuzione se non arriva l'id
         if(!id_elimina){
           throw new Error('Id Mancante nel bottone!');
         }
+        if (!Number.isInteger(id_elimina)) {
+            throw new Error('Id Mancante o non valido nel bottone!');
+        }
             
         //salvo il response dentro risposta, chiamo la fetch su un id specifico e scelgo il metodo delete definito in tavoli.php
-        const risposta = await fetch(`API_ORDINI?type=composto?id=${id_elimina}`, {
+        const risposta = await fetch(`${API_ORDINI}?type=composto&id=${id_elimina}`, {
             method: 'DELETE'
         });
         //se la risposta non è ok dat che il 400 e il 500 non interrompono il codice, lo interrompo con l'if e trow new error

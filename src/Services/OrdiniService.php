@@ -418,7 +418,7 @@ class OrdiniService {
         }
 
         try {
-            $this->pdo->beginTransaction();
+            $this->ordiniRepo->iniziaTransazione();
 
             foreach ($ordiniIeri as $ordineieri) { // FIX: singolo foreach, niente nesting
                 $id = $ordineieri['id_ordine'];
@@ -426,23 +426,23 @@ class OrdiniService {
                 $this->ordiniRepo->eliminaRelazioneOrdineTavolo($id);
                 $this->ordiniRepo->eliminaRelazioneOrdineStato($id);
                 $this->ordiniRepo->eliminaRelazioneOrdineBevanda($id);
-                $this->ordiniRepo->eliminaRelazionePiattoOrdine($id);
+                $this->ordiniRepo->eliminaRelazionePiattiOrdine($id);
 
                 $this->ordiniRepo->eliminaOrdine($id);
 
                 // log prima che il dato sparisca, altrimenti perdi il contesto
                 $this->storicoordini->cancellato(
-                    "ordine id {$id} ({$ordineieri['id_ordine']}) del {$ordineieri['data_e_ora']} {$ordineieri['numero_persone']} {$ordineieri['piatti']} {$ordineieri['bevande']} automaticamente (scaduta)"
+                    "ordine id {$id} ({$ordineieri[0]['id_ordine']}) del {$ordineieri[0]['data_e_ora']} {$ordineieri[0]['numero_persone']} {$ordineieri[0]['piatti']} {$ordineieri[0]['bevande']} automaticamente (scaduta)"
                 );
             }
 
-            $this->pdo->commit();
+            $this->ordiniRepo->confermaTransazione();
             $this->logger->info("Pulizia automatica: rimosse " . count($ordiniIeri) . " ordini scadute (prima del {$ieri})");
 
             return true;
         } catch (\Throwable $e) {
-            if ($this->pdo->inTransaction()) {
-               $this->pdo->rollBack();
+            if ($this->ordiniRepo->inTransaction()) {
+               $this->ordiniRepo->annullaTransazione();
             }
             $this->logger->error("Errore durante la pulizia ordini scadute: {$e->getMessage()}");
             return false;
@@ -457,14 +457,15 @@ class OrdiniService {
 
         
         if (!$ordine) {
-            return $this->logger->info(" Nessuna  ordine {$id_ordine} presente");
+             $this->logger->info(" Nessuna  ordine {$id_ordine} presente");
+             return false;
         }
 
         try {
-            $this->pdo->beginTransaction();
+            $this->ordiniRepo->iniziaTransazione();
 
             
-            $id = $ordine['id_ordine'];
+            $id = $id_ordine;
 
             $this->ordiniRepo->eliminaRelazioneOrdineTavolo($id);
             $this->ordiniRepo->eliminaRelazioneOrdineStato($id);
@@ -475,17 +476,18 @@ class OrdiniService {
 
             // log prima che il dato sparisca, altrimenti perdi il contesto
             $this->storicoordini->cancellato(
-                "ordine id {$id} ( del {$ordine['data_e_ora']} {$ordine['numero_persone']} {$ordine['piatti']} {$ordine['bevande']} "
+                "ordine id {$id} ( del {$ordine[0]['data_e_ora']} id tavolo {$ordine[0]['id_tavolo']} piatti {$ordine[0]['piatti']} bevande {$ordine[0]['bevande']} )"
             );
             
 
-            $this->pdo->commit();
+            $this->ordiniRepo->confermaTransazione();
             $this->logger->info("Cancellato: rimosso  ordine id {$id}   ");
 
             return true;
         } catch (\Throwable $e) {
-            if ($this->pdo->inTransaction()) {
-               $this->pdo->rollBack();
+            if ($this->ordiniRepo->inTransaction()) {
+               $this->ordiniRepo->annullaTransazione();
+               return false;
             }
             $this->logger->error("Errore durante l'eliminazione dell' ordine: {$e->getMessage()}");
             return false;
