@@ -32,12 +32,40 @@
   }else if(lavagna_ordini){
       //attiva il bottone inserisci
       document.addEventListener('DOMContentLoaded', caricaTavoliConOrdini);
+      document.addEventListener('DOMContentLoaded', eliminaStoricoOrdini);
+
       //il bottone elimina lo attivo solo se seno nell'elenco tavoli
       document.addEventListener('click', eliminaTavoloClick);   
       document.addEventListener('click', eliminaOrdineClick);
   }
   
-  
+  //funzione pulizia ordini vecchi
+
+  async function eliminaStoricoOrdini(e) {
+    try {
+        const oggi = new Date().toISOString().slice(0, 10);
+        const ultimaEsecuzione = localStorage.getItem('ultimaPuliziaOrdini');
+
+        
+        
+        if (ultimaEsecuzione === oggi) return; 
+
+        const risposta = await fetch(`${API_ORDINI}?type=pulisci`, {
+            method: 'DELETE'
+        });
+
+        if (!risposta.ok) {
+            const json = await risposta.json().catch(() => null);
+            throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
+        }
+
+        localStorage.setItem('ultimaPuliziaOrdini', oggi);
+        return console.log('efettuata pulizia ordini scaduti');
+    } catch (errore) {
+        console.error(errore);
+        alert(errore.message);
+    }
+}
   
  //Caricae reiderizza tutti i tavoli, funzione
 
@@ -240,7 +268,8 @@ async function caricaOrdiniTavolo(id_tavolo){
           throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
         }
         //se il flusso del programma non viene interrotto ricarico gli ordini
-        await caricaOrdiniTavolo();
+        window.location.reload();
+        
     }catch (errore){
         console.error(errore);
         //mostro la risposta json

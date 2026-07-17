@@ -432,7 +432,7 @@ class OrdiniService {
 
                 // log prima che il dato sparisca, altrimenti perdi il contesto
                 $this->storicoordini->cancellato(
-                    "ordine id {$id} ({$ordineieri[0]['id_ordine']}) del {$ordineieri[0]['data_e_ora']} {$ordineieri[0]['numero_persone']} {$ordineieri[0]['piatti']} {$ordineieri[0]['bevande']} automaticamente (scaduta)"
+                    "ordine id {$id} ({$ordineieri['id_ordine']}) del {$ordineieri['data_e_ora']} {$ordineieri['numero_persone']} {$ordineieri['piatti']} {$ordineieri['bevande']} automaticamente (scaduta)"
                 );
             }
 

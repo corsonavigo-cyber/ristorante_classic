@@ -1,5 +1,3 @@
-//salvo la API IN UNA VARIABILE---lo faccio in modo dinamico php nel file gestione tavoli.php
-
 //--------------------SELETTORI-------------------------------------
 
 //per caricare e selezionare dove avverrà l'insert dei menu
@@ -22,20 +20,6 @@ let id_tavolo_arrivato_url= new URLSearchParams(window.location.search).get('id'
 ///_-----------------LOCAL STORAGE--------------
 
 const CHIAVE_ORDINE = "id_ordine";
-/*function initLocal() {
-    const tavoliSelezionati = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')].map(el=> parseInt(el.value));
-    const comandaprecedente = localStorage.getItem('id_ordine');
-    const comandaTrovata = comandaprecedente.id_tavolo === tavoliSelezionati ? true : false;
-        if(comandaTrovata ){
-                const conferma = confirm("Su questo travolo hai già una comanda in corso, vuoi continuare con quella?");
-                if (conferma) {
-                    btn_avanti.dataset.id = parseInt(comandaprecedente.id_ordine);
-                    ripristinaOrdine(comandaprecedente);
-                    return;
-                }
-        }        
-   }
-*/
 
 //controllo che siamo nella pagina giusta per attivare i listener
 if (fuorimenupiatto) {
@@ -1045,7 +1029,7 @@ async function eliminaComandaClick(e) {
         if (!confirm('vuoi eliminare questa comanda?')) return;
 
         const id_elimina = Number(btn_elimina.dataset.id);
-        
+
         if (!id_elimina ) {
             throw new Error('Id Mancante nel bottone!');
         }
@@ -1123,29 +1107,7 @@ async function eliminaPiattoDallaComandaClick(e) {
 }
 
 
-async function eliminaStoricoOrdini(e) {
-    try {
-        const oggi = new Date().toISOString().slice(0, 10);
-        const ultimaEsecuzione = localStorage.getItem('ultimaPuliziaOrdini');
 
-        if (ultimaEsecuzione === oggi) return; // già eseguita oggi, esci
-
-        const risposta = await fetch(`${API_ORDINI}?type=pulisci`, {
-            method: 'DELETE'
-        });
-
-        if (!risposta.ok) {
-            const json = await risposta.json().catch(() => null);
-            throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
-        }
-
-        localStorage.setItem('ultimaPuliziaOrdini', oggi);
-        window.location.reload();
-    } catch (errore) {
-        console.error(errore);
-        alert(errore.message);
-    }
-}
 
 
 //utilità
