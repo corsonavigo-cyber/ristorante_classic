@@ -20,3 +20,8 @@
 [2026-07-16 13:11:04] [APERTO] ordine inserita correttamente id_ordine 24 sul tavolo 7
 [2026-07-16 15:28:36] [APERTO] ordine inserita correttamente id_ordine 25 sul tavolo 7
 [2026-07-16 15:51:36] [APERTO] ordine inserita correttamente id_ordine 26 sul tavolo 7
+[2026-07-16 16:15:59] [APERTO] ordine inserita correttamente id_ordine 27 sul tavolo 7
+[2026-07-16 16:22:27] [APERTO] ordine inserita correttamente id_ordine 28 sul tavolo 7
+[2026-07-17 09:46:25] [APERTO] ordine inserita correttamente id_ordine 29 sul tavolo 5
+[2026-07-17 09:57:35] [APERTO] ordine inserita correttamente id_ordine 30 sul tavolo 5
+[2026-07-17 10:32:28] [APERTO] ordine inserita correttamente id_ordine 31 sul tavolo 5

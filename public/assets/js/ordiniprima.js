@@ -123,6 +123,10 @@ async function precaricaTavoliForm(id_tavolo_arrivato_url) {
     const lavagna = document.getElementById('tavoli_checkbox');
    
     id_tavolo_arrivato_url= new URLSearchParams(window.location.search).get('id');
+    if(id_tavolo_arrivato_url && confirmGiaChiesto){
+        await controllaTavoloDisponibile();
+        return;
+    }
     lavagna.innerHTML = data.map(tavolo => `
        <li><label><input type="checkbox" name="tavoliSelezionati[]" id="id_${tavolo.id_tavolo}" value="${tavolo.id_tavolo}" data-posti="${tavolo.posti_max}">Numero Tavolo ${tavolo.numero_tavolo} posti ${tavolo.posti_max}</label></li>`).join('');
     console.log("ID Tavolo arrivato dall'URL:", id_tavolo_arrivato_url);
@@ -147,7 +151,7 @@ async function disegnaMomenti() {
     const jsonmomenti = await risposta.json();
     const contmomento = document.getElementById('momenti-servizio');
     if (!contmomento) return;
-    const momentoAttivojson =jsonmomenti.data.find(m=> m.id_momento === momentoAttivo);
+    const momentoAttivojson =jsonmomenti.data.find(m=> Number(m.id_momento) === Number(momentoAttivo));
     const stringaTitolo = momentoAttivojson ? `<br><h3>${momentoAttivojson.nome_servizio.toUpperCase()}</h3>` : '';
     
     
@@ -155,42 +159,36 @@ async function disegnaMomenti() {
     contmomento.innerHTML = `<div class="momenti-servizio">${selettori_momento}</div><div> ${stringaTitolo}</div>`;
 }
 
-async function disegnaPreComanda() {
+async function disegnaPreComanda(comanda) {
 
     const visualizza_modifiche_json = document.getElementById('riassunto-ordine');
     if (!visualizza_modifiche_json) return;
     
-    if (!ordine || !ordine.comanda || ordine.comanda.length === 0) {
+    if (!comanda || comanda.length === 0) {
         visualizza_modifiche_json.innerHTML = `<li>Non hai ancora aggiunto nessun elemento</li>`;
         return;
     }
 
-   const raggruppati = ordine.comanda.reduce((acc, e) => {
+
+   const raggruppati = comanda.reduce((acc, e) => {
 
         if (!acc[e.id_momento]) {
             acc[e.id_momento] = [];
         }
 
         acc[e.id_momento].push(e);
-
+        
         return acc;
+    },{});
+    console.log(raggruppati);
+    console.log(Object.entries(raggruppati));
 
-    }, {});
-
-
-    visualizza_modifiche_json.innerHTML = Object.entries(raggruppati).map(([id_momento, elementi]) => `
-
-    <h4>Momento ${id_momento}</h4>
-
-    ${elementi.map(e => `
-        <li>
-            ${e.nome} - X ${e.quantita} - ${e.prezzo} €
-        </li>
-    `).join("")}
-
-`).join("");
-
-}
+    visualizza_modifiche_json.innerHTML = Object.entries(raggruppati).map(([idMomento, elementi]) => `
+        <h3>Momento ${idMomento}</h3>
+        <ul>
+            ${elementi.map(e => `<li> [${e.tipo}] ${e.nome_pietanza}  ×  ${e.quantita} --   ${e.prezzo} </li>`).join('')}
+        </ul>`).join('<br>');
+    }
 
 async function precaricaBevandeForm() {
     const comanda =localStorage.getItem(CHIAVE_ORDINE) ? JSON.parse(localStorage.getItem(CHIAVE_ORDINE)) : [];
@@ -202,25 +200,29 @@ async function precaricaBevandeForm() {
         throw new Error("Errore nel caricamento delle bevande");
     }
     const jsonbevande = await rispostabevande.json();
-    bevande = jsonbevande;
+    bevande = jsonbevande.data;
     const lavagnabevande = document.getElementById('bevande_input');
     //elementi Bevande per fare il filtro dalla REST API va previsto sia nel menu.php (api) che nel serviceMenu
-    lavagnabevande.innerHTML = jsonbevande.data.filter(bevanda => bevanda.in_menu === 'si').map(bevanda => `
-    <div class="bevanda" >
-    <button type="button" class="btn-inserisci-bevandamenu-ordine" ">
-     <h3 class="comment" data-name="${bevanda.nome_bevanda}" data-id="${bevanda.id_bevanda} data-tipo="bevanda"><b> ${bevanda.nome_bevanda}</b></h3>
-     <p class="comment" data-id="${bevanda.id_bevanda} >${bevanda.descrizione}</p>
-     <p class="comment" data-prezzo="${bevanda.prezzo}" data-id="${bevanda.id_bevanda}>Prezzo: ${bevanda.prezzo} € </p>
-     <ul  class="elenco_allergeni" >
-        ${bevanda.allergeni ? bevanda.allergeni.split(', ').map(a => `<li class="comment">${a}</li>`).join('') : '<li>Nessun allergene</li>'}
-     </ul>
-     <p class="comment">Contiene Alcol: ${bevanda.alcol} </p>
-     <label for="quantita"  > Quantità </label>
-    <input type="number" step="1" name="quantita-bev" class="quantita-bev" id="quantita-bev" data-id="${bevanda.id_bevanda}" data-tipo="bevanda" value="0" min="0" required>
-    
+    lavagnabevande.innerHTML = jsonbevande.data.filter(b => b.in_menu ===
+    'si').map(bevanda => `
+    <div class="bevanda">
+    <button type="button" class="btn-inserisci-bevandamenu-ordine" id="nome-bevanda${bevanda.id_bevanda}"
+    data-id="${bevanda.id_bevanda}"  data-nome="${bevanda.nome_bevanda}">
+    <h3 class="comment"><b>${bevanda.nome_bevanda}</b></h3>
+    <p class="comment">${bevanda.descrizione}</p>
+    <p class="comment" id="prezzo" data-prezzo="${bevanda.prezzo}>Prezzo: ${bevanda.prezzo} €</p>
+    <ul class="elenco_allergeni">
+    ${bevanda.allergeni ? bevanda.allergeni.split(', ').map(a => `<li
+    class="comment">${a}</li>`).join('') : '<li>Nessun allergene</li>'}
+    </ul>
+    <p class="comment">Contiene Alcol: ${bevanda.alcol}</p>
+    <label for="quantita-bev-${bevanda.id_bevanda}">Quantità</label>
+    <input type="number" step="1" class="quantita-bev"
+    id="quantita-bev-${bevanda.id_bevanda}" data-id="${bevanda.id_bevanda}"
+    data-tipo="bevanda" value=0 min="0" required>
     </button>
-    </div>`).join(''); // FIX: era "b.id_bevanda", "b" non esisteva (la variabile del map è "bevanda")
-}
+    </div>`).join('');
+    }
 
 async function precaricaPiattiForm() {
     const comanda = localStorage.getItem(CHIAVE_ORDINE) ? JSON.parse(localStorage.getItem(CHIAVE_ORDINE)) : [];
@@ -233,12 +235,12 @@ async function precaricaPiattiForm() {
         throw new Error("Errore nel caricamento dei piatti");
     }
     const jsonpiatti = await rispostapiatti.json();
-    piatti = jsonpiatti;
+    piatti = jsonpiatti.data;
     const lavagnapiatti = document.getElementById('piatti_input');
     //elementi Piatti per fare il filtro dalla REST API va previsto sia nel menu.php (api) che nel serviceMenu
     lavagnapiatti.innerHTML = jsonpiatti.data.filter(piatti => piatti.in_menu === 'si').map(piatto => `
     <div class="piatto" >
-    <button type="button" class="btn-inserisci-piatto-ordine" data-id="${piatto.id_piatto}" data-tipo="piatti" >
+    <button type="button" id="nome-piatto${piatto.id_piatto}" class="btn-inserisci-piatto-ordine" data-id="${piatto.id_piatto}"  data-nome="${piatto.nome_piatto}">
     <h3 class="comment" id="nome"  data-name="${piatto.nome_piatto}"><b> ${piatto.nome_piatto}</b></h3>
     <p class="comment">${piatto.descrizione}</p>
     <p class="comment" id="prezzo" data-prezzo="${piatto.prezzo}">Prezzo: ${piatto.prezzo} € </p>
@@ -246,7 +248,7 @@ async function precaricaPiattiForm() {
         ${piatto.allergeni ? piatto.allergeni.split(', ').map(a => `${a}`).join(',') : 'Nessun allergene'}
     </p>
     <label for="quantita"> Quantità </label>
-    <input type="number" step="1" name="quantita" class="quantita" id="quantita" data-id="${piatto.id_piatto}" data-tipo="piatto" value="0" min="0" required>
+    <input type="number" step="1" name="quantita" class="quantita" id="quantita" data-id="${piatto.id_piatto}" data-tipo="piatto" value=0 min="0" required>
     
     </button>
     </div>
@@ -259,8 +261,7 @@ async function precaricaPiattiForm() {
 // Salva a che punto siamo e cosa c'è nella comanda
 function salvaOrdine(id_ordine, salvatavoli = true) {
 
-    const tavoliSelezionati = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')]
-        .map(el => parseInt(el.value));
+    const tavoliSelezionati = [...document.querySelectorAll('input[name="tavoliSelezionati[]"]:checked')].map(el => parseInt(el.value));
     let ordine = {};
     const step = document.getElementById('secondo-step').classList.contains('hider') ? 1 : 2;
      if(salvatavoli){
@@ -271,13 +272,12 @@ function salvaOrdine(id_ordine, salvatavoli = true) {
            tavoli: tavoliSelezionati
          }
         }else{
-            constordine = {
+            ordine = {
                 id_ordine: id_ordine,
                 step: step,
                 comanda: comanda}
             };
-    
-
+        
     localStorage.setItem(CHIAVE_ORDINE, JSON.stringify(ordine));
 }
 
@@ -354,7 +354,7 @@ async function globalClick(e) {
         //controllo per evitare che il json salvato invii la funzione sena il permesso dell'utente
         
         const idOrdine = Number(btn_avanti.dataset.id);
-        idOrdineInserito = id_ordine;
+        idOrdineInserito = idOrdine;
         if (idOrdine > 0) {
 
             alert("Ordine già inserito.");
@@ -368,7 +368,7 @@ async function globalClick(e) {
             console.log(idOrdine);
 
             salvaOrdine(idOrdine, false);
-
+            disegnaPreComanda(comanda);
             return;
         }
 
@@ -384,12 +384,14 @@ async function globalClick(e) {
 
         alert("Nuovo ordine inserito");
 
-        btn_avanti.dataset.id = id_ordine;
+        idOrdineInserito = id_ordine;
 
-        salvaOrdine(id_ordine, true);
+        salvaOrdine(idOrdineInserito, true);
+        disegnaPreComanda(comanda);
         disegnaMomenti();
         precaricaPiattiForm();
         precaricaBevandeForm();
+        aggiornaInputPernuovoMomento(comanda);
         return;
     }
 
@@ -409,9 +411,10 @@ async function globalClick(e) {
         momentoAttivo = Number(btn_momento.dataset.id);
         document.querySelectorAll(".btn-momento").forEach(b => b.classList.remove('attivo'));
         btn_momento.classList.add('attivo');
-        salvaOrdine(id_ordine, false);
+        salvaOrdine(idOrdineInserito, false);
+        disegnaPreComanda(comanda);
         disegnaMomenti();
-        aggiornaInputPernuovoMomento();
+        aggiornaInputPernuovoMomento(comanda);
         return;
     }
     const btn_piatto = e.target.closest('.btn-inserisci-piatto-ordine'); 
@@ -419,19 +422,21 @@ async function globalClick(e) {
         e.preventDefault();
         const id_piattoDaInserire = Number(btn_piatto.dataset.id);
         const quantita = document.querySelector(`.quantita[data-id="${id_piattoDaInserire}"]`);
-        const id_ordine = Number(btn_avanti.dataset.id);
-        console.log(id_ordine);
-        console.log(Number(btn_avanti.dataset.id));
+        const nome_pietanza = document.querySelector(`#nome-piatto${id_piattoDaInserire}`);
+        const prezzo  = document.querySelector('#prezzo');
+        console.log(prezzo);
         if (Number(quantita.value) === 0) quantita.value = 1;
         aggiornaVoceComanda(
             "piatto",
-            null, // nome: lo recupera comunque aggiornaVoceComanda dall'anagrafica piatti
-            Number(e.target.dataset.id),
-            Number(e.target.value),
-            null, // prezzo: recuperato dall'anagrafica
-            momentoAttivo, // presuppone che questa variabile sia disponibile nello scope (globale o closure)
-            idOrdineInserito       
-        );        
+            nome_pietanza.dataset.nome,
+            id_piattoDaInserire,      
+            Number(quantita.value),  
+            Number(prezzo.dataset.prezzo),
+            momentoAttivo,
+            idOrdineInserito      
+        );   
+        salvaOrdine(idOrdineInserito, true);
+        disegnaPreComanda(comanda);
         return;
     }
     const btn_bevanda = e.target.closest(".btn-inserisci-bevandamenu-ordine");
@@ -440,16 +445,19 @@ async function globalClick(e) {
         if (!controllaMomentoSelezionato()) return;
         const id_bevanda = Number(btn_bevanda.dataset.id);
         const quantita_bev = document.querySelector(`.quantita-bev[data-id="${id_bevanda}"]`);
+        const nome_pietanza = document.querySelector(`#nome-bevanda${id_bevanda}`);
+        const prezzo  = document.querySelector('#prezzo');
         if (Number(quantita_bev.value) === 0) quantita_bev.value = 1;
         aggiornaVoceComanda(
             "bevanda",
-            null,
-            Number(e.target.dataset.id),
-            Number(e.target.value),
-            null,
-            momentoAttivo,
-            idOrdineInserito
-        );        
+             nome_pietanza.dataset.nome,
+             nome_pietanza.dataset.id,
+             Number(quantita_bev.value),   
+             Number(prezzo.dataset.prezzo),
+             momentoAttivo,
+             idOrdineInserito
+        );      
+        salvaOrdine(idOrdineInserito, true);  
         return;
     }
 
@@ -467,30 +475,44 @@ async function globalClick(e) {
 function gestisciInputGlobali(e) {
     // Variazione manuale quantità piatti
     if (e.target.classList.contains("quantita")) {
+        const id_piatto = Number(btn_piatto.dataset.id);
+        const quantita = document.querySelector(`.quantita[data-id="${id_piatto}"]`);
+        const nome_pietanza = document.querySelector(`#nome-piatto${id_piatto}`);
+        const prezzo  = document.querySelector('#prezzo');
         if (!controllaMomentoSelezionato()) { e.target.value = 0; return; }
         aggiornaVoceComanda(
-            "piatto",
-            null, // nome: lo recupera comunque aggiornaVoceComanda dall'anagrafica piatti
-            Number(e.target.dataset.id),
-            Number(e.target.value),
-            null, // prezzo: recuperato dall'anagrafica
-            momentoAttivo, // presuppone che questa variabile sia disponibile nello scope (globale o closure)
-            id_ordine       // idem, verifica che sia accessibile qui
-        );
+             "piatto",
+            nome_pietanza.dataset.nome,
+            id_piatto,      
+            Number(quantita.value), 
+            Number(prezzo.dataset.prezzo),
+            momentoAttivo,
+            idOrdineInserito      
+        );        
+        salvaOrdine(idOrdineInserito, true);
+        disegnaPreComanda(comanda);
     }
 
     // Variazione manuale quantità bevande
     if (e.target.classList.contains("quantita-bev")) {
+        const id_bevanda = Number(btn_bevanda.dataset.id);
+        const quantita_bev = document.querySelector(`.quantita-bev[data-id="${id_bevanda}"]`);
+        const nome_pietanza = document.querySelector(`#nome-piatto${id_bevanda}`);
+        console.log(nome_pietanza);
+        console.log(nome_pietanza.dataset.nome)
+        const prezzo  = document.querySelector('#prezzo');
         if (!controllaMomentoSelezionato()) { e.target.value = 0; return; }
         aggiornaVoceComanda(
             "bevanda",
-            null,
-            Number(e.target.dataset.id),
-            Number(e.target.value),
-            null,
-            momentoAttivo,
-            id_ordine
+             nome_pietanza.dataset.nome,
+             nome_pietanza.dataset.id,      
+             Number(quantita_bev.value),   
+             Number(prezzo.dataset.prezzo),
+             momentoAttivo,
+             idOrdineInserito
         );
+        salvaOrdine(idOrdineInserito, true);
+        disegnaPreComanda(comanda);
     }
 
   
@@ -520,13 +542,14 @@ async function inserisciComandaDb(id_ordine, comanda){
     await inserisciOrdinePiatto(comanda.filter(e => e.tipo === "piatto").map(e => e.id));
     await inserisciOrdineBevanda(comanda.filter(e => e.tipo === "bevanda").map(e => e.id));
     await stampaComanda(id_ordine, comanda);
+    svuotaOrdineSalvato();
 }
 
 async function stampaComanda(id_ordine,comanda){
 
 }
 
-function aggiornaVoceComanda(tipo, nome, id, quantita, prezzo, momentoAttivo, id_ordine) {
+function aggiornaVoceComanda(tipo, nome_pietanza, id, quantita, prezzo, momentoAttivo, id_ordine) {
     // Cerca se l'elemento dello stesso tipo, id e nello stesso momento di servizio esiste già nell'array comanda
     const indice = comanda.findIndex(el => el.tipo === tipo && el.id === id && el.id_momento === momentoAttivo);
     // (rinominato il parametro della callback da id_momento a el: prima "ombreggiava" il campo id_momento dell'oggetto, confondendo la lettura)
@@ -539,13 +562,13 @@ function aggiornaVoceComanda(tipo, nome, id, quantita, prezzo, momentoAttivo, id
         if (tipo === "piatto") {
             const piatto = piatti.find(el => el.id === id);
             if (piatto) {
-                nome = piatto.nome_piatto;
+                nome_pietanza = piatto.nome_piatto;
                 prezzo = piatto.prezzo;
             }
         } else {
             const bevanda = bevande.find(el => el.id === id);
             if (bevanda) {
-                nome = bevanda.nome_bevanda;
+                nome_pietanza = bevanda.nome_bevanda;
                 prezzo = bevanda.prezzo;
             }
         }
@@ -558,29 +581,36 @@ function aggiornaVoceComanda(tipo, nome, id, quantita, prezzo, momentoAttivo, id
             comanda.push({
                 tipo: tipo,
                 id: id,
-                nome: nome,
+                nome_pietanza: nome_pietanza,
                 prezzo: prezzo,
                 id_momento: momentoAttivo,
-                quantita: quantita
+                quantita: quantita,
+                id_ordine
             });
         }
     }
 
     salvaOrdine(id_ordine, false); // prima non passavi id_ordine: dentro salvaOrdine arrivava undefined
+    disegnaPreComanda(comanda);
     console.log("Comanda Aggiornata:", comanda);
 }
 
 // Ripristina i valori numerici degli input grafici quando si cambia momento del servizio
+
 function aggiornaInputPernuovoMomento(comanda) {
-    const btn_avanti = document.querySelector('avanti');
-    if( btn_avanti.dataset.id = "#"){
-        // Azzera tutti gli input grafici correnti prima del ricalcolo
+
+    const ordine = localStorage.getItem(CHIAVE_ORDINE) ? JSON.parse(localStorage.getItem(CHIAVE_ORDINE)) : [];
+    
+    const esisteMomento = ordine.comanda.some(e => e.id_momento === momentoAttivo);
+    
+    if(!esisteMomento){
+        // Azzera tutti gli input grafici correnti prima del ricalcolo 
         document.querySelectorAll(".quantita, .quantita-bev").forEach(input => input.value = 0);
     }
-    if(comanda.id_ordine ===  btn_avanti.dataset.id){
-        if(comanda.comanda.length > 0){
+    if( Number(idOrdineInserito) ===  Number(ordine.id_ordine) ){
+        if(comanda.length > 0){
             // Popola gli input grafici con i valori della comanda
-            comanda.comanda.forEach(voce => {
+            comanda.forEach(voce => {
                 const input = document.querySelector(`[data-id="${voce.id}"][data-tipo="${voce.tipo}"]`);
                 if (input) {
                     input.value = voce.quantita;

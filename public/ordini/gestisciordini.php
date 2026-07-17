@@ -32,7 +32,6 @@ require_once __DIR__ . '/../bootstrap.php';
 </script>
 <script src="/ristorante_classic/public/assets/js/tavoli.js" defer></script>    
 <script src="/ristorante_classic/public/assets/js/ordiniprima.js" defer></script> 
-<script src="/ristorante_classic/public/assets/js/ordiniutil.js" defer></script> 
 </main>
 
 <?php 
