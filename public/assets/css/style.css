@@ -112,6 +112,21 @@ td,th{
     color: #333;
     margin-left: 15px;
 }
+#contenitore{
+    display: flex;
+    flex-direction: row;
+}
+
+.componi-comanda {
+    display: grid;
+    width: 70%;
+    margin: 20px auto; /* auto sui lati orizzontali per centrarlo, se vuoi che resti centrato */
+    box-sizing: border-box; /* include padding/border nel 70%, evita che il border faccia sforare la larghezza */
+}
+.riassunto1{
+    display:flex;
+    width: 30%
+}
 .cards{
     
     display: flex;

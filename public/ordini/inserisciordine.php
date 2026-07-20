@@ -40,33 +40,36 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
    </div>
       <div id="secondo-step" class="piattir hider">
         <div id="contenitore">
+          <div class="componi-comanda">
              <button type="button" id="aggiorna" class="aggiorna">Aggiorna</button> 
              <button type="button" id="indietro" class="btn-indietro">Indietro</button>
-           <div id="momenti-servizio">
-           </div>
+            <div id="momenti-servizio">
+            </div>
          
-            <div class="schermo">
-              <div id="piatti">   
+            <div class="schermo" class="1">
+              <div id="piatti" >   
                 <h3>Piatti:</h3>  
                 <a class="btn" id="linkpiat" href="#">+ piatto fuorimenu</a>
                 <div id="piatti_input">
             
                 </div> 
-            </div>
-            <div id="bevande">
+              </div>
+              <div id="bevande" >
 
                 <h3>Bevande:</h3>  
                 <a class="btn" id="linkbev" href="#">+ bevanda  fuorimenu</a>
                 <div id="bevande_input">
             
-               </div>
-            </div>
+                </div>
+              </div>
+          </div> 
          </div> 
-         <div >
+         <div class="riassunto1" >
+            
             <ul id="riassunto-ordine"></ul>
-         <div>
+          </div>
 
-
+        </div>
         </div>    
            
        <button type="button"  class="btn-inserisci-ordine" data-id="#">Inserisci & Stampa Comanda</button>

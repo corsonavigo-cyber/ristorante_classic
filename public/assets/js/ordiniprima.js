@@ -170,11 +170,19 @@ async function disegnaPreComanda() {
     },{});
     console.log(raggruppati);
     console.log(Object.entries(raggruppati));
+    const NOMI_MOMENTI ={
+        1: "PRIMA PORTATA",
+        2: "SECONDA PORTATA",
+        3: "TERZA PORTATA",
+        4: "QUARTA PORTATA",
+        5: "QUINTA PORTATA",
+        6: "ALTRO"
+        };
 
     visualizza_modifiche_json.innerHTML = Object.entries(raggruppati).map(([idMomento, elementi]) => `
-        <h3>Momento ${idMomento}</h3>
+        <h3>${NOMI_MOMENTI[idMomento] ?? `${idMomento}` }</h3>
         <ul>
-            ${elementi.map(e => `<li>${e.nome_pietanza}  ×  ${e.quantita} --   ${e.prezzo} </li>`).join('')}
+            ${elementi.map(e => `<li>${e.nome_pietanza}  ×  ${e.quantita} --   ${e.prezzo} € </li>`).join('')}
         </ul>`).join('<br>');
     }
 
