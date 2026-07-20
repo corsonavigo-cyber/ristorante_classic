@@ -146,19 +146,20 @@ async function disegnaMomenti() {
     contmomento.innerHTML = `<div class="momenti-servizio">${selettori_momento}</div><div> ${stringaTitolo}</div>`;
 }
 
-async function disegnaPreComanda(comanda) {
+async function disegnaPreComanda() {
+    const comanda =localStorage.getItem(CHIAVE_ORDINE) ? JSON.parse(localStorage.getItem(CHIAVE_ORDINE)) : [];
 
     const visualizza_modifiche_json = document.getElementById('riassunto-ordine');
     if (!visualizza_modifiche_json) return;
     
-    if (!comanda || comanda.length === 0) {
+    if (!comanda || comanda.comanda.length === 0) {
         visualizza_modifiche_json.innerHTML = `<li>Non hai ancora aggiunto nessun elemento</li>`;
         return;
     }
 
 
-   const raggruppati = comanda.reduce((acc, e) => {
-
+   const raggruppati = comanda.comanda.reduce((acc, e) => {
+    console.log("da visualizzare riassunto");
         if (!acc[e.id_momento]) {
             acc[e.id_momento] = [];
         }
@@ -173,7 +174,7 @@ async function disegnaPreComanda(comanda) {
     visualizza_modifiche_json.innerHTML = Object.entries(raggruppati).map(([idMomento, elementi]) => `
         <h3>Momento ${idMomento}</h3>
         <ul>
-            ${elementi.map(e => `<li> [${e.tipo}] ${e.nome_pietanza}  ×  ${e.quantita} --   ${e.prezzo} </li>`).join('')}
+            ${elementi.map(e => `<li>${e.nome_pietanza}  ×  ${e.quantita} --   ${e.prezzo} </li>`).join('')}
         </ul>`).join('<br>');
     }
 
@@ -195,10 +196,10 @@ async function precaricaBevandeForm() {
     <div class="bevanda">
     <button type="button" class="btn-inserisci-bevandamenu-ordine" id="nome-bevanda${bevanda.id_bevanda}"
     data-id="${bevanda.id_bevanda}"  data-nome="${bevanda.nome_bevanda}">
-    <h3 class="comment"><b>${bevanda.nome_bevanda}</b></h3>
-    <p class="comment">${bevanda.descrizione}</p>
-    <p class="comment" id="prezzo" data-prezzo="${bevanda.prezzo}>Prezzo: ${bevanda.prezzo} €</p>
-    <ul class="elenco_allergeni">
+    <h3 class="comment" id="nome${bevanda.id_bevanda}"><b>${bevanda.nome_bevanda}</b></h3>
+    <p class="comment" id="descrizione${bevanda.id_bevanda}">${bevanda.descrizione}</p>
+    <p class="comment" id="prezzo-bev${bevanda.id_bevanda}" data-prezzo="${bevanda.prezzo}">Prezzo: ${bevanda.prezzo} €</p>
+    <ul class="elenco_allergeni" id="allergeni${bevanda.id_bevanda}">
     ${bevanda.allergeni ? bevanda.allergeni.split(', ').map(a => `<li
     class="comment">${a}</li>`).join('') : '<li>Nessun allergene</li>'}
     </ul>
@@ -216,7 +217,7 @@ async function precaricaPiattiForm() {
     const id_ordine = comanda.id_ordine? comanda.id_ordine : '';
     const rispostapiatti = await fetch(`${API_MENU}?type=piatti`);
     const btn_fuorimenu = document.getElementById('linkbev');
-    btn_fuorimenu.setAttribute('href', `nuovabevandafuorimenu.php?id=${comanda.id_ordine}`);
+    btn_fuorimenu.setAttribute('href', `nuovopiattofuorimenu.php?id=${comanda.id_ordine}`);
 
     if (!rispostapiatti.ok) {
         throw new Error("Errore nel caricamento dei piatti");
@@ -228,14 +229,14 @@ async function precaricaPiattiForm() {
     lavagnapiatti.innerHTML = jsonpiatti.data.filter(piatti => piatti.in_menu === 'si').map(piatto => `
     <div class="piatto" >
     <button type="button" id="nome-piatto${piatto.id_piatto}" class="btn-inserisci-piatto-ordine" data-id="${piatto.id_piatto}"  data-nome="${piatto.nome_piatto}">
-    <h3 class="comment" id="nome"  data-name="${piatto.nome_piatto}"><b> ${piatto.nome_piatto}</b></h3>
+    <h3 class="comment" id="nome${piatto.id_piatto}"  data-name="${piatto.nome_piatto}"><b> ${piatto.nome_piatto}</b></h3>
     <p class="comment">${piatto.descrizione}</p>
-    <p class="comment" id="prezzo" data-prezzo="${piatto.prezzo}">Prezzo: ${piatto.prezzo} € </p>
+    <p class="comment" id="prezzo${piatto.id_piatto}" data-prezzo="${piatto.prezzo}">Prezzo: ${piatto.prezzo} € </p>
     <p  class="elenco_allergeni">
         ${piatto.allergeni ? piatto.allergeni.split(', ').map(a => `${a}`).join(',') : 'Nessun allergene'}
     </p>
     <label for="quantita"> Quantità </label>
-    <input type="number" step="1" name="quantita" class="quantita" id="quantita" data-id="${piatto.id_piatto}" data-tipo="piatto" value=0 min="0" required>
+    <input type="number" step="1" name="quantita" class="quantita" id="quantita${piatto.id_piatto}" data-id="${piatto.id_piatto}" data-tipo="piatto" value=0 min="0" required>
     
     </button>
     </div>
@@ -302,10 +303,7 @@ async function ripristinaOrdine(ordine) {
                secondo_step.classList.remove('hider');
                 console.log("comandaripristinata",comanda);
                 await disegnaMomenti();
-                precaricaBevandeForm();
-                precaricaPiattiForm();
-                disegnaPreComanda();
-                await aggiornaInputPernuovoMomento();
+                ripristinaQuantitaComanda();
             }
     }
     
@@ -319,12 +317,8 @@ async function ripristinaOrdine(ordine) {
                 secondo_step.classList.remove('hider');
                     console.log("comandaripristinata",comanda);
                     await disegnaMomenti();
-                    precaricaBevandeForm();
-                    precaricaPiattiForm();
-                    disegnaPreComanda();
-                    if(comanda.length >= 0 ){
-                       await aggiornaInputPernuovoMomento();
-                }
+                    ripristinaQuantitaComanda();
+                    
             }
     }
 
@@ -360,14 +354,14 @@ async function globalClick(e) {
         e.preventDefault();
         //controllo per evitare che il json salvato invii la funzione sena il permesso dell'utente
         
-        const idOrdine = Number(hid.value);
-        idOrdineInserito = idOrdine;
+        
         if (idOrdine > 0) {
 
             alert("Ordine già inserito.");
+            const idOrdine = Number(hid.value);
+            idOrdineInserito = idOrdine;
             disegnaMomenti();
-            precaricaPiattiForm();
-            precaricaBevandeForm();
+            
    
             secondo_step.classList.remove('hider');
             primo_step.classList.add('hider');
@@ -375,7 +369,7 @@ async function globalClick(e) {
             console.log(idOrdine);
 
             salvaOrdine(idOrdine, false);
-            disegnaPreComanda(comanda);
+            ripristinaQuantitaComanda();
             return;
         }
 
@@ -394,11 +388,10 @@ async function globalClick(e) {
         idOrdineInserito = id_ordine;
 
         salvaOrdine(idOrdineInserito, true);
-        disegnaPreComanda(comanda);
+        
         disegnaMomenti();
-        precaricaPiattiForm();
-        precaricaBevandeForm();
-        await aggiornaInputPernuovoMomento();
+        ripristinaQuantitaComanda()
+
         return;
     }
 
@@ -418,10 +411,8 @@ async function globalClick(e) {
         momentoAttivo = Number(btn_momento.dataset.id);
         document.querySelectorAll(".btn-momento").forEach(b => b.classList.remove('attivo'));
         btn_momento.classList.add('attivo');
-        salvaOrdine(idOrdineInserito, false);
-        disegnaPreComanda(comanda);
         disegnaMomenti();
-        await aggiornaInputPernuovoMomento();
+        ripristinaQuantitaComanda();
         return;
     }
     
@@ -442,10 +433,10 @@ function gestisciInputGlobali(e) {
         const id_piatto = Number(e.target.dataset.id);
         const quantita = document.querySelector(`.quantita[data-id="${id_piatto}"]`);
         const nome_pietanza = document.querySelector(`#nome-piatto${id_piatto}`);
-        const prezzo  = document.querySelector('#prezzo');
+        const prezzo  = document.querySelector(`#prezzo${id_piatto}`);
         if (!controllaMomentoSelezionato()) { e.target.value = 0; return; }
         aggiornaVoceComanda(
-             "piatto",
+            "piatto",
             nome_pietanza.dataset.nome,
             id_piatto,      
             Number(quantita.value), 
@@ -454,17 +445,17 @@ function gestisciInputGlobali(e) {
             idOrdineInserito      
         );        
         salvaOrdine(idOrdineInserito, false);
-        disegnaPreComanda(comanda);
+        ripristinaQuantitaComanda();
     }
 
     // Variazione manuale quantità bevande
     if (e.target.classList.contains("quantita-bev")) {
         const id_bevanda = Number(e.target.dataset.id);
         const quantita_bev = document.querySelector(`.quantita-bev[data-id="${id_bevanda}"]`);
-        const nome_pietanza = document.querySelector(`#nome-piatto${id_bevanda}`);
+        const nome_pietanza = document.querySelector(`#nome-bevanda${id_bevanda}`);
         console.log(nome_pietanza);
         console.log(nome_pietanza.dataset.nome)
-        const prezzo  = document.querySelector('#prezzo');
+        const prezzo  = document.querySelector(`#prezzo-bev${id_bevanda}`);
         if (!controllaMomentoSelezionato()) { e.target.value = 0; return; }
         aggiornaVoceComanda(
             "bevanda",
@@ -476,7 +467,8 @@ function gestisciInputGlobali(e) {
              idOrdineInserito
         );
         salvaOrdine(idOrdineInserito, false);
-        disegnaPreComanda(comanda);
+        ripristinaQuantitaComanda();
+        
     }
 
   
@@ -555,7 +547,7 @@ function aggiornaVoceComanda(tipo, nome_pietanza, id, quantita, prezzo, momentoA
     }
 
     salvaOrdine(id_ordine, false); // prima non passavi id_ordine: dentro salvaOrdine arrivava undefined
-    disegnaPreComanda(comanda);
+    ripristinaOrdine();
     console.log("Comanda Aggiornata:", comanda);
 }
 
@@ -564,13 +556,14 @@ function aggiornaVoceComanda(tipo, nome_pietanza, id, quantita, prezzo, momentoA
 async function aggiornaInputPernuovoMomento() {
 
     const ordine = localStorage.getItem(CHIAVE_ORDINE) ? JSON.parse(localStorage.getItem(CHIAVE_ORDINE)) : [];
+    if (!ordine || !(Number(idOrdineInserito) === Number(ordine.id_ordine))) return;
+    if (ordine.comanda.length === 0) return;
+
     
-    const esisteMomento = ordine.comanda.some( e => Number(e.id_momento) === Number(momentoAttivo));
-    console.log(ordine, esisteMomento);
-    if(!esisteMomento){
+    /**if(!esisteMomento){
         // Azzera tutti gli input grafici correnti prima del ricalcolo 
         document.querySelectorAll(".quantita, .quantita-bev").forEach(
-            /**la arrow function ha uno scope tutto suo, faceva una copia di input impedendo che la variazione si visualizzasse nel DOM, cambiava value sganciandolo dall'elemento a cui era seloezionato
+            la arrow function ha uno scope tutto suo, faceva una copia di input impedendo che la variazione si visualizzasse nel DOM, cambiava value sganciandolo dall'elemento a cui era seloezionato
              * (input) => {
                 let valueBefore = input.value;
                 input.value = 0; 
@@ -578,32 +571,33 @@ async function aggiornaInputPernuovoMomento() {
    
                 input.dispatchEvent(new Event("input", { bubbles: true }));
                 input.dispatchEvent(new Event("change", { bubbles: true }));
-            });*/
+            });
             
             function(input) {
                 let valueBefore = input.value;
                 input.value = 0; 
                 console.log(input, valueBefore, input.value); 
             });
-    }
-    if( Number(idOrdineInserito) ===  Number(ordine.id_ordine) ){
-        console.log("ainm " + ordine.comanda)
-        if(ordine.comanda.length > 0){
-            // Popola gli input grafici con i valori della comanda
-            ordine.comanda.forEach(voce => {
-                //da null
-                const input = document.querySelector(`[data-id="${voce.id}"][data-tipo="${voce.tipo}"]`);
-                console.log('cerco input:', voce.id, voce.tipo, '→ trovato:', input); // debug temporaneo
-
-                if (input) {
-                    input.value = voce.quantita;
-                }
-            });
-        }
+    }*/
+    
+    console.log("sto ripopolando le voci già inserite " + ordine.comanda[0]);
+    if(ordine.comanda.length > 0){
+        // Popola gli input grafici con i valori della comanda
+        ordine.comanda.forEach(voce => {
+            if(!(Number(momentoAttivo) === Number(voce.id_momento) )) return;
+            console.log(!(Number(ordine.comanda['id_momento']) === Number(voce.id_momento) ));
+            const input = document.querySelector(`[data-id="${voce.id}"][data-tipo="${voce.tipo}"]`);
+            if (input) input.value = voce.quantita;
+        });
     }
     
+    
 }
-
+async function ripristinaQuantitaComanda() {
+    await Promise.all([precaricaPiattiForm(), precaricaBevandeForm()]);
+    await aggiornaInputPernuovoMomento();
+    await disegnaPreComanda();
+}
 
 
 async function inserisciPiattoFuoriMenu() {
@@ -1246,11 +1240,8 @@ async function controllaPostiOrdineTavolo(tavoliSelezione){
         hid.value = Number(idOrdineInserito);
         hid.value = ordine.id_ordine;
         await disegnaMomenti();
-        precaricaBevandeForm();
-        precaricaPiattiForm();
-        disegnaPreComanda();
         ripristinaOrdine();
-        await aggiornaInputPernuovoMomento();
+        ripristinaQuantitaComanda();
         return true;
         }
 
@@ -1270,7 +1261,7 @@ async function controllaPostiOrdineTavolo(tavoliSelezione){
         hid.value = ordine.id_ordine;
         tavoliInUso = tavoliSelezionati;
         await ripristinaOrdineLocalS();
-        await aggiornaInputPernuovoMomento();
+        ripristinaQuantitaComanda();
         return true;
     
     }
