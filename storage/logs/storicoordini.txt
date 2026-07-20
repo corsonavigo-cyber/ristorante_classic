@@ -68,3 +68,10 @@
 [2026-07-17 15:35:36] [CANCELLATO] ordine id 5 () del     automaticamente (scaduta)
 [2026-07-17 15:35:36] [CANCELLATO] ordine id 4 () del     automaticamente (scaduta)
 [2026-07-17 15:52:22] [APERTO] ordine inserita correttamente id_ordine 36 sul tavolo 3
+[2026-07-20 09:23:34] [CANCELLATO] ordine id 36 (36) del 2026-07-17 15:52:22 6   automaticamente (scaduta)
+[2026-07-20 09:23:34] [CANCELLATO] ordine id 34 (34) del 2026-07-17 12:38:47 2   automaticamente (scaduta)
+[2026-07-20 09:23:34] [CANCELLATO] ordine id 32 (32) del 2026-07-17 12:14:39 2   automaticamente (scaduta)
+[2026-07-20 10:50:55] [APERTO] ordine inserita correttamente id_ordine 37 sul tavolo 3
+[2026-07-20 11:46:33] [APERTO] ordine inserita correttamente id_ordine 38 sul tavolo 3
+[2026-07-20 12:22:18] [APERTO] ordine inserita correttamente id_ordine 39 sul tavolo 3
+[2026-07-20 12:46:43] [APERTO] ordine inserita correttamente id_ordine 40 sul tavolo 3
