@@ -57,6 +57,10 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
               <div id="bevande" >
 
                 <h3>Bevande:</h3>  
+                <dialog id="dettaglioModal_bevande"> 
+                <button type="button"  id="chiudiModal" class="chiudiModal" aria-label="Chiudi">&times;</button>
+                <div id="dettaglioContenuto_bevande"></div>
+                </dialog>
                 <a class="btn" id="linkbev" href="#">+ bevanda  fuorimenu</a>
                 <div id="bevande_input">
             

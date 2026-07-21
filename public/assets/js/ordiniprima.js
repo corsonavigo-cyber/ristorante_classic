@@ -7,6 +7,8 @@ const fuorimenubevanda = document.getElementById("form-inserisci-fuorimenu-bev")
 const inserisciordine = document.getElementById("form_inserisci_ordine");
 const form_modifica_ordine = document.getElementById("form_modifica_ordine");
 const contenitore_bev = document.getElementById('bevande_bar');
+const contenitore_piatti= document.getElementById('bevande_piatti');
+
 const primo_step = document.getElementById('primo-step');
 const secondo_step = document.getElementById('secondo-step');
 //funzione di controllo multipla negli inserimenti/modifiche form_inserisci_ordine
@@ -34,6 +36,8 @@ if (fuorimenupiatto) {
     document.addEventListener('click', inserisciBevandaFuoriMenu);
 }else if (contenitore_bev) {
     document.addEventListener('DOMContentLoaded', precaricaBevandeBar);
+}else if (contenitore_piatti) {
+    document.addEventListener('DOMContentLoaded', precaricaBevandeCucina);
 }else if (inserisciordine) {
     document.addEventListener('input', gestisciInputGlobali);
     document.addEventListener('click', globalClick);
@@ -57,6 +61,57 @@ if (fuorimenupiatto) {
 
 
 
+async function precaricaBevandePiatti() {
+    
+    const risposta = await fetch(`${API_ORDINI}?type=oggi`);
+    if (!risposta.ok) {
+        throw new Error("Errore nel caricamento dei piatti");
+    }
+    const json = await risposta.json();
+    
+
+    // seleziono il div giusto tramite il data-attribute, non un id fisso "prenotato"
+   
+    
+    if (!contenitore_piatti) return;
+    const ordiniOggi = json.data.filter(ordini=>ordini.data_e_ora.split(' ')[0] === today());
+    const ordiniArray = Object.values(ordiniOggi.reduce((acc, comanda) => {
+
+        if (!acc[comanda.id_ordine]) {
+            acc[comanda.id_ordine] = {
+                ...comanda,
+                servizi: [],
+                piatti: [],
+                bevande:[]
+            };
+        }
+
+        acc[comanda.id_ordine].servizi.push(comanda.nome_servizio);
+        acc[comanda.id_ordine].bevande.push(comanda.bevande);
+        acc[comanda.id_ordine].piatti.push(comanda.piatti);
+        return acc;
+    }, {})
+    
+    );
+    console.log(ordiniArray);
+    const ordiniRaggruppati  = ordiniArray.filter(comanda=> comanda.piatti[0] !== null );
+
+    console.log(ordiniRaggruppati.length + ' lunghezza dell array piatti')
+    if (ordiniRaggruppati.length > 0){
+        contenitore.innerHTML = ordiniRaggruppati.map(comanda => `
+            
+            <h4 class="comment"><b>Tav: ${comanda.numero_tavolo}</b></h4>
+            <h4 class="comment"><b>${comanda.servizi.join(', ')}</b></h4>
+            <p class="comment">${comanda.numero_persone} persone</p>
+            <p class="comment">Bevande:<br>${comanda.piatti.join('<br>')}</p>
+            <p class="comment">ora di arrivo ${comanda.data_e_ora.split(' ')[1]}</p>
+            <button class="btn-elimina-ordine" data-id="${comanda.id_ordine}">Elimina 🗑️</button>
+        `).join('');
+    } else {
+    }
+
+}
+
 async function precaricaBevandeBar() {
     
     const risposta = await fetch(`${API_ORDINI}?type=oggi`);
@@ -71,30 +126,36 @@ async function precaricaBevandeBar() {
     
     if (!contenitore_bev) return;
     const ordiniOggi = json.data.filter(ordini=>ordini.data_e_ora.split(' ')[0] === today());
-    const ordiniRaggruppati = Object.values(ordiniOggi.reduce((acc, comanda) => {
+    const ordiniArray = Object.values(ordiniOggi.reduce((acc, comanda) => {
 
         if (!acc[comanda.id_ordine]) {
             acc[comanda.id_ordine] = {
                 ...comanda,
                 servizi: [],
+                piatti: [],
                 bevande:[]
             };
         }
 
         acc[comanda.id_ordine].servizi.push(comanda.nome_servizio);
         acc[comanda.id_ordine].bevande.push(comanda.bevande);
+        acc[comanda.id_ordine].piatti.push(comanda.piatti);
         return acc;
     }, {})
+    
     );
+    console.log(ordiniArray);
+    const ordiniRaggruppati  = ordiniArray.filter(comanda=> comanda.bevande[0] !== null );
+
+    console.log(ordiniRaggruppati.length + ' lunghezza dell array bevande')
     if (ordiniRaggruppati.length > 0){
         contenitore.innerHTML = ordiniRaggruppati.map(comanda => `
-          
+            
             <h4 class="comment"><b>Tav: ${comanda.numero_tavolo}</b></h4>
             <h4 class="comment"><b>${comanda.servizi.join(', ')}</b></h4>
             <p class="comment">${comanda.numero_persone} persone</p>
             <p class="comment">Bevande:<br>${comanda.bevande.join('<br>')}</p>
             <p class="comment">ora di arrivo ${comanda.data_e_ora.split(' ')[1]}</p>
-            <p class="comment">stato comanda ${comanda.nome_stato}</p>
             <button class="btn-elimina-ordine" data-id="${comanda.id_ordine}">Elimina 🗑️</button>
         `).join('');
     } else {
@@ -120,7 +181,6 @@ async function precaricaTavoliForm(id_tavolo_arrivato_url) {
        <li><label><input type="checkbox" name="tavoliSelezionati[]" id="id_${tavolo.id_tavolo}" value="${tavolo.id_tavolo}" data-posti="${tavolo.posti_max}">Numero Tavolo ${tavolo.numero_tavolo} posti ${tavolo.posti_max}</label></li>`).join('');
     console.log("ID Tavolo arrivato dall'URL:", id_tavolo_arrivato_url);
     await selezionatavolo(id_tavolo_arrivato_url);
-
     
 }
 async function selezionatavolo(id_tavolo_arrivato_url){
@@ -206,29 +266,45 @@ async function precaricaBevandeForm() {
     //elementi Bevande per fare il filtro dalla REST API va previsto sia nel menu.php (api) che nel serviceMenu
     lavagnabevande.innerHTML = jsonbevande.data.filter(b => b.in_menu ===
     'si').map(bevanda => `
-    <div class="bevanda">
-    <button type="button" class="btn-inserisci-bevandamenu-ordine" id="nome-bevanda${bevanda.id_bevanda}"
+    
+    <div class="btn-inserisci-bevandamenu-ordine ins-bev" id="nome-bevanda${bevanda.id_bevanda}"
     data-id="${bevanda.id_bevanda}"  data-nome="${bevanda.nome_bevanda}">
     <h3 class="comment" id="nome${bevanda.id_bevanda}"><b>${bevanda.nome_bevanda}</b></h3>
-    <p class="comment" id="descrizione${bevanda.id_bevanda}">${bevanda.descrizione}</p>
     <p class="comment" id="prezzo-bev${bevanda.id_bevanda}" data-prezzo="${bevanda.prezzo}">Prezzo: ${bevanda.prezzo} €</p>
-    <ul class="elenco_allergeni" id="allergeni${bevanda.id_bevanda}">
-    ${bevanda.allergeni ? bevanda.allergeni.split(', ').map(a => `<li
-    class="comment">${a}</li>`).join('') : '<li>Nessun allergene</li>'}
-    </ul>
-    <p class="comment">Contiene Alcol: ${bevanda.alcol}</p>
-    <label for="quantita-bev-${bevanda.id_bevanda}">Quantità</label>
-    <input type="number" step="1" class="quantita-bev"
-    id="quantita-bev-${bevanda.id_bevanda}" data-id="${bevanda.id_bevanda}"
-    data-tipo="bevanda" value=0 min="0" required>
-    <br><label for="note-bev-${bevanda.id_bevanda}">Note</label>
-    <input type="text" class="note-bev"
-    id="note-bev-${bevanda.id_bevanda}" data-note="${bevanda.id_bevanda}" 
-    data-tipo="bevanda" maxlength="100" data-id="${bevanda.id_bevanda}" placeholder="... ">
-    </button>
+    
+    <div id="modal-${bevanda.id_bevanda}" data-id="${bevanda.id_bevanda}" class="dettaglioModal_bevande" >i</div>
+    <button id="meno-quantita-bev-${bevanda.id_bevanda}"   data-id="${bevanda.id_bevanda}">-</button>    
+
+    <button id="piu-quantita-bev-${bevanda.id_bevanda}"   data-id="${bevanda.id_bevanda}">+</button>    
+
     </div>`).join('');
     }
 
+    async function mostraDettaglioBevanda(id_bevanda_modale){
+        const modalBevande = document.getElementById('dettaglioModal_bevande');
+        const contenitore = document.getElementById('dettaglioContenuto_bevande');
+        console.log(id_bevanda_modale);
+        contenitore.innerHTML = bevande.filter(b => b.id_bevanda === id_bevanda_modale).map(bevanda => `
+        <div class="btn-inserisci-bevandamenu-ordine" id="nome-bevanda${bevanda.id_bevanda}"
+        data-id="${bevanda.id_bevanda}"  data-nome="${bevanda.nome_bevanda}">
+        <h3 class="comment" id="nome${bevanda.id_bevanda}"><b>${bevanda.nome_bevanda}</b></h3>
+        <p class="comment" id="descrizione${bevanda.id_bevanda}">${bevanda.descrizione}</p>
+        <p class="comment" id="prezzo-bev${bevanda.id_bevanda}" data-prezzo="${bevanda.prezzo}">Prezzo: ${bevanda.prezzo} €</p>
+        
+        <p class="comment">Contiene Alcol: ${bevanda.alcol}</p>
+        <label for="quantita-bev-${bevanda.id_bevanda}">Quantità</label>
+        <input type="number" step="1" class="quantita-bev"
+        id="quantita-bev-${bevanda.id_bevanda}" data-id="${bevanda.id_bevanda}"
+        data-tipo="bevanda" value=0 min="0" required>
+        
+        <br><label for="note-bev-${bevanda.id_bevanda}">Note</label>
+        <input type="text" class="note-bev"
+        id="note-bev-${bevanda.id_bevanda}" data-note="${bevanda.id_bevanda}" 
+        data-tipo="bevanda" maxlength="100" data-id="${bevanda.id_bevanda}" placeholder="... ">
+        </div>`).join('');
+
+        modalBevande.showModal();
+    }
 async function precaricaPiattiForm() {
     const comanda = localStorage.getItem(CHIAVE_ORDINE) ? JSON.parse(localStorage.getItem(CHIAVE_ORDINE)) : [];
     const id_ordine = comanda.id_ordine? comanda.id_ordine : '';
@@ -365,7 +441,7 @@ function disattivaBottoneTavolo(tavoli) {
 async function globalClick(e) {
     const btn_avanti = e.target.closest('.btn-avanti');
     const div =document.getElementById('piatti_input');
-    
+    const modal_bevande = e.target.closest('.dettaglioModal_bevande');
     const divbev =document.getElementById('bevande_input');
     const idOrdine = Number(hid.value);
     const btn_aggiorna = e.target.closest('.aggiorna'); 
@@ -394,6 +470,7 @@ async function globalClick(e) {
             ripristinaQuantitaComanda();
             return;
         }
+        
 
 
         const id_ordine = await inserisciOrdine();
@@ -428,6 +505,22 @@ async function globalClick(e) {
         return;
     }
 
+    if(modal_bevande){
+        
+        if(!modal_bevande) return;
+        console.log('visto')
+        await mostraDettaglioBevanda(Number(modal_bevande.dataset.id));
+
+    }
+    const chiudiModal = e.target.closest('.chiudiModal'); 
+    if(chiudiModal){
+        if(!chiudiModal) return;
+        e.preventDefault();
+
+        chiudiModal.closest('dialog').close();
+        return;
+    }
+
     if (btn_momento) {
         e.preventDefault();
         momentoAttivo = Number(btn_momento.dataset.id);
@@ -447,6 +540,29 @@ async function globalClick(e) {
         /*inserisciComandaDb();*/
         return;
     }
+
+    if (e.target.classList.contains("piu-quantita-bev") ) {
+        const id_bevanda = Number(e.target.dataset.id);
+        const quantita_bev = document.querySelector(`.quantita-bev[data-id="${id_bevanda}"]`);
+        const nome_pietanza = document.querySelector(`#nome-bevanda${id_bevanda}`);
+        const note_bev = document.querySelector(`#note-bev-${id_bevanda}`);
+        const prezzo  = document.querySelector(`#prezzo-bev${id_bevanda}`);
+        if (!controllaMomentoSelezionato()) { e.target.value = 0; return; }
+        aggiornaVoceComanda(
+            "bevanda",
+             nome_pietanza.dataset.nome,
+             nome_pietanza.dataset.id,      
+             Number(quantita_bev.value),   
+             Number(prezzo.dataset.prezzo),
+             note_bev.value,
+             momentoAttivo,
+             idOrdineInserito
+        );
+        salvaOrdine(idOrdineInserito, false);
+        disegnaPreComanda();
+        
+    }
+
     const id_piatto = Number(e.target.dataset.id);
     const id_bevanda = Number(e.target.dataset.id);
     const note = document.querySelector(`#note-${id_piatto}`);
@@ -454,14 +570,8 @@ async function globalClick(e) {
 
     const quantita = document.querySelector(`.quantita[data-id="${id_piatto}"]`);
     const quantita_bev = document.querySelector(`.quantita-bev[data-id="${id_bevanda}"]`);
-    if(e.target.classList.contains("note")){
-        if (Number(quantita_bev.value) === 0 && note_bev.value !== null)   alert('per inserire le note seleziona prima il prodotto!');
-
-    }
-    if(e.target.classList.contains("note-bev")){
-        if (Number(quantita_bev.value) === 0 && note_bev.value !== null)   alert('per inserire le note seleziona prima il prodotto!');
-
-    }
+    
+   
 } // FIX: mancava questa chiusura → tutte le funzioni sotto erano nidificate dentro globalClick e irraggiungibili
 
 function gestisciInputGlobali(e) {

@@ -15,10 +15,10 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
    <div class="supporto-titolo">
      <h2><?= $title ?></h2>
   
-        <div id="contenitore">
+        <div id="comande-bar">
             <div id="bevande">
 
-                <h3>Bevande:</h3>  
+                <h3>Ordini Bar</h3>  
                
                 <div id="bevande_bar">
             
@@ -33,14 +33,10 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
   
    
 <script>
-    const API = '/ristorante_classic/api/tavoli.php';
     const API_ORDINI = '/ristorante_classic/api/ordini.php';
-    const API_MENU = '/ristorante_classic/api/menu.php';
 
 </script>
-<script src="/ristorante_classic/public/assets/js/tavoli.js" defer></script>    
 <script src="/ristorante_classic/public/assets/js/ordiniprima.js" defer></script> 
-<script src="/ristorante_classic/public/assets/js/ordiniutil.js" defer></script> 
 
 
 </main>

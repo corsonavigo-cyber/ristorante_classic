@@ -141,6 +141,21 @@ td,th{
     justify-content: center;
     
 }
+.ins-bev{
+    
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    
+    text-align: center;
+    box-shadow: 0 0 5px rgba(0, 0, 75, 0.8);
+    color: #333;
+    justify-content: center;
+    
+}
+.dettaglioModal_bevande:hover{
+    background-color: #b345bd;
+}
 
 .cards .title{
     padding:30px;
@@ -170,6 +185,27 @@ td,th{
 }
 .btn:hover{
     background-color: rgb(79, 45, 226);
+}
+#dettaglioModal {
+  border: none;
+  border-radius: 8px;
+  padding: 1.5rem;
+  width: 500px;
+  width: 90%;
+}
+
+#dettaglioModal::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+#chiudiModal {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
 }
   /*riferito alla cartella --tavoli*/
 .tavoli{
