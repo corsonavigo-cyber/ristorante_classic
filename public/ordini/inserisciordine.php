@@ -72,7 +72,7 @@ require_once __DIR__ . '/../navbar.php';    // ora $authService è disponibile
         </div>
         </div>    
            
-       <button type="button"  class="btn-inserisci-ordine" data-id="#">Inserisci & Stampa Comanda</button>
+       <button type="button"  class="btn-inserisci-ordine hider" data-id="#">Inserisci & Stampa Comanda</button>
       </div>
    
       </form>

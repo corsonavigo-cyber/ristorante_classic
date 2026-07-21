@@ -16,11 +16,14 @@ let bevande = [];
 let piatti = []; 
 let comanda = [];
 let momentoAttivo = 1;
+let iniziaMomentoSelezionato = false;
 let idOrdineInserito = null;
 let id_tavolo_arrivato_url= new URLSearchParams(window.location.search).get('id');
 ///_-----------------LOCAL STORAGE--------------
 
 const CHIAVE_ORDINE = "id_ordine";
+
+
 
 //controllo che siamo nella pagina giusta per attivare i listener
 if (fuorimenupiatto) {
@@ -92,7 +95,6 @@ async function precaricaBevandeBar() {
             <p class="comment">Bevande:<br>${comanda.bevande.join('<br>')}</p>
             <p class="comment">ora di arrivo ${comanda.data_e_ora.split(' ')[1]}</p>
             <p class="comment">stato comanda ${comanda.nome_stato}</p>
-            <a class="btn" href="modificaordine.php?id=${comanda.id_ordine}">Modifica ✏️</a>
             <button class="btn-elimina-ordine" data-id="${comanda.id_ordine}">Elimina 🗑️</button>
         `).join('');
     } else {
@@ -148,14 +150,18 @@ async function disegnaMomenti() {
 
 async function disegnaPreComanda() {
     const comanda =localStorage.getItem(CHIAVE_ORDINE) ? JSON.parse(localStorage.getItem(CHIAVE_ORDINE)) : [];
-
     const visualizza_modifiche_json = document.getElementById('riassunto-ordine');
+
     if (!visualizza_modifiche_json) return;
-    
-    if (!comanda || comanda.comanda.length === 0) {
+
+    if (!comanda || !(comanda.comanda.length >0)  ) {
+        console.log(comanda, comanda.comanda.length + 'eccommiiiii');
         visualizza_modifiche_json.innerHTML = `<li>Non hai ancora aggiunto nessun elemento</li>`;
         return;
     }
+    
+
+    console.log('PRENDO ');
 
 
    const raggruppati = comanda.comanda.reduce((acc, e) => {
@@ -168,21 +174,20 @@ async function disegnaPreComanda() {
         
         return acc;
     },{});
-    console.log(raggruppati);
+   
     console.log(Object.entries(raggruppati));
     const NOMI_MOMENTI ={
-        1: "PRIMA PORTATA",
-        2: "SECONDA PORTATA",
-        3: "TERZA PORTATA",
-        4: "QUARTA PORTATA",
-        5: "QUINTA PORTATA",
-        6: "ALTRO"
+        1: "ANTIPASTO",
+        2: "PRIMO",
+        3: "SECONDO",
+        4: "DOLCI",
+        5: "DA EVADERE SUBITO"
         };
-
+    
     visualizza_modifiche_json.innerHTML = Object.entries(raggruppati).map(([idMomento, elementi]) => `
         <h3>${NOMI_MOMENTI[idMomento] ?? `${idMomento}` }</h3>
         <ul>
-            ${elementi.map(e => `<li>${e.nome_pietanza}  ×  ${e.quantita} --   ${e.prezzo} € </li>`).join('')}
+            ${elementi.map(e => `<li>${e.nome_pietanza}  ×  ${e.quantita} --   ${e.prezzo} € --note:  ${e.note}</li>`).join('')}
         </ul>`).join('<br>');
     }
 
@@ -216,6 +221,10 @@ async function precaricaBevandeForm() {
     <input type="number" step="1" class="quantita-bev"
     id="quantita-bev-${bevanda.id_bevanda}" data-id="${bevanda.id_bevanda}"
     data-tipo="bevanda" value=0 min="0" required>
+    <br><label for="note-bev-${bevanda.id_bevanda}">Note</label>
+    <input type="text" class="note-bev"
+    id="note-bev-${bevanda.id_bevanda}" data-note="${bevanda.id_bevanda}" 
+    data-tipo="bevanda" maxlength="100" data-id="${bevanda.id_bevanda}" placeholder="... ">
     </button>
     </div>`).join('');
     }
@@ -245,7 +254,10 @@ async function precaricaPiattiForm() {
     </p>
     <label for="quantita"> Quantità </label>
     <input type="number" step="1" name="quantita" class="quantita" id="quantita${piatto.id_piatto}" data-id="${piatto.id_piatto}" data-tipo="piatto" value=0 min="0" required>
-    
+    <br><label for="note${piatto.id_piatto}">Note</label>
+    <input type="text" class="note" data-id="${piatto.id_piatto}"
+    id="note-${piatto.id_piatto}" data-note="${piatto.id_piatto}"
+    data-tipo="piatto" maxlength="100" placeholder="... ">
     </button>
     </div>
     `).join(''); // FIX: id="btn-inserisci-piatto-ordine non chiudeva le virgolette (HTML rotto); allineato al pattern del bottone bevanda (class + data-id). "p.id_piatto" → "piatto.id_piatto"
@@ -283,7 +295,7 @@ function salvaOrdine(id_ordine, salvatavoli = true) {
 
 
 // Al caricamento, ripristina step e comanda salvati
-async function ripristinaOrdine(ordine) {
+async function ripristinaOrdine() {
         console.log("sono qui 3");
         const risposta = await fetch(`${API_ORDINI}?type=oggi`);
         if (!risposta.ok) {
@@ -294,15 +306,14 @@ async function ripristinaOrdine(ordine) {
         console.log("sono qui2");
         //controllo se l'ordine è già presente in anagrafica
         if (!ordineJson.data || ordineJson.data.length === 0) {
-            console.log("sono qui");
-            alert("Ordine non trovato");
+            console.log("ordine bozza cancellato perché non più nel db");
             svuotaOrdineSalvato();
             primo_step.classList.remove('hider');
             secondo_step.classList.add('hider');
             return;
         }
         console.log("sono qui")
-        
+        const ordine = localStorage.getItem(CHIAVE_ORDINE) ? JSON.parse(localStorage.getItem(CHIAVE_ORDINE)) : [];
 
         comanda = ordine.comanda;
         idOrdineInserito = ordine.id_ordine;
@@ -318,27 +329,30 @@ async function ripristinaOrdine(ordine) {
     async function ripristinaOrdineLocalS() {
         console.log("sono locals");
         const ordine = localStorage.getItem(CHIAVE_ORDINE) ? JSON.parse(localStorage.getItem(CHIAVE_ORDINE)) : [];
-
-            idOrdineInserito = ordine.id_ordine;
-            if (Number(ordine.step) === 2) {
+        comanda = ordine.comanda;
+        idOrdineInserito = ordine.id_ordine;
+            
+        if (Number(ordine.step) === 2) {
                 primo_step.classList.add('hider');
                 secondo_step.classList.remove('hider');
                     console.log("comandaripristinata",comanda);
                     await disegnaMomenti();
                     ripristinaQuantitaComanda();
                     
-            }
+        }
     }
 
 
 // Da chiamare quando la comanda viene inviata definitivamente al server
 function svuotaOrdineSalvato() {
+    idOrdineInserito = 0;
+
     localStorage.removeItem(CHIAVE_ORDINE);
 
 }
 /*da inserire in controlla tavoli disponibili*/
 function disattivaBottoneTavolo(tavoli) {
-
+    if(!tavoli) return console.log('letto anche se non ci sono tavoli--');
     tavoli.forEach(id_tavolo => {
 
         const checkbox = document.getElementById(`id_${String(id_tavolo)}`);
@@ -353,20 +367,20 @@ async function globalClick(e) {
     const div =document.getElementById('piatti_input');
     
     const divbev =document.getElementById('bevande_input');
-    
+    const idOrdine = Number(hid.value);
     const btn_aggiorna = e.target.closest('.aggiorna'); 
     const btn_indietro = e.target.closest('.btn-indietro'); 
     
     if (btn_avanti) {
         
         e.preventDefault();
-        //controllo per evitare che il json salvato invii la funzione sena il permesso dell'utente
+        //controllo per evitare che il json salvato invii la funzione senza il permesso dell'utente
         
         
         if (idOrdine > 0) {
 
             alert("Ordine già inserito.");
-            const idOrdine = Number(hid.value);
+           
             idOrdineInserito = idOrdine;
             disegnaMomenti();
             
@@ -433,36 +447,52 @@ async function globalClick(e) {
         /*inserisciComandaDb();*/
         return;
     }
+    const id_piatto = Number(e.target.dataset.id);
+    const id_bevanda = Number(e.target.dataset.id);
+    const note = document.querySelector(`#note-${id_piatto}`);
+    const note_bev = document.querySelector(`#note-bev-${id_bevanda}`);
+
+    const quantita = document.querySelector(`.quantita[data-id="${id_piatto}"]`);
+    const quantita_bev = document.querySelector(`.quantita-bev[data-id="${id_bevanda}"]`);
+    if(e.target.classList.contains("note")){
+        if (Number(quantita_bev.value) === 0 && note_bev.value !== null)   alert('per inserire le note seleziona prima il prodotto!');
+
+    }
+    if(e.target.classList.contains("note-bev")){
+        if (Number(quantita_bev.value) === 0 && note_bev.value !== null)   alert('per inserire le note seleziona prima il prodotto!');
+
+    }
 } // FIX: mancava questa chiusura → tutte le funzioni sotto erano nidificate dentro globalClick e irraggiungibili
 
 function gestisciInputGlobali(e) {
     // Variazione manuale quantità piatti
-    if (e.target.classList.contains("quantita")) {
+    if (e.target.classList.contains("quantita") || e.target.classList.contains("note")) {
         const id_piatto = Number(e.target.dataset.id);
         const quantita = document.querySelector(`.quantita[data-id="${id_piatto}"]`);
         const nome_pietanza = document.querySelector(`#nome-piatto${id_piatto}`);
         const prezzo  = document.querySelector(`#prezzo${id_piatto}`);
+        const note = document.querySelector(`#note-${id_piatto}`);
         if (!controllaMomentoSelezionato()) { e.target.value = 0; return; }
         aggiornaVoceComanda(
             "piatto",
             nome_pietanza.dataset.nome,
-            id_piatto,      
+            nome_pietanza.dataset.id,      
             Number(quantita.value), 
             Number(prezzo.dataset.prezzo),
+            note.value,
             momentoAttivo,
             idOrdineInserito      
         );        
         salvaOrdine(idOrdineInserito, false);
-        ripristinaQuantitaComanda();
+        disegnaPreComanda();
     }
 
     // Variazione manuale quantità bevande
-    if (e.target.classList.contains("quantita-bev")) {
+    if (e.target.classList.contains("quantita-bev") || e.target.classList.contains("note-bev")) {
         const id_bevanda = Number(e.target.dataset.id);
         const quantita_bev = document.querySelector(`.quantita-bev[data-id="${id_bevanda}"]`);
         const nome_pietanza = document.querySelector(`#nome-bevanda${id_bevanda}`);
-        console.log(nome_pietanza);
-        console.log(nome_pietanza.dataset.nome)
+        const note_bev = document.querySelector(`#note-bev-${id_bevanda}`);
         const prezzo  = document.querySelector(`#prezzo-bev${id_bevanda}`);
         if (!controllaMomentoSelezionato()) { e.target.value = 0; return; }
         aggiornaVoceComanda(
@@ -471,11 +501,12 @@ function gestisciInputGlobali(e) {
              nome_pietanza.dataset.id,      
              Number(quantita_bev.value),   
              Number(prezzo.dataset.prezzo),
+             note_bev.value,
              momentoAttivo,
              idOrdineInserito
         );
         salvaOrdine(idOrdineInserito, false);
-        ripristinaQuantitaComanda();
+        disegnaPreComanda();
         
     }
 
@@ -513,7 +544,7 @@ async function stampaComanda(id_ordine,comanda){
 
 }
 
-function aggiornaVoceComanda(tipo, nome_pietanza, id, quantita, prezzo, momentoAttivo, id_ordine) {
+function aggiornaVoceComanda(tipo, nome_pietanza, id, quantita, prezzo, note, momentoAttivo, id_ordine) {
     // Cerca se l'elemento dello stesso tipo, id e nello stesso momento di servizio esiste già nell'array comanda
     const indice = comanda.findIndex(el => el.tipo === tipo && el.id === id && el.id_momento === momentoAttivo);
     // (rinominato il parametro della callback da id_momento a el: prima "ombreggiava" il campo id_momento dell'oggetto, confondendo la lettura)
@@ -528,18 +559,21 @@ function aggiornaVoceComanda(tipo, nome_pietanza, id, quantita, prezzo, momentoA
             if (piatto) {
                 nome_pietanza = piatto.nome_piatto;
                 prezzo = piatto.prezzo;
+                
             }
         } else {
             const bevanda = bevande.find(el => el.id === id);
             if (bevanda) {
                 nome_pietanza = bevanda.nome_bevanda;
                 prezzo = bevanda.prezzo;
+                
             }
         }
 
         if (indice !== -1) {
             // Aggiornamento quantità esistente
             comanda[indice].quantita = quantita;
+            comanda[indice].note = note;
         } else {
             // Inserimento nuova voce
             comanda.push({
@@ -549,13 +583,14 @@ function aggiornaVoceComanda(tipo, nome_pietanza, id, quantita, prezzo, momentoA
                 prezzo: prezzo,
                 id_momento: momentoAttivo,
                 quantita: quantita,
+                note,
                 id_ordine
             });
         }
     }
 
-    salvaOrdine(id_ordine, false); // prima non passavi id_ordine: dentro salvaOrdine arrivava undefined
-    ripristinaOrdine();
+    salvaOrdine(id_ordine, false); 
+    disegnaPreComanda();
     console.log("Comanda Aggiornata:", comanda);
 }
 
@@ -595,7 +630,9 @@ async function aggiornaInputPernuovoMomento() {
             if(!(Number(momentoAttivo) === Number(voce.id_momento) )) return;
             console.log(!(Number(ordine.comanda['id_momento']) === Number(voce.id_momento) ));
             const input = document.querySelector(`[data-id="${voce.id}"][data-tipo="${voce.tipo}"]`);
+            const input_note = document.querySelector(`[data-note="${voce.id}"][data-tipo="${voce.tipo}"]`);
             if (input) input.value = voce.quantita;
+            if(input_note) input_note.value = voce.note;
         });
     }
     
@@ -1171,12 +1208,12 @@ async function eliminaPiattoDallaComandaClick(e) {
     );
 
   
-    if (!(ordine)) {
+    if (!(ordine) || ordine.length === 0) {
         console.log(`ordine ${ordine.length}! condizione falsa`);
         return false;
     }
-
-    // cerca se ALMENO UN ordine ha esattamente gli stessi tavoli selezionati
+    console.log(ordine)
+    // cerca se ordine ha esattamente gli stessi tavoli selezionati
      const stessiTavoli = tavoliSelezionati.every(t => ordine.tavoli.includes(t));
 
     if (jsonTavoliConOrdine.length>0 || stessiTavoli >0) {
@@ -1254,20 +1291,32 @@ async function controllaPostiOrdineTavolo(tavoliSelezione){
         }
 
     if (!controllo && !confirmGiaChiesto){
+        console.log('già chiesto? ' + ordine.length )
         confirmGiaChiesto = true;
-
-        console.log("entrato controllo funzione tavolo in uso" + ordine.tavoli );
+        if(ordine.length === 0) return;
+        console.log("entrato controllo funzione tavolo in uso " + ordine.tavoli );
         const conferma = confirm(`Il tavolo id ${ordine.tavoli} ha già un inserimento in corso, vuoi utilizzarlo ?`);
         if(!conferma){
            svuotaOrdineSalvato();
-           await precaricaTavoliForm();
            await disattivaBottoneTavolo(ordine.tavoli);
-           await controllaPostiOrdineTavolo();
+           await precaricaTavoliForm();
+
            return false;
         }
         console.log(conferma + 'ciao');
         hid.value = ordine.id_ordine;
+        comanda = ordine.comanda;
+        console.log('recuperando la comanda in bozza hai recuperato i piatti che avevi selezionato prima! '+ comanda )
         tavoliInUso = tavoliSelezionati;
+        //Sostituire i parametri di un url in js in modo dinamico 
+        const params = new URLSearchParams(window.location.search);
+        params.set('id', tavoliInUso[0]);
+        window.history.replaceState({}, '', `${window.location.pathname}?${params}`);
+
+
+
+       
+        console.log('nooooooovo URL ' );
         await ripristinaOrdineLocalS();
         ripristinaQuantitaComanda();
         return true;
