@@ -186,6 +186,11 @@ td,th{
 .btn:hover{
     background-color: rgb(79, 45, 226);
 }
+.lista-momento.drop-target,
+.zona-cestino.drop-target {
+    outline: 2px dashed #2980b9;
+    background: rgba(41, 128, 185, 0.1);
+}
 #dettaglioModal {
   border: none;
   border-radius: 8px;
@@ -193,7 +198,16 @@ td,th{
   width: 500px;
   width: 90%;
 }
+.operazioni-aritmetiche{
+    display: flex;
 
+}
+.operazioni-aritmetiche p{
+    margin: 10px;
+}
+.operazioni-aritmetiche button{
+    margin: 10px;
+}
 #dettaglioModal::backdrop {
   background: rgba(0, 0, 0, 0.5);
 }

@@ -81,3 +81,5 @@
 [2026-07-21 09:36:08] [CANCELLATO] ordine id 37 (37) del 2026-07-20 10:50:55 6   automaticamente (scaduta)
 [2026-07-21 10:14:35] [APERTO] ordine inserita correttamente id_ordine 41 sul tavolo 3
 [2026-07-21 12:38:44] [APERTO] ordine inserita correttamente id_ordine 42 sul tavolo 5
+[2026-07-23 14:43:57] [CANCELLATO] ordine id 42 (42) del 2026-07-21 12:38:44 6   automaticamente (scaduta)
+[2026-07-23 14:43:57] [CANCELLATO] ordine id 41 (41) del 2026-07-21 10:14:35 6   automaticamente (scaduta)

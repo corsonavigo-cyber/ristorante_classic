@@ -215,15 +215,11 @@ async function disegnaPreComanda() {
     if (!visualizza_modifiche_json) return;
 
     if (!comanda || !(comanda.comanda.length >0)  ) {
-        console.log(comanda, comanda.comanda.length + 'eccommiiiii');
+        console.log(comanda, comanda.comanda.length );
         visualizza_modifiche_json.innerHTML = `<li>Non hai ancora aggiunto nessun elemento</li>`;
         return;
     }
     
-
-    console.log('PRENDO ');
-
-
    const raggruppati = comanda.comanda.reduce((acc, e) => {
     console.log("da visualizzare riassunto");
         if (!acc[e.id_momento]) {
@@ -234,6 +230,7 @@ async function disegnaPreComanda() {
         
         return acc;
     },{});
+    
    
     console.log(Object.entries(raggruppati));
     const NOMI_MOMENTI ={
@@ -245,12 +242,134 @@ async function disegnaPreComanda() {
         };
     
     visualizza_modifiche_json.innerHTML = Object.entries(raggruppati).map(([idMomento, elementi]) => `
-        <h3>${NOMI_MOMENTI[idMomento] ?? `${idMomento}` }</h3>
-        <ul>
-            ${elementi.map(e => `<li>${e.nome_pietanza}  ×  ${e.quantita} --   ${e.prezzo} € --note:  ${e.note}</li>`).join('')}
-        </ul>`).join('<br>');
+    <h3>${NOMI_MOMENTI[idMomento] ?? `${idMomento}`}</h3>
+    <ul class="lista-momento" data-momento-id="${idMomento}">
+        ${elementi.map(e => `
+            <li data-id="${e.id}" class="voce-trascinabile">
+            
+                ${e.nome_pietanza} × ${e.quantita} -- ${e.prezzo} €    ${e.note !== ""? e.note : ""}
+            </li>
+        `).join('')}
+    </ul>`).join('<br>');
     }
 
+//cluade per dra&drop
+// ogni <ul> dei momenti deve avere un data-momento-id per riconoscere il target
+
+
+abilitaTrascinamento(visualizza_modifiche_json, {
+    onCambiaMomento: (idElemento, nuovoMomentoId) => {
+        // aggiorna raggruppati / chiama la tua REST API per salvare il nuovo momento
+        console.log(`Elemento ${idElemento} spostato nel momento ${nuovoMomentoId}`);
+    },
+    onCestina: (idElemento) => {
+        console.log(`Elemento ${idElemento} da eliminare`);
+    }
+});
+
+function abilitaTrascinamento(container, { onCambiaMomento, onCestina }) {
+    let elementoGhost = null;
+    let elementoOrigine = null;
+    let ulOrigine = null;
+
+    // zona cestino: creala una volta sola, fissa in fondo alla pagina
+    let zonaCestino = document.querySelector('.zona-cestino');
+    if (!zonaCestino) {
+        zonaCestino = document.createElement('div');
+        zonaCestino.className = 'zona-cestino';
+        zonaCestino.textContent = '🗑️ Trascina qui per eliminare';
+        Object.assign(zonaCestino.style, {
+            position: 'fixed', bottom: '0', left: '0', width: '100%',
+            padding: '16px', textAlign: 'center', background: '#c0392b',
+            color: '#fff', transform: 'translateY(100%)', transition: 'transform 0.2s ease',
+            zIndex: '9999'
+        });
+        document.body.appendChild(zonaCestino);
+    }
+
+    container.querySelectorAll('.voce-trascinabile').forEach(li => {
+        li.style.touchAction = 'none'; // il trascinamento gestisce lui il movimento, niente scroll nativo
+        li.style.cursor = 'grab';
+
+        li.addEventListener('pointerdown', e => {
+            elementoOrigine = li;
+            ulOrigine = li.closest('.lista-momento');
+
+            // ghost: copia visiva che segue il dito/mouse, l'originale resta semi-trasparente
+            elementoGhost = li.cloneNode(true);
+            Object.assign(elementoGhost.style, {
+                position: 'fixed', pointerEvents: 'none', opacity: '0.85',
+                width: `${li.offsetWidth}px`, zIndex: '10000', background: '#fff',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)', borderRadius: '4px'
+            });
+            document.body.appendChild(elementoGhost);
+            spostaGhost(e.clientX, e.clientY);
+
+            li.style.opacity = '0.3';
+            zonaCestino.style.transform = 'translateY(0)'; // mostra il cestino durante il drag
+
+            li.setPointerCapture(e.pointerId);
+        });
+
+        li.addEventListener('pointermove', e => {
+            if (!elementoGhost) return;
+            spostaGhost(e.clientX, e.clientY);
+            evidenziaTarget(e.clientX, e.clientY);
+        });
+
+        li.addEventListener('pointerup', e => {
+            if (!elementoGhost) return;
+            gestisciRilascio(e.clientX, e.clientY);
+            pulisci();
+        });
+    });
+
+    function spostaGhost(x, y) {
+        elementoGhost.style.left = `${x - elementoGhost.offsetWidth / 2}px`;
+        elementoGhost.style.top = `${y - 20}px`;
+    }
+
+    function evidenziaTarget(x, y) {
+        document.querySelectorAll('.lista-momento, .zona-cestino').forEach(el => el.classList.remove('drop-target'));
+        elementoGhost.style.display = 'none'; // nascondi il ghost un istante per "vedere sotto"
+        const sotto = document.elementFromPoint(x, y);
+        elementoGhost.style.display = '';
+
+        const ulTarget = sotto?.closest('.lista-momento');
+        const cestinoTarget = sotto?.closest('.zona-cestino');
+        if (ulTarget) ulTarget.classList.add('drop-target');
+        if (cestinoTarget) cestinoTarget.classList.add('drop-target');
+    }
+
+    function gestisciRilascio(x, y) {
+        elementoGhost.style.display = 'none';
+        const sotto = document.elementFromPoint(x, y);
+        elementoGhost.style.display = '';
+
+        const idElemento = elementoOrigine.dataset.id;
+
+        if (sotto?.closest('.zona-cestino')) {
+            onCestina(idElemento);
+            elementoOrigine.remove();
+            return;
+        }
+
+        const ulTarget = sotto?.closest('.lista-momento');
+        if (ulTarget && ulTarget !== ulOrigine) {
+            const nuovoMomentoId = ulTarget.dataset.momentoId;
+            ulTarget.appendChild(elementoOrigine); // sposta subito nel DOM, ottimistico
+            onCambiaMomento(idElemento, nuovoMomentoId);
+        }
+    }
+
+    function pulisci() {
+        elementoOrigine.style.opacity = '';
+        elementoGhost?.remove();
+        elementoGhost = null;
+        zonaCestino.style.transform = 'translateY(100%)';
+        document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+    }
+}
 async function precaricaBevandeForm() {
     const comanda =localStorage.getItem(CHIAVE_ORDINE) ? JSON.parse(localStorage.getItem(CHIAVE_ORDINE)) : [];
     const rispostabevande = await fetch(`${API_MENU}?type=bevande`);
@@ -273,10 +392,11 @@ async function precaricaBevandeForm() {
     <p class="comment" id="prezzo-bev${bevanda.id_bevanda}" data-prezzo="${bevanda.prezzo}">Prezzo: ${bevanda.prezzo} €</p>
     
     <div id="modal-${bevanda.id_bevanda}" data-id="${bevanda.id_bevanda}" class="dettaglioModal_bevande" >i</div>
-    <button id="meno-quantita-bev-${bevanda.id_bevanda}"   data-id="${bevanda.id_bevanda}">-</button>    
-
-    <button id="piu-quantita-bev-${bevanda.id_bevanda}"   data-id="${bevanda.id_bevanda}">+</button>    
-
+    <div class="operazioni-aritmetiche">
+    <button type="button" id="meno-quantita-bev-${bevanda.id_bevanda}" class="sottrazione"   data-id="${bevanda.id_bevanda}"  data-rif="bevanda">-</button>    
+        <p id="quantita-bev-comment-${bevanda.id_bevanda}" data-id="${bevanda.id_bevanda}" data-rif="bevanda"> 0 </p>
+        <button type="button" id="piu-quantita-bev-${bevanda.id_bevanda}" class="addizione"  data-id="${bevanda.id_bevanda}" data-rif="bevanda" >+</button>    
+    </div>
     </div>`).join('');
     }
 
@@ -541,40 +661,41 @@ async function globalClick(e) {
         return;
     }
 
-    if (e.target.classList.contains("piu-quantita-bev") ) {
-        const id_bevanda = Number(e.target.dataset.id);
-        const quantita_bev = document.querySelector(`.quantita-bev[data-id="${id_bevanda}"]`);
-        const nome_pietanza = document.querySelector(`#nome-bevanda${id_bevanda}`);
-        const note_bev = document.querySelector(`#note-bev-${id_bevanda}`);
-        const prezzo  = document.querySelector(`#prezzo-bev${id_bevanda}`);
-        if (!controllaMomentoSelezionato()) { e.target.value = 0; return; }
-        aggiornaVoceComanda(
-            "bevanda",
-             nome_pietanza.dataset.nome,
-             nome_pietanza.dataset.id,      
-             Number(quantita_bev.value),   
-             Number(prezzo.dataset.prezzo),
-             note_bev.value,
-             momentoAttivo,
-             idOrdineInserito
-        );
-        salvaOrdine(idOrdineInserito, false);
-        disegnaPreComanda();
-        
+    
+
+    if (e.target.classList.contains("sottrazione")) {
+    const id = e.target.dataset.id;
+    console.log('sottrazione');
+    const tipo = e.target.dataset.rif;
+    if (!controllaMomentoSelezionato()) { e.target.value = 0; return; }
+    aggiornaSingolaVoceComanda(
+        tipo,
+        id,
+        momentoAttivo,
+        idOrdineInserito,
+        false
+    );
+  
+    
     }
 
-    const id_piatto = Number(e.target.dataset.id);
-    const id_bevanda = Number(e.target.dataset.id);
-    const note = document.querySelector(`#note-${id_piatto}`);
-    const note_bev = document.querySelector(`#note-bev-${id_bevanda}`);
-
-    const quantita = document.querySelector(`.quantita[data-id="${id_piatto}"]`);
-    const quantita_bev = document.querySelector(`.quantita-bev[data-id="${id_bevanda}"]`);
-    
-   
-} // FIX: mancava questa chiusura → tutte le funzioni sotto erano nidificate dentro globalClick e irraggiungibili
+    if(e.target.classList.contains("addizione")){
+        const id = e.target.dataset.id;
+        console.log('addizione');
+        const tipo = e.target.dataset.rif;
+        if (!controllaMomentoSelezionato()) { e.target.value = 0; return; }
+            aggiornaSingolaVoceComanda(
+            tipo,
+            id,
+            momentoAttivo,
+            idOrdineInserito
+        );
+        
+    }
+}
 
 function gestisciInputGlobali(e) {
+    console.log("pigiato A!");
     // Variazione manuale quantità piatti
     if (e.target.classList.contains("quantita") || e.target.classList.contains("note")) {
         const id_piatto = Number(e.target.dataset.id);
@@ -599,6 +720,7 @@ function gestisciInputGlobali(e) {
 
     // Variazione manuale quantità bevande
     if (e.target.classList.contains("quantita-bev") || e.target.classList.contains("note-bev")) {
+        console.log("pigiato B!");
         const id_bevanda = Number(e.target.dataset.id);
         const quantita_bev = document.querySelector(`.quantita-bev[data-id="${id_bevanda}"]`);
         const nome_pietanza = document.querySelector(`#nome-bevanda${id_bevanda}`);
@@ -701,7 +823,77 @@ function aggiornaVoceComanda(tipo, nome_pietanza, id, quantita, prezzo, note, mo
 
     salvaOrdine(id_ordine, false); 
     disegnaPreComanda();
+    aggiornaInputPernuovoMomento();
     console.log("Comanda Aggiornata:", comanda);
+}
+
+
+//aggiorna una singola voce di 1 comanda
+// aggiorna una singola voce di 1 comanda
+function aggiornaSingolaVoceComanda(tipo, id, momentoAttivo, id_ordine, operazione = true) {
+    // Cerca se l'elemento (stesso tipo, id, momento di servizio) esiste già in comanda
+    const indice = comanda.findIndex(el => el.tipo === tipo && el.id === id && el.id_momento === momentoAttivo);
+    const displ = document.querySelector(`#quantita-bev-comment-${Number(id)}`);
+
+    if (indice !== -1) {
+        // Voce esistente: incrementa/decrementa quantità
+        let pezzi = Number(comanda[indice].quantita);
+         
+        if(operazione){
+                pezzi +=  1;
+                comanda[indice].quantita = pezzi;
+        }else{
+                pezzi -=  1;
+                comanda[indice].quantita = pezzi;
+                if (comanda[indice].quantita <= 0) {
+                    console.log('ukokpoedfagg');
+                    // Quantità azzerata: rimuovi la voce (deselezione)
+                    comanda.splice(indice, 1);
+                    salvaOrdine(id_ordine, false);
+                    console.log('sono sottrazione  controllo' + pezzi);
+                    displ.innerHTML = `<strong>0</strong>`;
+
+                    }
+                console.log('sono sottrazione ' + pezzi);
+        }
+        
+
+        
+    }else{
+        
+        if(!operazione) return;
+        let nome_pietanza, prezzo;
+
+        if (tipo === "piatto") {
+            const piatto = piatti.find(e => e.id_piatto === Number(id));
+            if (!piatto) return console.warn(`Piatto id ${id} non trovato`);
+            nome_pietanza = piatto.nome_piatto;
+            prezzo = piatto.prezzo;
+        } else if (tipo === "bevanda") {
+            const bevanda = bevande.find(e => e.id_bevanda === Number(id) );
+            if (!bevanda) return console.warn(`Bevanda id ${id} non trovata`);
+            nome_pietanza = bevanda.nome_bevanda;
+            prezzo = bevanda.prezzo;
+        }
+
+        comanda.push({
+            tipo ,
+            id,
+            nome_pietanza,
+            prezzo,
+            id_momento: momentoAttivo,
+            quantita: 1,
+            note: "",
+            id_ordine
+        });
+        
+       
+    }
+
+    salvaOrdine(id_ordine, false);
+    disegnaPreComanda();
+    aggiornaInputPernuovoMomento();
+    console.log("Comanda aggiornata:", comanda);
 }
 
 // Ripristina i valori numerici degli input grafici quando si cambia momento del servizio
@@ -735,14 +927,17 @@ async function aggiornaInputPernuovoMomento() {
     
     console.log("sto ripopolando le voci già inserite " + ordine.comanda[0]);
     if(ordine.comanda.length > 0){
+        
         // Popola gli input grafici con i valori della comanda
         ordine.comanda.forEach(voce => {
+            const displ = document.querySelector(`#quantita-bev-comment-${Number(voce.id)}`);
             if(!(Number(momentoAttivo) === Number(voce.id_momento) )) return;
-            console.log(!(Number(ordine.comanda['id_momento']) === Number(voce.id_momento) ));
+            console.log('sto mdisegnando i valori precompilati');
             const input = document.querySelector(`[data-id="${voce.id}"][data-tipo="${voce.tipo}"]`);
             const input_note = document.querySelector(`[data-note="${voce.id}"][data-tipo="${voce.tipo}"]`);
             if (input) input.value = voce.quantita;
             if(input_note) input_note.value = voce.note;
+            displ.innerHTML = `<strong>${voce.quantita}</strong>`;
         });
     }
     
@@ -1001,7 +1196,7 @@ async function inserisciOrdineBevanda(id_bevanda) {
             throw new Error(json?.data ?? `Errore HTTP ${risposta.status}`);
         }
 
-        window.location.href = "gestioneordini.php";
+       /*da configurare l'id ordine window.location.href = "inserisciordini.php";*/
 
     } catch (errore) {
         console.error(errore);
